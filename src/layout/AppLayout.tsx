@@ -5,7 +5,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
         <>
             <AppHeader />
-            <main>{children}</main>
+            <main className="min-h-[60vh]">{children}</main>
             <AppFooter />
         </>
     );
