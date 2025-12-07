@@ -1,170 +1,180 @@
 "use client";
 
-import Link from 'next/link';
-import { useState, ChangeEvent, FormEvent } from 'react';
+import Link from "next/link";
+import { useState, ChangeEvent, FormEvent } from "react";
 
 // Interface pour typer les données du formulaire d'inscription
 interface FormData {
-  name: string;          // Nom complet de l'utilisateur
-  email: string;         // Adresse email
-  password: string;      // Mot de passe
-  confirmPassword: string; // Confirmation du mot de passe
+    name: string; // Nom complet de l'utilisateur
+    email: string; // Adresse email
+    password: string; // Mot de passe
+    confirmPassword: string; // Confirmation du mot de passe
 }
 
 // Interface pour typer les erreurs de validation du formulaire
 interface FormErrors {
-  name?: string;           // Erreur pour le nom
-  email?: string;          // Erreur pour l'email
-  password?: string;       // Erreur pour le mot de passe
-  confirmPassword?: string; // Erreur pour la confirmation du mot de passe
-  terms?: string;          // Erreur pour l'acceptation des conditions
-  [key: string]: string | undefined; // Index signature pour les erreurs dynamiques
+    name?: string; // Erreur pour le nom
+    email?: string; // Erreur pour l'email
+    password?: string; // Erreur pour le mot de passe
+    confirmPassword?: string; // Erreur pour la confirmation du mot de passe
+    terms?: string; // Erreur pour l'acceptation des conditions
+    [key: string]: string | undefined; // Index signature pour les erreurs dynamiques
 }
 
-const Register = () => {
-  // État pour stocker les données du formulaire
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
-  
-  // État pour gérer les erreurs de validation
-  const [errors, setErrors] = useState<FormErrors>({});
-  
-  // État pour gérer l'affichage du chargement pendant la soumission
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export default function Register() {
+    // État pour stocker les données du formulaire
+    const [formData, setFormData] = useState<FormData>({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+    });
 
-  /**
-   * Valide le format d'un email
-   * @param email - L'email à valider
-   * @returns true si l'email est valide, false sinon
-   */
-  const validateEmail = (email: string) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  };
+    // État pour gérer les erreurs de validation
+    const [errors, setErrors] = useState<FormErrors>({});
 
-  /**
-   * Valide la force du mot de passe selon plusieurs critères
-   * @param password - Le mot de passe à valider
-   * @returns Un objet contenant la validité et les erreurs détaillées
-   */
-  const validatePassword = (password: string): { 
-    isValid: boolean; 
-    errors: { 
-      length: string; 
-      uppercase: string; 
-      number: string; 
-      specialChar: string 
-    } 
-  } => {
-    // Vérification des différents critères de complexité
-    const hasMinLength = password.length >= 10;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    
-    // Retourne la validité globale et les messages d'erreur détaillés
-    return {
-      isValid: hasMinLength && hasUpperCase && hasNumber && hasSpecialChar,
-      errors: {
-        length: hasMinLength ? '' : 'Au moins 10 caractères',
-        uppercase: hasUpperCase ? '' : 'Au moins une majuscule',
-        number: hasNumber ? '' : 'Au moins un chiffre',
-        specialChar: hasSpecialChar ? '' : 'Au moins un caractère spécial (!@#$%^&*)',
-      }
+    // État pour gérer l'affichage du chargement pendant la soumission
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    /**
+     * Valide le format d'un email
+     * @param email - L'email à valider
+     * @returns true si l'email est valide, false sinon
+     */
+    const validateEmail = (email: string) => {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
     };
-  };
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target as HTMLInputElement;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Effacer l'erreur quand l'utilisateur corrige
-    if (name in errors) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-  };
+    /**
+     * Valide la force du mot de passe selon plusieurs critères
+     * @param password - Le mot de passe à valider
+     * @returns Un objet contenant la validité et les erreurs détaillées
+     */
+    const validatePassword = (
+        password: string
+    ): {
+        isValid: boolean;
+        errors: {
+            length: string;
+            uppercase: string;
+            number: string;
+            specialChar: string;
+        };
+    } => {
+        // Vérification des différents critères de complexité
+        const hasMinLength = password.length >= 10;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const newErrors: FormErrors = {};
-    
-    // Validation du nom
-    if (!formData.name.trim()) {
-      newErrors.name = 'Le nom est requis';
-    }
-    
-    // Validation de l'email
-    if (!formData.email) {
-      newErrors.email = 'L\'email est requis';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Veuillez entrer un email valide';
-    }
-    
-    // Validation du mot de passe
-    const passwordValidation = validatePassword(formData.password);
-    if (!formData.password) {
-      newErrors.password = 'Le mot de passe est requis';
-    } else if (!passwordValidation.isValid) {
-      newErrors.password = 'Le mot de passe ne respecte pas les critères';
-    }
-    
-    // Validation de la confirmation du mot de passe
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
-    }
-    
-    // Validation des conditions d'utilisation
-    const termsCheckbox = e.currentTarget.elements.namedItem('terms') as HTMLInputElement;
-    if (!termsCheckbox.checked) {
-      newErrors.terms = 'Vous devez accepter les conditions d\'utilisation';
-    }
-    
-    setErrors(newErrors);
-    
-    // Si pas d'erreurs, on peut soumettre
-    if (Object.keys(newErrors).length === 0) {
-      setIsSubmitting(true);
-      try {
-        // Ici, vous pourriez ajouter l'appel à votre API
-        // Exemple :
-        // await fetch('/api/register', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(formData)
-        // });
-        
-        console.log('Formulaire soumis avec succès:', formData);
-        
-        // Réinitialiser le formulaire après soumission
-        setFormData({
-          name: '',
-          email: '',
-          password: '',
-          confirmPassword: ''
-        });
-        
-        // Réinitialiser les erreurs
-        setErrors({});
-      } catch (error) {
-        console.error('Erreur lors de l\'inscription:', error);
-        // Gérer les erreurs de l'API ici
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-  };
-  return (
-    {/* Conteneur principal avec fond gris foncé et centrage vertical/horizontal */}
+        // Retourne la validité globale et les messages d'erreur détaillés
+        return {
+            isValid:
+                hasMinLength && hasUpperCase && hasNumber && hasSpecialChar,
+            errors: {
+                length: hasMinLength ? "" : "Au moins 10 caractères",
+                uppercase: hasUpperCase ? "" : "Au moins une majuscule",
+                number: hasNumber ? "" : "Au moins un chiffre",
+                specialChar: hasSpecialChar
+                    ? ""
+                    : "Au moins un caractère spécial (!@#$%^&*)",
+            },
+        };
+    };
+
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target as HTMLInputElement;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+
+        // Effacer l'erreur quand l'utilisateur corrige
+        if (name in errors) {
+            setErrors((prev) => ({
+                ...prev,
+                [name]: "",
+            }));
+        }
+    };
+
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const newErrors: FormErrors = {};
+
+        // Validation du nom
+        if (!formData.name.trim()) {
+            newErrors.name = "Le nom est requis";
+        }
+
+        // Validation de l'email
+        if (!formData.email) {
+            newErrors.email = "L'email est requis";
+        } else if (!validateEmail(formData.email)) {
+            newErrors.email = "Veuillez entrer un email valide";
+        }
+
+        // Validation du mot de passe
+        const passwordValidation = validatePassword(formData.password);
+        if (!formData.password) {
+            newErrors.password = "Le mot de passe est requis";
+        } else if (!passwordValidation.isValid) {
+            newErrors.password = "Le mot de passe ne respecte pas les critères";
+        }
+
+        // Validation de la confirmation du mot de passe
+        if (formData.password !== formData.confirmPassword) {
+            newErrors.confirmPassword =
+                "Les mots de passe ne correspondent pas";
+        }
+
+        // Validation des conditions d'utilisation
+        const termsCheckbox = e.currentTarget.elements.namedItem(
+            "terms"
+        ) as HTMLInputElement;
+        if (!termsCheckbox.checked) {
+            newErrors.terms =
+                "Vous devez accepter les conditions d'utilisation";
+        }
+
+        setErrors(newErrors);
+
+        // Si pas d'erreurs, on peut soumettre
+        if (Object.keys(newErrors).length === 0) {
+            setIsSubmitting(true);
+            try {
+                // Ici, vous pourriez ajouter l'appel à votre API
+                // Exemple :
+                // await fetch('/api/register', {
+                //   method: 'POST',
+                //   headers: { 'Content-Type': 'application/json' },
+                //   body: JSON.stringify(formData)
+                // });
+
+                console.log("Formulaire soumis avec succès:", formData);
+
+                // Réinitialiser le formulaire après soumission
+                setFormData({
+                    name: "",
+                    email: "",
+                    password: "",
+                    confirmPassword: "",
+                });
+
+                // Réinitialiser les erreurs
+                setErrors({});
+            } catch (error) {
+                console.error("Erreur lors de l'inscription:", error);
+                // Gérer les erreurs de l'API ici
+            } finally {
+                setIsSubmitting(false);
+            }
+        }
+    };
+
+	return (
+    // {/* Conteneur principal avec fond gris foncé et centrage vertical/horizontal */}
     <div className="min-h-screen bg-neutral-700 flex items-center justify-center p-4">
       {/* Carte blanche du formulaire avec ombre et espacement */}
       <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
@@ -233,7 +243,7 @@ const Register = () => {
             {errors.password ? (
               <p className="mt-1 text-sm text-red-600">{errors.password}</p>
             ) : formData.password && (
-              {/* Indicateurs visuels des critères de complexité du mot de passe */}
+            //   {/* Indicateurs visuels des critères de complexité du mot de passe */}
               <div className="mt-2 text-xs text-gray-500">
                 Le mot de passe doit contenir :
                 <ul className="list-disc pl-5 mt-1">
@@ -329,6 +339,4 @@ const Register = () => {
       </div>
     </div>
   );
-};
-
-export default Register;
+}
