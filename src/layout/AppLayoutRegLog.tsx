@@ -85,3 +85,4 @@ const AppLayoutRegLog: React.FC<AppLayoutProps> = ({
 };
 
 export default AppLayoutRegLog;
+68837864d68f18044d58368b087111e608ea4ea9
