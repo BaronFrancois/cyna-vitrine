@@ -243,7 +243,6 @@ export default function Register() {
             {errors.password ? (
               <p className="mt-1 text-sm text-red-600">{errors.password}</p>
             ) : formData.password && (
-            HEAD
             //   {/* Indicateurs visuels des critères de complexité du mot de passe */}
               <div className="mt-2 text-xs text-gray-500">
                 Le mot de passe doit contenir :
