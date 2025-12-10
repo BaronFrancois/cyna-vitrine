@@ -1,8 +1,8 @@
 "use client";
 
-import { PRODUCTS } from "@/constants";
-import { Button } from "@/src/components/ui/Button";
-import AppLayout from "@/src/layout/AppLayout";
+import { Button } from "@/components/ui/Button";
+import { PRODUCTS } from "@/constant";
+import AppLayout from "@/layout/AppLayout";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";

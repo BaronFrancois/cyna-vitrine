@@ -2,9 +2,9 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { MessageSquare, Send, X, User as UserIcon, Bot } from "lucide-react";
-import { Button } from "@/src/components/ui/Button";
-import { chatWithCyna } from "@/src/services/geminiService";
-import AppLayout from "@/src/layout/AppLayout";
+import { Button } from "@/components/ui/Button";
+import { chatWithCyna } from "@/services/geminiService";
+import AppLayout from "@/layout/AppLayout";
 
 export default function SupportPage() {
     const [isChatOpen, setIsChatOpen] = useState(false);
