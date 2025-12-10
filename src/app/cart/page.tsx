@@ -1,8 +1,8 @@
 "use client"
 
-import { Button } from "@/src/components/ui/Button";
-import useCart from "@/src/hooks/useCart";
-import AppLayout from "@/src/layout/AppLayout";
+import { Button } from "@/components/ui/Button";
+import useCart from "@/hooks/useCart";
+import AppLayout from "@/layout/AppLayout";
 import Link from "next/link";
 
 export default function Cart() {
