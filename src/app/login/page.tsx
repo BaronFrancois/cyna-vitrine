@@ -129,7 +129,7 @@ export default function Login() {
 
   return 
     // {/* Conteneur principal centré verticalement et horizontalement */}
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a0a23] via-[#1a1a40] to-[#2a2a60] py-12 px-4 sm:px-6 lg:px-8">
       {/* Carte du formulaire avec ombre et espacement */}
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
         {/* En-tête du formulaire */}
