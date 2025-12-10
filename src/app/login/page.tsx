@@ -219,20 +219,22 @@ export default function Login() {
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-300"></div>
             </div>
-<<<<<<< HEAD
+{/* Bloc combiné */}
+<div className="flex flex-col space-y-4">
+  {/* Lien "Mot de passe oublié" aligné à droite */}
+  <div className="flex items-center justify-end">
+    <div className="text-sm">
+      <a href="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
+        Mot de passe oublié ?
+      </a>
+    </div>
+  </div>
 
-            {/* Ligne du lien "Mot de passe oublié" aligné à droite */}
-            <div className="flex items-center justify-end">
-              <div className="text-sm">
-                <a href="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
-                  Mot de passe oublié ?
-                </a>
-              </div>
-=======
-            {/* Texte "Ou" centré sur la ligne */}
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Ou</span>
->>>>>>> f9ceaae8d5ca064df2f521a5020c412cfe58182d
+  {/* Séparateur "Ou" centré */}
+  <div className="relative flex justify-center text-sm">
+    <span className="px-2 bg-white text-gray-500">Ou</span>
+  </div>
+
             </div>
           </div>
 
