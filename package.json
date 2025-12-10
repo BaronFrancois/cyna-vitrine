@@ -12,6 +12,7 @@
     "@google/genai": "^1.31.0",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
+    "axios": "^1.13.2",
     "framer-motion": "^12.23.25",
     "heroicons": "^2.2.0",
     "lucide-react": "^0.555.0",
