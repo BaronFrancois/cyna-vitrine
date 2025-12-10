@@ -129,14 +129,16 @@ export default function Login() {
   };
 
   return (
+
+
     <AppLayoutRegLog>
       {/* Conteneur principal centré verticalement et horizontalement */}
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-blue-950">
         {/* Carte du formulaire avec ombre et espacement */}
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
+        <div className="max-w-md w-full space-y-8 bg-blue-950 p-8 rounded-lg shadow-md text-white">
           {/* En-tête du formulaire */}
           <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-950">
               Connectez-vous à votre compte
             </h2>
           </div>
