@@ -127,7 +127,7 @@ export default function Login() {
     }
   };
 
-  return (
+  return 
     // {/* Conteneur principal centré verticalement et horizontalement */}
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       {/* Carte du formulaire avec ombre et espacement */}
@@ -191,15 +191,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Ligne du lien "Mot de passe oublié" aligné à droite */}
-          <div className="flex items-center justify-end">
-            <div className="text-sm">
-              <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Mot de passe oublié ?
-              </a>
-            </div>
-          </div>
-
           {/* Conteneur du bouton de soumission */}
           <div>
             <button
@@ -250,5 +241,5 @@ export default function Login() {
         </div>
       </div>
     </div>
-  );
+  ;
 }
