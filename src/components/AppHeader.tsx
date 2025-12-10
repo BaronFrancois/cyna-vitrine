@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import AppSearch from "./AppSearch";
 
 export default function AppHeader() {
     const pathname = usePathname();
@@ -43,12 +44,6 @@ export default function AppHeader() {
                                 Solutions
                             </Link>
                             <Link
-                                href="/search"
-                                className={isActive("/search")}
-                            >
-                                Recherche
-                            </Link>
-                            <Link
                                 href="/support"
                                 className={isActive("/support")}
                             >
@@ -63,12 +58,7 @@ export default function AppHeader() {
                             <span>FR</span>
                             <ChevronDown size={10} />
                         </div>
-                        <Link
-                            href="/search"
-                            className="text-gray-500 hover:text-gray-900 transition-colors"
-                        >
-                            <Search size={20} />
-                        </Link>
+                        <AppSearch />
                         <Link
                             href="/cart"
                             className="relative text-gray-500 hover:text-gray-900 transition-colors"
