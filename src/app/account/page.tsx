@@ -7,7 +7,7 @@ export default function Account() {
 
 
     if(!auth_token) {
-        window.location.href = "/login";
+        window.location.href = "/auth/login";
     }
 
 }
