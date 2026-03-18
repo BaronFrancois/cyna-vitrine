@@ -52,7 +52,7 @@ export default function Home() {
         <AppLayout>
             <div className="w-full overflow-hidden">
                 {/* Hero */}
-                <section className="min-h-[90vh] flex flex-col items-center justify-center text-center px-4 pt-20 pb-10 bg-white">
+                <section className="min-h-[90vh] flex flex-col items-center justify-center text-center px-4 pt-20 [padding-bottom:2.5rem] bg-white">
                     <FadeInSection>
                         <h2 className="text-blue-600 font-semibold text-xl md:text-2xl mb-4 tracking-wide">
                             Cyna Defense Platform
@@ -246,7 +246,7 @@ export default function Home() {
                     </div>
 
                     {/* Horizontal Scroll Container (Slider) */}
-                    <div className="overflow-x-auto pb-10 px-4 no-scrollbar">
+                    <div className="overflow-x-auto [padding-bottom:2.5rem] px-4 no-scrollbar">
                         <div className="flex flex-nowrap md:justify-center gap-6 min-w-max md:min-w-0">
                             {/* Weekly Card */}
                             <div className="w-80 md:w-96 flex-shrink-0 bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col transform hover:-translate-y-1">
