@@ -6,14 +6,13 @@ import {
     Shield,
     Zap,
     Lock,
-    Activity,
-    Calendar,
     Clock,
     Check,
 } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useRef } from "react";
 import { Button } from "../components/ui/Button";
+import DashboardMockup from "../components/DashboardMockup";
 
 const FadeInSection: React.FC<{
     children: React.ReactNode;
@@ -88,25 +87,17 @@ export default function Home() {
                             </Link>
                         </div>
 
-                        <div className="mt-16 w-full max-w-6xl mx-auto relative rounded-3xl overflow-hidden shadow-2xl border border-gray-200">
-                            {/* Dashboard Mockup */}
-                            <div className="aspect-[16/9] bg-gray-900 relative flex items-center justify-center">
-                                <div className="absolute inset-0 bg-gradient-to-tr from-gray-900 to-gray-800"></div>
-                                <div className="text-center z-10 p-8">
-                                    <Activity className="mx-auto text-blue-500 mb-4 h-16 w-16" />
-                                    <p className="text-gray-400 font-mono text-sm">
-                                        STATUT SYSTÈME : SÉCURISÉ
-                                    </p>
-                                    <p className="text-white text-3xl font-light mt-2">
-                                        0 Menaces Détectées
-                                    </p>
-                                </div>
-                                <img
-                                    src="https://picsum.photos/id/6/1200/800"
-                                    alt="Tableau de bord"
-                                    className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-overlay"
-                                />
+                        <div className="mt-16 w-full max-w-4xl mx-auto">
+                            <div className="mb-6 text-center">
+                                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
+                                    Les dernières failles de sécurité{" "}
+                                    <span className="text-blue-600">dans le monde</span>
+                                </h3>
+                                <p className="mt-2 text-gray-400 text-sm">
+                                    Données officielles CISA — mises à jour en continu
+                                </p>
                             </div>
+                            <DashboardMockup />
                         </div>
                     </FadeInSection>
                 </section>
@@ -246,7 +237,7 @@ export default function Home() {
                     </div>
 
                     {/* Horizontal Scroll Container (Slider) */}
-                    <div className="overflow-x-auto [padding-bottom:2.5rem] px-4 no-scrollbar">
+                    <div className="overflow-x-auto [padding-top:1.5rem] [padding-bottom:2.5rem] px-4 no-scrollbar">
                         <div className="flex flex-nowrap md:justify-center gap-6 min-w-max md:min-w-0">
                             {/* Weekly Card */}
                             <div className="w-80 md:w-96 flex-shrink-0 bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col transform hover:-translate-y-1">
@@ -327,7 +318,7 @@ export default function Home() {
                                         Annulation facile
                                     </li>
                                 </ul>
-                                <Button className="w-full bg-blue-600 hover:bg-blue-700 border-none text-white">
+                                  <Button className="w-full bg-blue-600 hover:bg-blue-700 border-none text-white">
                                     Choisir Mensuel
                                 </Button>
                             </div>

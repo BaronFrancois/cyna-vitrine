@@ -12,14 +12,19 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AppSearch from "./AppSearch";
+import { cn } from "@/lib/utils";
 
 export default function AppHeader() {
     const pathname = usePathname();
 
-    const isActive = (path: string) =>
-        pathname === path
-            ? "text-gray-900"
-            : "text-gray-500 hover:text-gray-900";
+    const navClass = (path: string) => {
+        const active = pathname === path || pathname.startsWith(path + "/");
+        return cn(
+            "nav-sku text-sm font-medium transition-colors",
+            active ? "nav-sku-active" : "text-gray-500 hover:text-gray-800"
+        );
+    };
+
     return (
         <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-200/50 transition-all duration-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -36,17 +41,11 @@ export default function AppHeader() {
                                 Cyna
                             </span>
                         </Link>
-                        <div className="hidden md:flex space-x-6 text-sm font-medium">
-                            <Link
-                                href="/catalog"
-                                className={isActive("/catalog")}
-                            >
+                        <div className="hidden md:flex items-center space-x-1">
+                            <Link href="/catalog" className={navClass("/catalog")}>
                                 Solutions
                             </Link>
-                            <Link
-                                href="/support"
-                                className={isActive("/support")}
-                            >
+                            <Link href="/support" className={navClass("/support")}>
                                 Support
                             </Link>
                         </div>

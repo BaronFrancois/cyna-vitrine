@@ -196,7 +196,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                         Démarrer maintenant
                                     </Button>
                                     <Link href="/support">
-                                        <Button size="lg" variant="ghost" className="text-white hover:bg-white/10">
+                                        <Button size="lg" variant="ghost" className="text-white hover:text-white btn-sku-inv">
                                             Parler à un expert
                                         </Button>
                                     </Link>

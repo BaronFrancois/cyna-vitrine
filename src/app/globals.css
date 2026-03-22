@@ -25,6 +25,131 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* ============================================================
+   SKEUOMORPHIC BUTTON SYSTEM
+   ─ raised (default) → flush (hover) → pressed (active/active-state)
+   ============================================================ */
+
+/* Shared transition */
+.btn-sku,
+.btn-sku-primary,
+.btn-sku-ghost,
+.nav-sku {
+  transition: box-shadow 0.1s ease, transform 0.1s ease;
+}
+
+/* ── Light variants (secondary / outline) ── */
+.btn-sku {
+  box-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.13),
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+.btn-sku:hover:not(:disabled) {
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.09);
+  transform: translateY(2px);
+}
+.btn-sku:active:not(:disabled),
+.btn-sku[data-active="true"] {
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.16),
+    inset 0 1px 2px rgba(0, 0, 0, 0.10),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.09);
+  transform: translateY(3px);
+}
+
+/* ── Primary (blue) ── */
+.btn-sku-primary {
+  box-shadow:
+    0 3px 0 #1d4ed8,
+    0 1px 6px rgba(37, 99, 235, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20);
+}
+.btn-sku-primary:hover:not(:disabled) {
+  box-shadow:
+    0 1px 0 #1d4ed8,
+    inset 0 0 0 1px rgba(29, 78, 216, 0.45);
+  transform: translateY(2px);
+}
+.btn-sku-primary:active:not(:disabled),
+.btn-sku-primary[data-active="true"] {
+  box-shadow:
+    inset 0 2px 6px rgba(29, 78, 216, 0.55),
+    inset 0 1px 3px rgba(0, 0, 0, 0.20);
+  transform: translateY(3px);
+}
+
+/* ── Ghost (très subtil, pas de fond) ── */
+.btn-sku-ghost {
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.btn-sku-ghost:hover:not(:disabled) {
+  box-shadow:
+    0 0 0 transparent,
+    inset 0 0 0 1px rgba(0, 0, 0, 0.07);
+  transform: translateY(1px);
+}
+.btn-sku-ghost:active:not(:disabled),
+.btn-sku-ghost[data-active="true"] {
+  box-shadow:
+    inset 0 1px 4px rgba(0, 0, 0, 0.12),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.07);
+  transform: translateY(2px);
+}
+
+/* ── Header nav pills ── */
+.nav-sku {
+  padding: 0.3rem 0.85rem;
+  border-radius: 9999px;
+  background: transparent;
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+.nav-sku:hover {
+  background: rgba(0, 0, 0, 0.025);
+  box-shadow:
+    0 0 0 transparent,
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  transform: translateY(1px);
+}
+.nav-sku-active {
+  background: rgba(0, 0, 0, 0.05) !important;
+  box-shadow:
+    inset 0 1px 4px rgba(0, 0, 0, 0.13),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.09) !important;
+  transform: translateY(1px);
+  color: #111827 !important;
+}
+
+/* ── Ghost inversé (sur fond sombre / coloré) ── */
+.btn-sku-inv {
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+.btn-sku-inv:hover:not(:disabled) {
+  box-shadow:
+    0 0 0 transparent,
+    inset 0 0 0 1px rgba(255, 255, 255, 0.40);
+  background-color: rgba(255, 255, 255, 0.10);
+  transform: translateY(1px);
+}
+.btn-sku-inv:active:not(:disabled),
+.btn-sku-inv[data-active="true"] {
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.25),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  background-color: rgba(255, 255, 255, 0.08);
+  transform: translateY(2px);
+}
+
+/* ============================================================ */
+
 @keyframes fadeIn {
   from {
     opacity: 0;
