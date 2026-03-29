@@ -1,11 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import AppSearch from "@/components/AppSearch";
 import { PRODUCTS } from "@/constant";
 import AppLayout from "@/layout/AppLayout";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useMemo, useState, Suspense } from "react";
+import { cn } from "@/lib/utils";
 
 function CatalogContent() {
     const searchParams = useSearchParams();
@@ -20,7 +22,7 @@ function CatalogContent() {
         return PRODUCTS.filter((p) => p.category === activeFilter);
     }, [activeFilter]);
 
-    const categories = ["Tous", "EDR", "XDR", "SOC", "Cloud", "Network"];
+    const categories = ["Tous", "EDR", "XDR", "SOC"];
 
     const handleFilterChange = (cat: string) => {
         setActiveFilter(cat);
@@ -41,30 +43,54 @@ function CatalogContent() {
             <div className="pt-10 pb-20">
 
                 {/* Catalog Hero */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-10 md:mb-12">
                     <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
                         Trouvez la bonne protection.
                     </h1>
-                    <p className="text-xl text-gray-500">
-                        Explorez notre suite d'outils de cybersécurité nouvelle génération.
+                    <p className="text-xl text-gray-500 mb-6 md:mb-8">
+                        Explorez notre suite d&apos;outils de cybersécurité nouvelle génération.
                     </p>
+                    {/* Desktop : recherche centrée sous le sous-titre (la loupe header est masquée) */}
+                    <div className="mx-auto hidden max-w-2xl w-full fade-in md:block">
+                        <AppSearch variant="catalogInline" />
+                    </div>
                 </div>
 
-                {/* Filter Bar */}
-                <div className="sticky top-16 z-40 bg-white/90 backdrop-blur-md border-b border-gray-200 py-4 mb-12">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2 overflow-x-auto no-scrollbar">
-                        {categories.map((cat) => (
-                            <button
-                                key={cat}
-                                onClick={() => handleFilterChange(cat)}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${activeFilter === cat
-                                        ? "bg-gray-900 text-white"
-                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                    }`}
+                {/* Filter Bar — padding vertical pour ne pas tronquer les box-shadow des pastilles */}
+                <div className="sticky top-16 z-40 bg-white/90 backdrop-blur-md border-b border-gray-200 mb-12">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 sm:pb-6">
+                        {/* Mobile: dropdown */}
+                        <div className="sm:hidden">
+                            <select
+                                value={activeFilter}
+                                onChange={(e) => handleFilterChange(e.target.value)}
+                                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-cyna-500"
+                                aria-label="Filtrer par catégorie"
                             >
-                                {cat}
-                            </button>
-                        ))}
+                                {categories.map((cat) => (
+                                    <option key={cat} value={cat}>
+                                        {cat}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Tablet/Desktop : pas d'overflow-x-auto (tronque les ombres) ; flex-wrap suffit */}
+                        <div className="hidden sm:flex flex-wrap gap-2 gap-y-3 pt-1 pb-1">
+                            {categories.map((cat) => (
+                                <button
+                                    key={cat}
+                                    type="button"
+                                    onClick={() => handleFilterChange(cat)}
+                                    className={cn(
+                                        "nav-sku-raised text-sm font-medium whitespace-nowrap",
+                                        activeFilter === cat && "nav-sku-header-active"
+                                    )}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
@@ -96,7 +122,7 @@ function CatalogContent() {
                                 </div>
 
                                 <div className="p-8 flex-grow flex flex-col">
-                                    <div className="text-xs font-bold text-blue-600 mb-2 uppercase tracking-wide">
+                                    <div className="text-xs font-bold text-cyna-600 mb-2 uppercase tracking-wide">
                                         {product.category}
                                     </div>
 
@@ -120,7 +146,7 @@ function CatalogContent() {
                                         </div>
 
                                         <Link href={`/product/${product.id}`}>
-                                            <Button size="sm" variant="secondary" className="rounded-full px-5">
+                                            <Button size="sm" variant="secondary" className="px-5">
                                                 Acheter
                                             </Button>
                                         </Link>

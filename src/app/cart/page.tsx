@@ -71,7 +71,9 @@ export default function Cart() {
                         <span className="font-bold text-gray-900">{total.toFixed(2)}€</span>
                     </div>
                     <Link href="/checkout" className="w-full sm:w-1/3">
-                        <Button className="w-full py-4 text-lg rounded-xl">Payer</Button>
+                        <Button variant="primary" className="w-full">
+                            Payer
+                        </Button>
                     </Link>
                 </div>
             </div>

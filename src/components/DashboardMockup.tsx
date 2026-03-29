@@ -135,7 +135,7 @@ export default function DashboardMockup() {
             </div>
 
             {/* Tiles */}
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
                 {!data ? (
                     <>
                         <TileSkeleton />
@@ -147,7 +147,7 @@ export default function DashboardMockup() {
             </div>
 
             {/* CTA */}
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                     href="/support"
                     className="flex-1 inline-flex items-center justify-center gap-2 bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 hover:border-white/20 text-white/80 hover:text-white font-medium text-sm py-3 rounded-2xl transition-all duration-200"

@@ -17,8 +17,6 @@ import {
     AlertTriangle,
     Zap,
     Lock,
-    Cloud,
-    Globe,
     Settings,
     LifeBuoy,
 } from "lucide-react";
@@ -27,16 +25,12 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
     EDR: <Zap className="w-5 h-5" />,
     XDR: <Activity className="w-5 h-5" />,
     SOC: <Shield className="w-5 h-5" />,
-    Cloud: <Cloud className="w-5 h-5" />,
-    Network: <Globe className="w-5 h-5" />,
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-    EDR: "bg-yellow-100 text-yellow-700",
-    XDR: "bg-blue-100 text-blue-700",
-    SOC: "bg-purple-100 text-purple-700",
-    Cloud: "bg-sky-100 text-sky-700",
-    Network: "bg-green-100 text-green-700",
+    EDR: "bg-violet-100 text-violet-800",
+    XDR: "bg-fuchsia-100 text-fuchsia-800",
+    SOC: "bg-purple-100 text-purple-800",
 };
 
 const MOCK_ACTIVITY = [
@@ -50,14 +44,14 @@ const MOCK_ACTIVITY = [
     {
         id: 2,
         label: "Rapport mensuel généré",
-        detail: "Cyna EDR Pro — Janvier 2026",
+        detail: "EDR & Digital Workplace — Janvier 2026",
         time: "Il y a 3 jours",
         type: "info",
     },
     {
         id: 3,
         label: "Abonnement renouvelé",
-        detail: "Cyna XDR Max — 199,99 €",
+        detail: "Détection étendue (XDR) — 199,99 €",
         time: "Il y a 7 jours",
         type: "success",
     },
@@ -381,9 +375,7 @@ export default function AccountDashboard() {
                                     <p className="text-gray-500 text-sm mt-1">{MOCK_USER.activeSubscriptions} abonnement(s) actif(s)</p>
                                 </div>
                                 <Link href="/catalog">
-                                    <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full">
-                                        Ajouter une solution
-                                    </Button>
+                                    <Button variant="accent">Ajouter une solution</Button>
                                 </Link>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -427,7 +419,9 @@ export default function AccountDashboard() {
                                 <h3 className="font-bold text-gray-900 mb-1">Complétez votre protection</h3>
                                 <p className="text-sm text-gray-500 mb-4">3 solutions supplémentaires sont disponibles pour renforcer votre sécurité.</p>
                                 <Link href="/catalog">
-                                    <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full text-sm">Explorer le catalogue</Button>
+                                    <Button variant="accent" size="sm">
+                                        Explorer le catalogue
+                                    </Button>
                                 </Link>
                             </div>
                         </div>
@@ -559,7 +553,11 @@ export default function AccountDashboard() {
                                 <p className="text-sm text-gray-500 mb-4">
                                     La suppression de votre compte est irréversible et annule tous vos abonnements.
                                 </p>
-                                <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 rounded-full text-sm">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-red-600 border-red-200 hover:bg-red-50"
+                                >
                                     Supprimer mon compte
                                 </Button>
                             </div>

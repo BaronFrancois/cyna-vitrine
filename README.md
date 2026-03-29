@@ -1,5 +1,16 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Vérification TypeScript
+
+Exécuter les commandes **depuis ce dossier** (`cyna-vitrine`), où `typescript` est installé — pas depuis le dossier parent `cyna` (sinon `npx` peut proposer le mauvais paquet `tsc`) :
+
+```bash
+cd cyna-vitrine
+npx tsc --noEmit
+```
+
+Alternative : `npm run build` (inclut la compilation Next.js).
+
 ## Getting Started
 
 First, run the development server:

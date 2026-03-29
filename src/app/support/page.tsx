@@ -1,12 +1,15 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { MessageSquare, Send, X, User as UserIcon, Bot } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { chatWithCyna } from "@/services/geminiService";
 import AppLayout from "@/layout/AppLayout";
+import { SUPPORT_FAQ, matchPredefinedAnswer } from "@/lib/supportFaq";
 
 export default function SupportPage() {
+    const pathname = usePathname();
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [input, setInput] = useState("");
     const [history, setHistory] = useState<
@@ -23,6 +26,29 @@ export default function SupportPage() {
         scrollToBottom();
     }, [history, isChatOpen]);
 
+    /** Défilement vers #contact (lien footer « Nous contacter », même page, navigation initiale) */
+    useEffect(() => {
+        if (pathname !== "/support") return;
+
+        const scrollToContact = () => {
+            if (window.location.hash !== "#contact") return;
+            const el = document.getElementById("contact");
+            if (el) {
+                requestAnimationFrame(() => {
+                    el.scrollIntoView({ behavior: "smooth", block: "start" });
+                });
+            }
+        };
+
+        scrollToContact();
+        const t = setTimeout(scrollToContact, 150);
+        window.addEventListener("hashchange", scrollToContact);
+        return () => {
+            clearTimeout(t);
+            window.removeEventListener("hashchange", scrollToContact);
+        };
+    }, [pathname]);
+
     const handleSendMessage = async () => {
         if (!input.trim()) return;
 
@@ -34,6 +60,16 @@ export default function SupportPage() {
         ];
         setHistory(newHistory);
         setIsLoading(true);
+
+        const predefined = matchPredefinedAnswer(userMsg);
+        if (predefined) {
+            setHistory([
+                ...newHistory,
+                { role: "model" as const, parts: [{ text: predefined }] },
+            ]);
+            setIsLoading(false);
+            return;
+        }
 
         const responseText = await chatWithCyna(userMsg, history);
 
@@ -55,15 +91,45 @@ export default function SupportPage() {
                     <input
                         type="text"
                         placeholder="Rechercher des sujets d'aide..."
-                        className="w-full p-4 rounded-full border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        className="w-full p-4 rounded-full border border-gray-300 shadow-sm focus:ring-2 focus:ring-cyna-500 focus:outline-none"
                     />
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto px-4 py-20 grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="max-w-4xl mx-auto px-4 py-12">
+                <h2 className="text-xl font-bold text-gray-900 mb-4 text-center md:text-left">
+                    Questions fréquentes
+                </h2>
+                <div className="space-y-3 mb-16">
+                    {SUPPORT_FAQ.map((item) => (
+                        <details
+                            key={item.id}
+                            className="group rounded-2xl border border-gray-200 bg-white px-4 py-3 open:shadow-sm"
+                        >
+                            <summary className="cursor-pointer font-medium text-gray-900 list-none flex justify-between items-center gap-2">
+                                {item.question}
+                                <span className="text-cyna-600 text-sm group-open:rotate-180 transition-transform">
+                                    ▼
+                                </span>
+                            </summary>
+                            <p className="mt-3 text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
+                                {item.answer}
+                            </p>
+                        </details>
+                    ))}
+                </div>
+            </div>
+
+            <section
+                id="contact"
+                className="scroll-mt-28 max-w-4xl mx-auto px-4 pb-20 grid grid-cols-1 md:grid-cols-2 gap-12"
+                aria-labelledby="contact-heading"
+            >
                 {/* Contact Form */}
                 <div>
-                    <h2 className="text-2xl font-bold mb-6">Contactez-nous</h2>
+                    <h2 id="contact-heading" className="text-2xl font-bold mb-6">
+                        Contactez-nous
+                    </h2>
                     <form className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -98,8 +164,8 @@ export default function SupportPage() {
                 </div>
 
                 {/* Chatbot CTA */}
-                <div className="flex flex-col justify-center items-center bg-blue-50 rounded-3xl p-10 text-center">
-                    <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white mb-6 shadow-lg shadow-blue-200">
+                <div className="flex flex-col justify-center items-center bg-violet-50 rounded-3xl p-10 text-center border border-violet-100">
+                    <div className="w-16 h-16 bg-cyna-600 rounded-full flex items-center justify-center text-white mb-6 shadow-lg shadow-violet-200">
                         <MessageSquare size={32} />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -113,7 +179,7 @@ export default function SupportPage() {
                         Démarrer le Chat
                     </Button>
                 </div>
-            </div>
+            </section>
 
             {/* Chat Modal */}
             {isChatOpen && (
@@ -161,7 +227,7 @@ export default function SupportPage() {
                                     <div
                                         className={`max-w-[80%] p-3 rounded-2xl text-sm ${
                                             msg.role === "user"
-                                                ? "bg-blue-600 text-white rounded-br-none"
+                                                ? "bg-cyna-600 text-white rounded-br-none"
                                                 : "bg-gray-100 text-gray-800 rounded-bl-none"
                                         }`}
                                     >
@@ -186,7 +252,7 @@ export default function SupportPage() {
                             <div className="relative">
                                 <input
                                     type="text"
-                                    className="w-full pl-4 pr-12 py-3 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full pl-4 pr-12 py-3 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-cyna-500"
                                     placeholder="Écrivez un message..."
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
@@ -197,7 +263,7 @@ export default function SupportPage() {
                                 <button
                                     onClick={handleSendMessage}
                                     disabled={isLoading || !input.trim()}
-                                    className="absolute right-2 top-2 p-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="absolute right-2 top-2 p-1.5 bg-cyna-600 text-white rounded-full hover:bg-cyna-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                     <Send size={16} />
                                 </button>

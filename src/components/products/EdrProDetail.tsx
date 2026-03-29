@@ -114,7 +114,7 @@ export default function EdrProDetail() {
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 text-white">
                     <h3 className="text-xl font-bold mb-2">Rollback ransomware</h3>
                     <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-                        En cas d'attaque ransomware, Cyna EDR Pro isole instantanément l'endpoint et restaure
+                        En cas d'attaque ransomware, l’EDR isole instantanément l'endpoint et restaure
                         les fichiers chiffrés grâce à nos snapshots continus.
                     </p>
                     <div className="space-y-3">

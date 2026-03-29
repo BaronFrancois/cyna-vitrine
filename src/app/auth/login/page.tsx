@@ -110,6 +110,7 @@ export default function Login() {
 			}
 
 			if (reponse.status === 200) {
+				document.cookie = `auth_token=${reponse.data.accessToken}; path=/; max-age=${7 * 24 * 3600}`;
 				// Redirection vers le tableau de bord après connexion réussie
 				router.push('/dashboard');
 				return;

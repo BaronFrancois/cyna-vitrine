@@ -5,7 +5,7 @@ export interface Product {
   fullDescription: string;
   price: number;
   period: 'monthly' | 'yearly';
-  category: 'EDR' | 'XDR' | 'SOC' | 'Cloud' | 'Network';
+  category: 'EDR' | 'XDR' | 'SOC';
   features: string[];
   status: 'available' | 'maintenance' | 'coming_soon';
   image: string;

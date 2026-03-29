@@ -10,23 +10,16 @@ import { notFound } from "next/navigation";
 import EdrProDetail from "@/components/products/EdrProDetail";
 import XdrMaxDetail from "@/components/products/XdrMaxDetail";
 import SocManagedDetail from "@/components/products/SocManagedDetail";
-import CloudShieldDetail from "@/components/products/CloudShieldDetail";
-import NetSentryDetail from "@/components/products/NetSentryDetail";
-
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-    EDR: { bg: "bg-yellow-100", text: "text-yellow-700", border: "border-yellow-200" },
-    XDR: { bg: "bg-purple-100", text: "text-purple-700", border: "border-purple-200" },
-    SOC: { bg: "bg-blue-100", text: "text-blue-700", border: "border-blue-200" },
-    Cloud: { bg: "bg-sky-100", text: "text-sky-700", border: "border-sky-200" },
-    Network: { bg: "bg-orange-100", text: "text-orange-700", border: "border-orange-200" },
+    EDR: { bg: "bg-violet-100", text: "text-violet-800", border: "border-violet-200" },
+    XDR: { bg: "bg-fuchsia-100", text: "text-fuchsia-800", border: "border-fuchsia-200" },
+    SOC: { bg: "bg-purple-100", text: "text-purple-800", border: "border-purple-200" },
 };
 
 const PRODUCT_DETAIL_COMPONENTS: Record<string, React.FC> = {
     "cyna-edr-pro": EdrProDetail,
     "cyna-xdr-max": XdrMaxDetail,
     "cyna-soc-managed": SocManagedDetail,
-    "cyna-cloud-shield": CloudShieldDetail,
-    "cyna-net-sentry": NetSentryDetail,
 };
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -180,7 +173,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     {DetailComponent && <DetailComponent />}
 
                     {/* Bottom CTA */}
-                    <div className="mt-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl p-12 text-center text-white">
+                    <div className="mt-20 bg-gradient-to-br from-cyna-600 to-[#4c1d95] rounded-3xl p-12 text-center text-white">
                         <h2 className="text-3xl font-bold mb-3">Prêt à sécuriser votre organisation ?</h2>
                         <p className="text-blue-200 mb-8 text-lg">
                             Commencez dès aujourd'hui avec {product.name}.
@@ -190,20 +183,20 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                 <>
                                     <Button
                                         size="lg"
-                                        className="bg-white text-blue-700 hover:bg-blue-50"
+                                        variant="surface"
                                         onClick={handleAddToCart}
                                     >
                                         Démarrer maintenant
                                     </Button>
-                                    <Link href="/support">
-                                        <Button size="lg" variant="ghost" className="text-white hover:text-white btn-sku-inv">
+                                    <Link href="/support#contact">
+                                        <Button size="lg" variant="ghostInverse">
                                             Parler à un expert
                                         </Button>
                                     </Link>
                                 </>
                             ) : (
-                                <Link href="/support">
-                                    <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50">
+                                <Link href="/support#contact">
+                                    <Button size="lg" variant="surface">
                                         Nous contacter
                                     </Button>
                                 </Link>

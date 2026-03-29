@@ -12,6 +12,7 @@ export interface CartItem {
 
 export default function useCart() {
     const [items, setItems] = useState<CartItem[]>([]);
+    const [isLoaded, setIsLoaded] = useState(false);
 
     // Charger le panier au démarrage
     useEffect(() => {
@@ -19,12 +20,14 @@ export default function useCart() {
         if (stored) {
             setItems(JSON.parse(stored));
         }
+        setIsLoaded(true);
     }, []);
 
-    // Sauvegarder automatiquement
+    // Sauvegarder uniquement après le chargement initial
     useEffect(() => {
+        if (!isLoaded) return;
         localStorage.setItem("cart", JSON.stringify(items));
-    }, [items]);
+    }, [items, isLoaded]);
 
     const addToCart = useCallback((item: CartItem) => {
         setItems((prev) => {
@@ -61,6 +64,7 @@ export default function useCart() {
 
     return {
         items,
+        isLoaded,
         addToCart,
         removeFromCart,
         updateQuantity,

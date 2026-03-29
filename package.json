@@ -9,10 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@google/genai": "^1.31.0",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@radix-ui/react-popover": "^1.1.15",
+    "@stripe/react-stripe-js": "^5.6.1",
+    "@stripe/stripe-js": "^8.11.0",
     "axios": "^1.13.2",
     "framer-motion": "^12.23.25",
     "heroicons": "^2.2.0",
