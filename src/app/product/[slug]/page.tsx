@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { PRODUCTS } from "@/constant";
 import AppLayout from "@/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
-import useCart from "@/hooks/useCart";
+import useCart, { type CartItem } from "@/hooks/useCart";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { use } from "react";
 import { notFound } from "next/navigation";
 import EdrProDetail from "@/components/products/EdrProDetail";
@@ -28,7 +30,15 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
     if (!product) notFound();
 
+    const router = useRouter();
     const { addToCart } = useCart();
+    const [justAdded, setJustAdded] = useState(false);
+
+    useEffect(() => {
+        if (!justAdded) return;
+        const t = window.setTimeout(() => setJustAdded(false), 6000);
+        return () => window.clearTimeout(t);
+    }, [justAdded]);
     const colors = CATEGORY_COLORS[product.category] ?? {
         bg: "bg-gray-100",
         text: "text-gray-700",
@@ -37,21 +47,48 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
     const DetailComponent = PRODUCT_DETAIL_COMPONENTS[product.id];
 
+    const buildCartItem = (): CartItem => ({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+        image: product.image,
+        category: product.category,
+        period: product.period === "monthly" ? "monthly" : "annual",
+    });
+
     const handleAddToCart = () => {
-        addToCart({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            quantity: 1,
-            image: product.image,
-            category: product.category,
-            period: product.period === "monthly" ? "monthly" : "annual",
-        });
+        addToCart(buildCartItem());
+        setJustAdded(true);
+    };
+
+    const handleBuyNow = () => {
+        addToCart(buildCartItem());
+        setJustAdded(true);
+        router.push("/checkout");
     };
 
     return (
         <AppLayout>
             <div className="pt-10 pb-24">
+                {justAdded && (
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+                        <div
+                            role="status"
+                            className="flex flex-col gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                            <span>
+                                <strong>{product.name}</strong> a été ajouté à votre panier.
+                            </span>
+                            <Link
+                                href="/cart"
+                                className="font-semibold text-cyna-700 underline underline-offset-2 hover:text-cyna-900 shrink-0"
+                            >
+                                Voir le panier
+                            </Link>
+                        </div>
+                    </div>
+                )}
 
                 {/* Breadcrumb */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
@@ -131,11 +168,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                         <Button size="lg" variant="primary" onClick={handleAddToCart}>
                                             Ajouter au panier
                                         </Button>
-                                        <Link href="/checkout">
-                                            <Button size="lg" variant="outline">
-                                                Acheter maintenant
-                                            </Button>
-                                        </Link>
+                                        <Button size="lg" variant="outline" type="button" onClick={handleBuyNow}>
+                                            Acheter maintenant
+                                        </Button>
                                     </>
                                 ) : (
                                     <Button size="lg" variant="secondary" disabled>

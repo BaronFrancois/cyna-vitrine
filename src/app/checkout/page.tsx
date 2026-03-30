@@ -4,13 +4,21 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { Check, Lock, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Check, Lock, ShieldCheck, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import AppLayout from '@/layout/AppLayout';
 import useCart from '@/hooks/useCart';
 import api from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY!);
+
+const COUNTRY_LABELS: Record<string, string> = {
+    FR: 'France',
+    BE: 'Belgique',
+    CH: 'Suisse',
+    LU: 'Luxembourg',
+};
 
 // ─── Décodage JWT ────────────────────────────────────────────────────────────
 
@@ -140,8 +148,8 @@ function PaymentForm({
                 await api().post('/payement/confirm-3ds', { paymentIntentId: data.clientSecret.split('_secret_')[0] });
             }
 
-            clearCart();
             onSuccess(data.orderId);
+            clearCart();
         } catch (err: any) {
             setError(err.response?.data?.message ?? 'Une erreur est survenue');
         } finally {
@@ -202,6 +210,7 @@ function PaymentForm({
 export default function Checkout() {
     const router = useRouter();
     const { items, isLoaded } = useCart();
+    const showCartRecap = items.length > 0;
 
     const [step, setStep] = useState(1);
     const [userId, setUserId] = useState<number | null>(null);
@@ -213,6 +222,15 @@ export default function Checkout() {
         firstName: '', lastName: '', addressLine1: '', city: '', postalCode: '', country: 'FR',
     });
     const [billingError, setBillingError] = useState('');
+
+    /** Panier vide : pas de tunnel de commande (sauf écran de confirmation déjà affiché) */
+    useEffect(() => {
+        if (!isLoaded) return;
+        if (orderDone != null) return;
+        if (items.length === 0) {
+            router.replace('/cart');
+        }
+    }, [isLoaded, items.length, router, orderDone]);
 
     // Détection token + sync panier — attendre que le localStorage soit chargé
     useEffect(() => {
@@ -278,13 +296,32 @@ export default function Checkout() {
         }
 
         try {
-            const { data } = await api().post('/addresses', billing);
-            setAddressId(data.id);
+            if (addressId != null) {
+                await api().patch(`/addresses/${addressId}`, billing);
+            } else {
+                const { data } = await api().post('/addresses', billing);
+                setAddressId(data.id);
+            }
             setStep(3);
         } catch {
             setBillingError('Impossible de sauvegarder l\'adresse. Réessayez.');
         }
     };
+
+    const goToBillingStep = () => setStep(2);
+    const goToAccountStep = () => setStep(1);
+    const goToVerificationStep = () => setStep(3);
+    const goToPaymentStep = () => setStep(4);
+
+    if (!isLoaded) {
+        return (
+            <AppLayout>
+                <div className="mx-auto max-w-md px-4 py-24 text-center text-sm text-gray-500">
+                    Chargement du panier…
+                </div>
+            </AppLayout>
+        );
+    }
 
     if (orderDone) {
         return (
@@ -304,43 +341,80 @@ export default function Checkout() {
         );
     }
 
+    if (items.length === 0) {
+        return null;
+    }
+
     return (
         <AppLayout>
-            <div className="max-w-4xl mx-auto px-4 py-16">
+            <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 py-16">
                 {/* Étapes */}
-                <div className="flex justify-center gap-4 mb-12 border-b border-gray-100 pb-8">
+                <div className="mb-12 flex w-full flex-wrap justify-center gap-2 border-b border-gray-100 pb-8 sm:gap-3">
                     <StepIndicator num={1} title="Compte" current={step} />
                     <StepIndicator num={2} title="Facturation" current={step} />
-                    <StepIndicator num={3} title="Paiement" current={step} />
+                    <StepIndicator num={3} title="Vérification" current={step} />
+                    <StepIndicator num={4} title="Paiement" current={step} />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
-                    {/* Formulaire */}
-                    <div className="lg:col-span-3">
+                <div
+                    className={cn(
+                        'flex w-full flex-col items-center gap-10',
+                        showCartRecap && 'lg:flex-row lg:items-start lg:justify-center'
+                    )}
+                >
+                    {/* Formulaire — seul bloc centré si pas de récap (colonne vide supprimée) */}
+                    <div
+                        className={cn(
+                            'w-full max-w-md',
+                            showCartRecap ? 'lg:max-w-[28rem] lg:shrink-0' : 'mx-auto'
+                        )}
+                    >
 
                         {/* ── ÉTAPE 1 : Compte ── */}
                         {step === 1 && (
-                            <div className="fade-in space-y-6">
-                                <h2 className="text-2xl font-bold text-gray-900">Connectez-vous pour continuer.</h2>
+                            <div className="fade-in mx-auto w-full max-w-md space-y-6 text-center sm:text-left">
+                                <h2 className="text-2xl font-bold text-gray-900">
+                                    {userId ? 'Votre compte' : 'Connectez-vous pour continuer.'}
+                                </h2>
+                                {userId ? (
+                                    <p className="text-sm text-gray-600">
+                                        Vous êtes connecté. Poursuivez vers la facturation ou revenez plus tard aux étapes précédentes avec les boutons ci-dessous.
+                                    </p>
+                                ) : null}
                                 <div className="space-y-3">
-                                    <input type="email" placeholder="Adresse email"
-                                        className="w-full p-4 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" />
-                                    <input type="password" placeholder="Mot de passe"
-                                        className="w-full p-4 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" />
-                                    <Button className="w-full rounded-xl py-3" onClick={() => router.push('/auth/login?redirect=/checkout')}>
-                                        Se connecter
-                                    </Button>
-                                    <button onClick={() => setStep(2)} className="w-full text-sm text-gray-500 hover:text-gray-700 py-2">
-                                        Continuer en invité →
-                                    </button>
+                                    {!userId && (
+                                        <>
+                                            <input type="email" placeholder="Adresse email"
+                                                className="w-full rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                            <input type="password" placeholder="Mot de passe"
+                                                className="w-full rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                            <Button className="w-full rounded-xl py-3" onClick={() => router.push('/auth/login?redirect=/checkout')}>
+                                                Se connecter
+                                            </Button>
+                                        </>
+                                    )}
+                                    <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-center">
+                                        {userId && (
+                                            <Button type="button" className="w-full gap-2 sm:w-auto" onClick={goToBillingStep}>
+                                                Suivant <ChevronRight size={16} />
+                                            </Button>
+                                        )}
+                                        {!userId && (
+                                            <>
+                                                <Button type="button" variant="ghost" className="w-full gap-2 sm:w-auto" onClick={goToBillingStep}>
+                                                    Continuer en invité <ChevronRight size={16} />
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
 
                         {/* ── ÉTAPE 2 : Facturation ── */}
                         {step === 2 && (
-                            <form onSubmit={handleBillingSubmit} className="fade-in space-y-6">
-                                <h2 className="text-2xl font-bold text-gray-900">Adresse de facturation.</h2>
+                            <form onSubmit={handleBillingSubmit} className="fade-in w-full space-y-6">
+                                <h2 className="text-center text-2xl font-bold text-gray-900">Adresse de facturation.</h2>
                                 <div className="grid grid-cols-2 gap-3">
                                     {[
                                         { field: 'firstName', placeholder: 'Prénom', col: 1 },
@@ -354,11 +428,11 @@ export default function Checkout() {
                                             placeholder={placeholder}
                                             value={billing[field as keyof typeof billing]}
                                             onChange={e => setBilling(prev => ({ ...prev, [field]: e.target.value }))}
-                                            className={`${col === 2 ? 'col-span-2' : ''} p-4 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm`}
+                                            className={`${col === 2 ? 'col-span-2' : ''} rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
                                         />
                                     ))}
                                     <select value={billing.country} onChange={e => setBilling(prev => ({ ...prev, country: e.target.value }))}
-                                        className="col-span-2 p-4 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                                        className="col-span-2 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                                         <option value="FR">France</option>
                                         <option value="BE">Belgique</option>
                                         <option value="CH">Suisse</option>
@@ -366,19 +440,77 @@ export default function Checkout() {
                                     </select>
                                 </div>
                                 {billingError && (
-                                    <p className="text-sm text-red-600 bg-red-50 p-3 rounded-xl">{billingError}</p>
+                                    <p className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{billingError}</p>
                                 )}
-                                <Button type="submit" className="w-full">
-                                    Continuer vers le paiement →
-                                </Button>
+                                <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-between sm:gap-4">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="w-full gap-2 sm:w-auto"
+                                        onClick={goToAccountStep}
+                                    >
+                                        <ChevronLeft size={16} /> Précédent
+                                    </Button>
+                                    <Button type="submit" className="w-full gap-2 sm:w-auto">
+                                        Suivant <ChevronRight size={16} />
+                                    </Button>
+                                </div>
                             </form>
                         )}
 
-                        {/* ── ÉTAPE 3 : Paiement ── */}
-                        {step === 3 && userId && cartId && addressId && (
-                            <div className="fade-in space-y-6">
-                                <h2 className="text-2xl font-bold text-gray-900">Paiement sécurisé.</h2>
-                                <div className="w-full max-w-xl mx-auto px-4 sm:px-0">
+                        {/* ── ÉTAPE 3 : Vérification (avant Stripe) ── */}
+                        {step === 3 && (
+                            <div className="fade-in w-full space-y-6">
+                                <h2 className="text-center text-2xl font-bold text-gray-900">
+                                    Vérifiez votre commande.
+                                </h2>
+                                <p className="text-center text-sm text-gray-500">
+                                    Contrôlez l’adresse et le récapitulatif avant de saisir votre carte.
+                                </p>
+                                <div className="space-y-4 rounded-2xl border border-gray-100 bg-gray-50 p-5 text-sm">
+                                    <h3 className="font-semibold text-gray-900">Adresse de facturation</h3>
+                                    <p className="text-gray-700">
+                                        {billing.firstName} {billing.lastName}
+                                        <br />
+                                        {billing.addressLine1}
+                                        <br />
+                                        {billing.postalCode} {billing.city}
+                                        <br />
+                                        {COUNTRY_LABELS[billing.country] ?? billing.country}
+                                    </p>
+                                </div>
+                                <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-between sm:gap-4">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="w-full gap-2 sm:w-auto"
+                                        onClick={goToBillingStep}
+                                    >
+                                        <ChevronLeft size={16} /> Précédent
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        className="w-full gap-2 sm:w-auto"
+                                        onClick={goToPaymentStep}
+                                        disabled={!userId || !cartId || !addressId}
+                                    >
+                                        Passer au paiement <ChevronRight size={16} />
+                                    </Button>
+                                </div>
+                                {(!userId || !cartId || !addressId) && (
+                                    <p className="text-center text-xs text-amber-700">
+                                        Connexion et synchronisation du panier en cours… Si cela persiste,
+                                        rechargez la page.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ── ÉTAPE 4 : Paiement Stripe ── */}
+                        {step === 4 && userId && cartId && addressId && (
+                            <div className="fade-in w-full space-y-6">
+                                <h2 className="text-center text-2xl font-bold text-gray-900">Paiement sécurisé.</h2>
+                                <div className="mx-auto w-full max-w-md px-0 sm:px-0">
                                     <Elements stripe={stripePromise}>
                                         <PaymentForm
                                             userId={userId}
@@ -388,29 +520,36 @@ export default function Checkout() {
                                         />
                                     </Elements>
                                 </div>
+                                <div className="flex justify-center pt-2">
+                                    <Button type="button" variant="ghost" className="gap-2" onClick={goToVerificationStep}>
+                                        <ChevronLeft size={16} /> Précédent (vérification)
+                                    </Button>
+                                </div>
                             </div>
                         )}
 
-                        {step === 3 && (!userId || !cartId || !addressId) && (
-                            <div className="fade-in text-center py-12">
-                                {isLoaded && items.length === 0 ? (
-                                    <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-xl p-4 text-sm">
-                                        Votre panier est vide.{' '}
-                                        <button onClick={() => router.push('/')} className="underline font-medium">
-                                            Retourner à la boutique
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <p className="text-sm text-gray-500">Chargement en cours…</p>
-                                )}
+                        {step === 4 && (!userId || !cartId || !addressId) && (
+                            <div className="fade-in mx-auto max-w-md py-12 text-center">
+                                <p className="text-sm text-gray-500">Chargement en cours…</p>
                             </div>
                         )}
                     </div>
 
-                    {/* Récapitulatif */}
-                    <div className="lg:col-span-2">
-                        <CartSummary />
-                    </div>
+                    {/* Récapitulatif — décalé sous le niveau du titre du formulaire (comme un titre invisible à gauche) */}
+                    {showCartRecap && (
+                        <div
+                            className={cn(
+                                'w-full max-w-sm shrink-0 lg:max-w-xs',
+                                /* ~ h2 (text-2xl) + gap space-y-6 avant le premier bloc utile */
+                                step === 2 && 'lg:mt-[3.5rem]',
+                                step === 3 && 'lg:mt-[4.75rem]',
+                                step === 4 && 'lg:mt-[3.5rem]',
+                                step === 1 && 'lg:mt-[3.5rem]'
+                            )}
+                        >
+                            <CartSummary />
+                        </div>
+                    )}
                 </div>
             </div>
         </AppLayout>

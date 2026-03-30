@@ -52,11 +52,6 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [isCatalogHero]);
 
-    const closeAndReset = () => {
-        setOpen(false);
-        setQuery("");
-    };
-
     const onPick = () => {
         setQuery("");
         if (!isCatalogHero) setOpen(false);
@@ -92,7 +87,9 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                             />
                         )}
                         <input
-                            type="search"
+                            type="text"
+                            inputMode="search"
+                            autoComplete="off"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             autoFocus={!isCatalogHero}

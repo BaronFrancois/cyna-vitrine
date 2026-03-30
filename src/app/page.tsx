@@ -1,20 +1,42 @@
 "use client";
 
 import AppLayout from "../layout/AppLayout";
-import {
-    ArrowRight,
-    Shield,
-    Zap,
-    Lock,
-    Clock,
-    Check,
-    ChevronLeft,
-    ChevronRight,
-} from "lucide-react";
+import { ArrowRight, Shield, Zap, Lock } from "lucide-react";
 import Link from "next/link";
-import React, { useEffect, useLayoutEffect, useRef } from "react";
-import { Button } from "../components/ui/Button";
+import React, { useEffect, useRef } from "react";
+import { Button, buttonClassName } from "../components/ui/Button";
 import DashboardMockup from "../components/DashboardMockup";
+import { PRODUCTS } from "@/constant";
+
+/** Top 3 accueil : entrée / milieu / très haut de gamme — IDs alignés sur `PRODUCTS` */
+const HOME_TOP3: {
+    id: string;
+    tierLabel: string;
+    hook: string;
+}[] = [
+    {
+        id: "cyna-edr-pro",
+        tierLabel: "Pour découvrir",
+        hook: "Vous voulez voir ce que ça donne, sans vous engager dans le grand écart ? Une protection concrète sur vos postes, expliquée simplement.",
+    },
+    {
+        id: "cyna-xdr-max",
+        tierLabel: "Une solution clé en main",
+        hook: "On relie les bons signaux pour vous : moins de bruit, plus de clarté — comme si quelqu’un avait déjà trié la pile d’alertes avant vous.",
+    },
+    {
+        id: "cyna-soc-managed",
+        tierLabel: "Une équipe qui veille pour vous",
+        hook: "Ce ne sont pas des réponses toutes faites : de vrais analystes, en France, qui gardent un œil sur votre SI jour et nuit — pour que vous puissiez vous concentrer sur le reste.",
+    },
+];
+
+function CategoryIcon({ category }: { category: string }) {
+    const cls = "w-10 h-10 mb-4 text-cyna-600";
+    if (category === "EDR") return <Zap className={cls} aria-hidden />;
+    if (category === "XDR") return <Lock className={cls} aria-hidden />;
+    return <Shield className={cls} aria-hidden />;
+}
 
 const FadeInSection: React.FC<{
     children: React.ReactNode;
@@ -45,74 +67,6 @@ const FadeInSection: React.FC<{
         </div>
     );
 };
-
-function MobilePricingCarousel({ children }: { children: React.ReactNode }) {
-    const scrollerRef = useRef<HTMLDivElement>(null);
-
-    const scrollByAmount = (direction: "prev" | "next") => {
-        const el = scrollerRef.current;
-        if (!el) return;
-        const amount = Math.max(280, Math.floor(el.clientWidth * 0.85));
-        el.scrollBy({ left: direction === "next" ? amount : -amount, behavior: "smooth" });
-    };
-
-    const centerInitialCard = () => {
-        const el = scrollerRef.current;
-        if (!el) return;
-        const target = el.querySelector<HTMLElement>('[data-carousel-initial="true"]');
-        if (!target) return;
-
-        const elRect = el.getBoundingClientRect();
-        const targetRect = target.getBoundingClientRect();
-        const elCenter = elRect.left + elRect.width / 2;
-        const targetCenter = targetRect.left + targetRect.width / 2;
-        const delta = targetCenter - elCenter;
-
-        if (Math.abs(delta) < 1) return;
-        el.scrollLeft = el.scrollLeft + delta;
-    };
-
-    useLayoutEffect(() => {
-        // Centre la carte "initiale" dès le premier rendu (évite le "saut" visible)
-        // On relance après un frame pour fiabiliser le centrage (fonts/layout).
-        centerInitialCard();
-        requestAnimationFrame(centerInitialCard);
-    }, []);
-
-    return (
-        <div className="relative max-[1245px]:block min-[1246px]:hidden">
-            <div
-                ref={scrollerRef}
-                className="overflow-x-auto [padding-top:1.5rem] [padding-bottom:2.5rem] px-4 no-scrollbar scroll-smooth snap-x snap-mandatory"
-            >
-                <div className="flex flex-nowrap gap-6 min-w-max">
-                    {children}
-                </div>
-            </div>
-
-            {/* Fade edges (suggère le swipe) */}
-            <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-gray-50 to-transparent" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-gray-50 to-transparent" />
-
-            <button
-                type="button"
-                aria-label="Précédent"
-                onClick={() => scrollByAmount("prev")}
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/70 backdrop-blur border border-gray-200 shadow-sm p-2 text-gray-700"
-            >
-                <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-                type="button"
-                aria-label="Suivant"
-                onClick={() => scrollByAmount("next")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/70 backdrop-blur border border-gray-200 shadow-sm p-2 text-gray-700"
-            >
-                <ChevronRight className="h-5 w-5" />
-            </button>
-        </div>
-    );
-}
 
 export default function Home() {
     return (
@@ -167,81 +121,100 @@ export default function Home() {
                 <section className="py-24 bg-gray-50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <FadeInSection>
-                            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-16 text-center tracking-tight">
-                                Intelligence à l'échelle.
+                            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 text-center tracking-tight">
+                                Trois niveaux pour avancer avec Cyna.
                             </h2>
+                            <p className="mx-auto mb-14 max-w-2xl text-center text-lg text-gray-500">
+                                Un aperçu volontairement ciblé — le catalogue complet reste disponible pour aller plus loin.
+                            </p>
                         </FadeInSection>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <FadeInSection delay="100ms">
-                                <div className="bg-white p-10 rounded-3xl shadow-xl h-full flex flex-col justify-between hover:scale-[1.02] transition-transform duration-500">
-                                    <div>
-                                        <Shield className="text-cyna-600 w-12 h-12 mb-6" />
-                                        <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                                            SOC
-                                        </h3>
-                                        <p className="text-gray-500 leading-relaxed">
-                                            Centre d'opérations de sécurité 24/7
-                                            adapté aux besoins de votre
-                                            entreprise.
-                                        </p>
-                                    </div>
-                                    <div className="mt-8">
-                                        <Link
-                                            href="/catalog?category=SOC"
-                                            className="text-cyna-600 font-medium hover:underline"
+                        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                            {HOME_TOP3.map((entry, i) => {
+                                const product = PRODUCTS.find((p) => p.id === entry.id);
+                                if (!product) return null;
+                                const isMid = entry.id === "cyna-xdr-max";
+                                return (
+                                    <FadeInSection key={product.id} delay={`${i * 100}ms`}>
+                                        <div
+                                            className={`group flex h-full flex-col overflow-hidden rounded-3xl border bg-white shadow-xl transition-transform duration-500 hover:scale-[1.02] hover:shadow-2xl ${
+                                                isMid
+                                                    ? "border-cyna-300 ring-2 ring-cyna-100"
+                                                    : "border-gray-100"
+                                            }`}
                                         >
-                                            En savoir plus &gt;
-                                        </Link>
-                                    </div>
-                                </div>
-                            </FadeInSection>
-
-                            <FadeInSection delay="200ms">
-                                <div className="bg-black p-10 rounded-3xl shadow-xl h-full flex flex-col justify-between text-white hover:scale-[1.02] transition-transform duration-500">
-                                    <div>
-                                        <Zap className="text-yellow-400 w-12 h-12 mb-6" />
-                                        <h3 className="text-2xl font-bold mb-3">
-                                            EDR
-                                        </h3>
-                                        <p className="text-gray-400 leading-relaxed">
-                                            Détection des terminaux plus rapide
-                                            qu'humainement possible.
-                                        </p>
-                                    </div>
-                                    <div className="mt-8">
-                                        <Link
-                                            href="/catalog?category=EDR"
-                                            className="text-yellow-400 font-medium hover:underline"
-                                        >
-                                            En savoir plus &gt;
-                                        </Link>
-                                    </div>
-                                </div>
-                            </FadeInSection>
-
-                            <FadeInSection delay="300ms">
-                                <div className="bg-white p-10 rounded-3xl shadow-xl h-full flex flex-col justify-between hover:scale-[1.02] transition-transform duration-500">
-                                    <div>
-                                        <Lock className="text-purple-600 w-12 h-12 mb-6" />
-                                        <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                                            XDR
-                                        </h3>
-                                        <p className="text-gray-500 leading-relaxed">
-                                            Détection étendue à travers le
-                                            cloud, le réseau et les terminaux.
-                                        </p>
-                                    </div>
-                                    <div className="mt-8">
-                                        <Link
-                                            href="/catalog?category=XDR"
-                                            className="text-purple-600 font-medium hover:underline"
-                                        >
-                                            En savoir plus &gt;
-                                        </Link>
-                                    </div>
-                                </div>
-                            </FadeInSection>
+                                            <Link
+                                                href={`/product/${product.id}`}
+                                                className="flex min-h-0 flex-grow flex-col"
+                                            >
+                                                <div className="relative aspect-[16/10] overflow-hidden">
+                                                    <img
+                                                        src={product.image}
+                                                        alt={product.name}
+                                                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                    />
+                                                    <span className="absolute left-4 top-4 rounded-full border border-white/50 bg-white/95 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-cyna-800">
+                                                        {entry.tierLabel}
+                                                    </span>
+                                                    <span className="absolute bottom-4 right-4 rounded-full bg-black/55 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm">
+                                                        {product.category}
+                                                    </span>
+                                                </div>
+                                                <div className="flex flex-grow flex-col p-8 pb-4">
+                                                    <p className="mb-3 text-sm font-medium leading-snug text-cyna-700">
+                                                        {entry.hook}
+                                                    </p>
+                                                    <CategoryIcon category={product.category} />
+                                                    <h3 className="mb-3 text-xl font-bold leading-snug text-gray-900 group-hover:text-cyna-700">
+                                                        {product.name}
+                                                    </h3>
+                                                    <p className="flex-grow text-sm leading-relaxed text-gray-500">
+                                                        {product.shortDescription}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                            <div className="flex items-end justify-between border-t border-gray-100 px-8 pb-8 pt-2">
+                                                <div>
+                                                    <span className="text-lg font-semibold text-gray-900">
+                                                        {product.price}€
+                                                    </span>
+                                                    <span className="text-xs text-gray-400">
+                                                        {" "}
+                                                        /{" "}
+                                                        {product.period === "monthly"
+                                                            ? "mois"
+                                                            : "an"}
+                                                    </span>
+                                                </div>
+                                                <Link
+                                                    href={`/product/${product.id}`}
+                                                    className={buttonClassName(
+                                                        "outline",
+                                                        "sm",
+                                                        "inline-flex gap-1.5 shrink-0"
+                                                    )}
+                                                >
+                                                    Voir la fiche
+                                                    <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </FadeInSection>
+                                );
+                            })}
+                        </div>
+                        <div className="mt-12 flex justify-center">
+                            <Link
+                                href="/catalog"
+                                className={buttonClassName(
+                                    "primary",
+                                    "md",
+                                    "gap-2"
+                                )}
+                            >
+                                Voir toutes les offres au catalogue
+                                <ArrowRight className="h-5 w-5" aria-hidden />
+                            </Link>
                         </div>
                     </div>
                 </section>
@@ -279,270 +252,6 @@ export default function Home() {
                                         />
                                     </div>
                                 </FadeInSection>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Pricing Slider Section */}
-                <section className="py-24 bg-gray-50 border-t border-gray-200">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-12">
-                        <FadeInSection>
-                            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
-                                L'abonnement qui vous correspond.
-                            </h2>
-                            <p className="text-xl text-gray-500">
-                                Flexible. Transparent. Sans engagement caché.
-                            </p>
-                        </FadeInSection>
-                    </div>
-
-                    {/* Mobile Carousel */}
-                    <MobilePricingCarousel>
-                        {/* Weekly Card */}
-                        <div className="w-80 flex-shrink-0 snap-center bg-white rounded-3xl p-8 shadow-lg transition-all duration-300 border border-gray-100 flex flex-col">
-                            <div className="mb-4">
-                                <span className="inline-block px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wide">
-                                    Court Terme
-                                </span>
-                            </div>
-                            <h3 className="text-3xl font-bold text-gray-900 mb-2">
-                                Hebdomadaire
-                            </h3>
-                            <p className="text-gray-500 mb-6 text-sm">
-                                Idéal pour les consultants et audits ponctuels.
-                            </p>
-                            <div className="mb-6">
-                                <span className="text-4xl font-bold text-gray-900">
-                                    49€
-                                </span>
-                                <span className="text-gray-500">/semaine</span>
-                            </div>
-                            <ul className="space-y-3 mb-8 flex-grow">
-                                <li className="flex items-center text-sm text-gray-600">
-                                    <Check className="w-4 h-4 text-green-500 mr-2" />{" "}
-                                    Accès complet EDR
-                                </li>
-                                <li className="flex items-center text-sm text-gray-600">
-                                    <Check className="w-4 h-4 text-green-500 mr-2" />{" "}
-                                    Rapports instantanés
-                                </li>
-                                <li className="flex items-center text-sm text-gray-600">
-                                    <Check className="w-4 h-4 text-green-500 mr-2" />{" "}
-                                    Sans engagement
-                                </li>
-                            </ul>
-                            <Button variant="outline" className="w-full">
-                                Choisir Hebdo
-                            </Button>
-                        </div>
-
-                        {/* Monthly Card (Featured) */}
-                        <div
-                            data-carousel-initial="true"
-                            className="w-80 flex-shrink-0 snap-center bg-black text-white rounded-3xl p-8 shadow-2xl transition-all duration-300 border border-gray-800 flex flex-col"
-                        >
-                            <div className="mb-4 flex justify-between items-center">
-                                <span className="inline-block px-3 py-1 rounded-full bg-cyna-600 text-white text-xs font-bold uppercase tracking-wide">
-                                    Le plus populaire
-                                </span>
-                            </div>
-                            <h3 className="text-3xl font-bold mb-2">Mensuel</h3>
-                            <p className="text-gray-400 mb-6 text-sm">
-                                Flexibilité maximale pour les PME en croissance.
-                            </p>
-                            <div className="mb-6">
-                                <span className="text-4xl font-bold text-white">
-                                    199€
-                                </span>
-                                <span className="text-gray-400">/mois</span>
-                            </div>
-                            <ul className="space-y-3 mb-8 flex-grow">
-                                <li className="flex items-center text-sm text-gray-300">
-                                    <Check className="w-4 h-4 text-violet-400 mr-2" />{" "}
-                                    Suite Cyna Complete
-                                </li>
-                                <li className="flex items-center text-sm text-gray-300">
-                                    <Check className="w-4 h-4 text-violet-400 mr-2" />{" "}
-                                    Support prioritaire 24/7
-                                </li>
-                                <li className="flex items-center text-sm text-gray-300">
-                                    <Check className="w-4 h-4 text-violet-400 mr-2" />{" "}
-                                    Jusqu&apos;à 50 terminaux
-                                </li>
-                                <li className="flex items-center text-sm text-gray-300">
-                                    <Check className="w-4 h-4 text-violet-400 mr-2" />{" "}
-                                    Annulation facile
-                                </li>
-                            </ul>
-                            <Button variant="primary" className="w-full">
-                                Choisir Mensuel
-                            </Button>
-                        </div>
-
-                        {/* Yearly Card */}
-                        <div className="w-80 flex-shrink-0 snap-center bg-white rounded-3xl p-8 shadow-lg transition-all duration-300 border border-gray-100 flex flex-col">
-                            <div className="mb-4">
-                                <span className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wide">
-                                    Meilleur Prix
-                                </span>
-                            </div>
-                            <h3 className="text-3xl font-bold text-gray-900 mb-2">
-                                Annuel
-                            </h3>
-                            <p className="text-gray-500 mb-6 text-sm">
-                                Pour les entreprises établies cherchant la stabilité.
-                            </p>
-                            <div className="mb-6">
-                                <span className="text-4xl font-bold text-gray-900">
-                                    1990€
-                                </span>
-                                <span className="text-gray-500">/an</span>
-                            </div>
-                            <ul className="space-y-3 mb-8 flex-grow">
-                                <li className="flex items-center text-sm text-gray-600">
-                                    <Check className="w-4 h-4 text-green-500 mr-2" />{" "}
-                                    2 mois offerts
-                                </li>
-                                <li className="flex items-center text-sm text-gray-600">
-                                    <Check className="w-4 h-4 text-green-500 mr-2" />{" "}
-                                    Manager de compte dédié
-                                </li>
-                                <li className="flex items-center text-sm text-gray-600">
-                                    <Check className="w-4 h-4 text-green-500 mr-2" />{" "}
-                                    Terminaux illimités
-                                </li>
-                            </ul>
-                            <Button variant="outline" className="w-full">
-                                Choisir Annuel
-                            </Button>
-                        </div>
-                    </MobilePricingCarousel>
-
-                    {/* Desktop Slider (scroll / centered) */}
-                    <div className="hidden min-[1246px]:block overflow-x-auto [padding-top:1.5rem] [padding-bottom:2.5rem] px-4 no-scrollbar">
-                        <div className="flex flex-nowrap md:justify-center gap-6 min-w-max md:min-w-0">
-                            {/* Weekly Card */}
-                            <div className="w-80 md:w-96 flex-shrink-0 bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col transform hover:-translate-y-1">
-                                <div className="mb-4">
-                                    <span className="inline-block px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wide">
-                                        Court Terme
-                                    </span>
-                                </div>
-                                <h3 className="text-3xl font-bold text-gray-900 mb-2">
-                                    Hebdomadaire
-                                </h3>
-                                <p className="text-gray-500 mb-6 text-sm">
-                                    Idéal pour les consultants et audits
-                                    ponctuels.
-                                </p>
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold text-gray-900">
-                                        49€
-                                    </span>
-                                    <span className="text-gray-500">
-                                        /semaine
-                                    </span>
-                                </div>
-                                <ul className="space-y-3 mb-8 flex-grow">
-                                    <li className="flex items-center text-sm text-gray-600">
-                                        <Check className="w-4 h-4 text-green-500 mr-2" />{" "}
-                                        Accès complet EDR
-                                    </li>
-                                    <li className="flex items-center text-sm text-gray-600">
-                                        <Check className="w-4 h-4 text-green-500 mr-2" />{" "}
-                                        Rapports instantanés
-                                    </li>
-                                    <li className="flex items-center text-sm text-gray-600">
-                                        <Check className="w-4 h-4 text-green-500 mr-2" />{" "}
-                                        Sans engagement
-                                    </li>
-                                </ul>
-                                <Button variant="outline" className="w-full">
-                                    Choisir Hebdo
-                                </Button>
-                            </div>
-
-                            {/* Monthly Card (Featured) */}
-                            <div className="w-80 md:w-96 flex-shrink-0 bg-black text-white rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 border border-gray-800 flex flex-col transform scale-105 z-10">
-                                <div className="mb-4 flex justify-between items-center">
-                                    <span className="inline-block px-3 py-1 rounded-full bg-cyna-600 text-white text-xs font-bold uppercase tracking-wide">
-                                        Le plus populaire
-                                    </span>
-                                </div>
-                                <h3 className="text-3xl font-bold mb-2">
-                                    Mensuel
-                                </h3>
-                                <p className="text-gray-400 mb-6 text-sm">
-                                    Flexibilité maximale pour les PME en
-                                    croissance.
-                                </p>
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold text-white">
-                                        199€
-                                    </span>
-                                    <span className="text-gray-400">/mois</span>
-                                </div>
-                                <ul className="space-y-3 mb-8 flex-grow">
-                                    <li className="flex items-center text-sm text-gray-300">
-                                        <Check className="w-4 h-4 text-violet-400 mr-2" />{" "}
-                                        Suite Cyna Complete
-                                    </li>
-                                    <li className="flex items-center text-sm text-gray-300">
-                                        <Check className="w-4 h-4 text-violet-400 mr-2" />{" "}
-                                        Support prioritaire 24/7
-                                    </li>
-                                    <li className="flex items-center text-sm text-gray-300">
-                                        <Check className="w-4 h-4 text-violet-400 mr-2" />{" "}
-                                        Jusqu'à 50 terminaux
-                                    </li>
-                                    <li className="flex items-center text-sm text-gray-300">
-                                        <Check className="w-4 h-4 text-violet-400 mr-2" />{" "}
-                                        Annulation facile
-                                    </li>
-                                </ul>
-                                  <Button variant="primary" className="w-full">
-                                    Choisir Mensuel
-                                </Button>
-                            </div>
-
-                            {/* Yearly Card */}
-                            <div className="w-80 md:w-96 flex-shrink-0 bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col transform hover:-translate-y-1">
-                                <div className="mb-4">
-                                    <span className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wide">
-                                        Meilleur Prix
-                                    </span>
-                                </div>
-                                <h3 className="text-3xl font-bold text-gray-900 mb-2">
-                                    Annuel
-                                </h3>
-                                <p className="text-gray-500 mb-6 text-sm">
-                                    Pour les entreprises établies cherchant la
-                                    stabilité.
-                                </p>
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold text-gray-900">
-                                        1990€
-                                    </span>
-                                    <span className="text-gray-500">/an</span>
-                                </div>
-                                <ul className="space-y-3 mb-8 flex-grow">
-                                    <li className="flex items-center text-sm text-gray-600">
-                                        <Check className="w-4 h-4 text-green-500 mr-2" />{" "}
-                                        2 mois offerts
-                                    </li>
-                                    <li className="flex items-center text-sm text-gray-600">
-                                        <Check className="w-4 h-4 text-green-500 mr-2" />{" "}
-                                        Manager de compte dédié
-                                    </li>
-                                    <li className="flex items-center text-sm text-gray-600">
-                                        <Check className="w-4 h-4 text-green-500 mr-2" />{" "}
-                                        Terminaux illimités
-                                    </li>
-                                </ul>
-                                <Button variant="outline" className="w-full">
-                                    Choisir Annuel
-                                </Button>
                             </div>
                         </div>
                     </div>

@@ -11,19 +11,27 @@ export default function Cart() {
     if (items.length === 0) {
         return (
             <AppLayout>
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">Votre panier est vide.</h2>
-                <p className="text-gray-500 mb-8">Sécurisez vos systèmes avec nos outils premium.</p>
-                <Link href="/catalog">
-                    <Button>Continuer vos achats</Button>
-                </Link>
+                <div className="mx-auto flex min-h-[min(60vh,720px)] w-full max-w-2xl flex-col items-center justify-center px-4 py-16 text-center sm:py-24">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                        Votre panier est vide.
+                    </h2>
+                    <p className="mb-8 max-w-md text-gray-500">
+                        Sécurisez vos systèmes avec nos outils premium.
+                    </p>
+                    <Link href="/catalog" className="inline-flex">
+                        <Button>Continuer vos achats</Button>
+                    </Link>
+                </div>
             </AppLayout>
         );
     }
 
     return (
         <AppLayout>
-            <div className="max-w-5xl mx-auto px-4 py-20">
-                <h1 className="text-4xl font-bold text-gray-900 mb-12 border-b border-gray-200 pb-8">Récapitulatif de votre panier.</h1>
+            <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:py-20">
+                <h1 className="mb-12 border-b border-gray-200 pb-8 text-center text-4xl font-bold text-gray-900 sm:text-left">
+                    Récapitulatif de votre panier.
+                </h1>
 
                 <div className="space-y-8">
                     {items.map(item => (
@@ -57,20 +65,20 @@ export default function Cart() {
                     ))}
                 </div>
 
-                <div className="mt-12 flex flex-col items-end">
-                    <div className="flex justify-between w-full sm:w-1/3 mb-4 text-lg">
+                <div className="mx-auto mt-12 flex w-full max-w-md flex-col items-stretch">
+                    <div className="mb-4 flex justify-between text-lg">
                         <span className="text-gray-500">Sous-total</span>
                         <span className="font-bold text-gray-900">{total.toFixed(2)}€</span>
                     </div>
-                    <div className="flex justify-between w-full sm:w-1/3 mb-8 text-sm">
+                    <div className="mb-8 flex justify-between text-sm">
                         <span className="text-gray-500">Taxes</span>
                         <span className="text-gray-900">0.00€</span>
                     </div>
-                    <div className="flex justify-between w-full sm:w-1/3 mb-8 text-xl border-t border-gray-200 pt-4">
+                    <div className="mb-8 flex justify-between border-t border-gray-200 pt-4 text-xl">
                         <span className="font-bold text-gray-900">Total</span>
                         <span className="font-bold text-gray-900">{total.toFixed(2)}€</span>
                     </div>
-                    <Link href="/checkout" className="w-full sm:w-1/3">
+                    <Link href="/checkout" className="w-full">
                         <Button variant="primary" className="w-full">
                             Payer
                         </Button>

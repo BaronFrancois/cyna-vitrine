@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Comptes de test
+
+Voir [TEST_ACCOUNTS.md](./TEST_ACCOUNTS.md)
+
 ## Vérification TypeScript
 
 Exécuter les commandes **depuis ce dossier** (`cyna-vitrine`), où `typescript` est installé — pas depuis le dossier parent `cyna` (sinon `npx` peut proposer le mauvais paquet `tsc`) :
