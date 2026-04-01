@@ -127,7 +127,7 @@ function PaymentForm({
             }
 
             // 2. Appeler le backend
-            const { data } = await api().post('/payement/checkout', {
+            const { data } = await api().post('/v1/payement/checkout', {
                 userId,
                 cartId,
                 billingAddressId: addressId,

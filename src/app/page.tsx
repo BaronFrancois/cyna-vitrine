@@ -137,15 +137,15 @@ export default function Home() {
                                 return (
                                     <FadeInSection key={product.id} delay={`${i * 100}ms`}>
                                         <div
-                                            className={`group flex h-full flex-col overflow-hidden rounded-3xl border bg-white shadow-xl transition-transform duration-500 hover:scale-[1.02] hover:shadow-2xl ${
+                                            className={`group relative flex h-full flex-col rounded-3xl shadow-xl transition-transform duration-500 hover:scale-[1.02] hover:shadow-2xl ${
                                                 isMid
-                                                    ? "border-cyna-300 ring-2 ring-cyna-100"
-                                                    : "border-gray-100"
+                                                    ? "bg-white before:content-[''] before:absolute before:-inset-6 before:rounded-[2.25rem] before:bg-gradient-to-br before:from-cyna-600/25 before:via-sky-500/25 before:to-indigo-500/25 before:blur-2xl before:-z-10"
+                                                    : "border border-gray-100 bg-white"
                                             }`}
                                         >
                                             <Link
                                                 href={`/product/${product.id}`}
-                                                className="flex min-h-0 flex-grow flex-col"
+                                                className="flex min-h-0 flex-grow flex-col overflow-hidden rounded-3xl"
                                             >
                                                 <div className="relative aspect-[16/10] overflow-hidden">
                                                     <img
