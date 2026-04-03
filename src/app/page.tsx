@@ -88,13 +88,13 @@ export default function Home() {
                             nouvelle génération. Intégration fluide. Vitesse
                             sans compromis.
                         </p>
-                        <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 justify-center">
-                            <Link href="/catalog">
+                        <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 justify-center">
+                            <Link href="/catalog" className="flex justify-center">
                                 <Button size="lg" variant="primary">
                                     Découvrir les solutions
                                 </Button>
                             </Link>
-                            <Link href="/support">
+                            <Link href="/support" className="flex justify-center">
                                 <Button size="lg" variant="ghost">
                                     Demander une démo{" "}
                                     <ArrowRight size={18} className="ml-2" />

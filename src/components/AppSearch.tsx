@@ -70,11 +70,11 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                 {!isCatalogHero && !open && (
                     <button
                         type="button"
-                        className="inline-flex cursor-pointer items-center justify-center text-gray-500 hover:text-cyna-600 bg-transparent shadow-none p-0"
+                        className="inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0 text-gray-500 shadow-none hover:text-cyna-600"
                         onClick={() => setOpen(true)}
                         aria-label="Ouvrir la recherche"
                     >
-                        <Search />
+                        <Search className="h-5 w-5" aria-hidden />
                     </button>
                 )}
 

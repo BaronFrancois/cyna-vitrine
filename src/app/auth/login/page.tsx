@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import AppLayout from '@/layout/AppLayout';
 
 // Interface pour typer les données du formulaire
 interface FormData {
@@ -127,7 +128,8 @@ export default function Login() {
 	};
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a0a23] via-[#1a1a40] to-[#2a2a60] py-12 px-4 sm:px-6 lg:px-8">
+		<AppLayout>
+			<div className="flex min-h-[calc(100vh-10rem)] w-full flex-col items-center justify-center bg-gradient-to-br from-[#0a0a23] via-[#1a1a40] to-[#2a2a60] py-12 px-4 sm:px-6 lg:px-8">
 			{/* Carte du formulaire avec ombre et espacement */}
 			<div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
 				{/* En-tête du formulaire */}
@@ -201,29 +203,21 @@ export default function Login() {
 					</div>
 				</form>
 
-				{/* Séparateur "Ou" avec ligne horizontale */}
+				{/* Lien mot de passe oublié + séparateur */}
 				<div className="mt-6">
-					<div className="relative">
-						{/* Ligne horizontale */}
-						<div className="absolute inset-0 flex items-center">
-							<div className="w-full border-t border-gray-300"></div>
+					<div className="flex flex-col space-y-4">
+						{/* Lien "Mot de passe oublié" aligné à droite */}
+						<div className="flex items-center justify-end">
+							<a href="/forgot-password" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+								Mot de passe oublié ?
+							</a>
 						</div>
-						{/* Bloc combiné */}
-						<div className="flex flex-col space-y-4">
-							{/* Lien "Mot de passe oublié" aligné à droite */}
-							<div className="flex items-center justify-end">
-								<div className="text-sm">
-									<a href="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
-										Mot de passe oublié ?
-									</a>
-								</div>
-							</div>
 
-							{/* Séparateur "Ou" centré */}
-							<div className="relative flex justify-center text-sm">
-								<span className="px-2 bg-white text-gray-500">Ou</span>
-							</div>
-
+						{/* Séparateur "Ou" */}
+						<div className="relative flex items-center">
+							<div className="flex-grow border-t border-gray-300"></div>
+							<span className="mx-3 text-sm text-gray-500">Ou</span>
+							<div className="flex-grow border-t border-gray-300"></div>
 						</div>
 					</div>
 
@@ -231,13 +225,14 @@ export default function Login() {
 					<div className="mt-6">
 						<p className="text-center text-sm text-gray-600">
 							Pas encore de compte ?{' '}
-							<a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
-								Commencez un essai gratuit de 14 jours
+							<a href="/auth/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+								Créer un compte
 							</a>
 						</p>
 					</div>
 				</div>
 			</div>
-		</div>
+			</div>
+		</AppLayout>
 	);
 }

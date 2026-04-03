@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import AppLayout from "@/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
-import { MOCK_USER, PRODUCTS } from "@/constant";
+import { PRODUCTS } from "@/constant";
+import api from "@/lib/api";
 import Link from "next/link";
 import {
     Shield,
@@ -21,6 +23,20 @@ import {
     LifeBuoy,
 } from "lucide-react";
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface UserProfile {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    lastLoginAt: string | null;
+    createdAt: string;
+}
+
+// ── Constantes UI ─────────────────────────────────────────────────────────────
+
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
     EDR: <Zap className="w-5 h-5" />,
     XDR: <Activity className="w-5 h-5" />,
@@ -34,51 +50,115 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 const MOCK_ACTIVITY = [
-    {
-        id: 1,
-        label: "Connexion réussie",
-        detail: "Paris, France — Chrome",
-        time: "Il y a 2 minutes",
-        type: "success",
-    },
-    {
-        id: 2,
-        label: "Rapport mensuel généré",
-        detail: "EDR & Digital Workplace — Janvier 2026",
-        time: "Il y a 3 jours",
-        type: "info",
-    },
-    {
-        id: 3,
-        label: "Abonnement renouvelé",
-        detail: "Détection étendue (XDR) — 199,99 €",
-        time: "Il y a 7 jours",
-        type: "success",
-    },
-    {
-        id: 4,
-        label: "Alerte de sécurité",
-        detail: "Tentative de connexion inhabituelle bloquée",
-        time: "Il y a 12 jours",
-        type: "warning",
-    },
-    {
-        id: 5,
-        label: "Mise à jour du profil",
-        detail: "Adresse email modifiée",
-        time: "Il y a 20 jours",
-        type: "info",
-    },
+    { id: 1, label: "Connexion réussie", detail: "Paris, France — Chrome", time: "Il y a 2 minutes", type: "success" },
+    { id: 2, label: "Rapport mensuel généré", detail: "EDR & Digital Workplace — Janvier 2026", time: "Il y a 3 jours", type: "info" },
+    { id: 3, label: "Abonnement renouvelé", detail: "Détection étendue (XDR) — 199,99 €", time: "Il y a 7 jours", type: "success" },
+    { id: 4, label: "Alerte de sécurité", detail: "Tentative de connexion inhabituelle bloquée", time: "Il y a 12 jours", type: "warning" },
+    { id: 5, label: "Mise à jour du profil", detail: "Adresse email modifiée", time: "Il y a 20 jours", type: "info" },
 ];
 
-const activeSubscriptions = PRODUCTS.filter(
-    (_, i) => i < MOCK_USER.activeSubscriptions
-);
+// Pour la démo — sera remplacé par l'API abonnements
+const DEMO_SUBSCRIPTIONS = PRODUCTS.filter((_, i) => i < 2);
 
 type Tab = "overview" | "subscriptions" | "billing" | "settings";
 
+// ── Composant ─────────────────────────────────────────────────────────────────
+
 export default function AccountDashboard() {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<Tab>("overview");
+
+    // ── Profil utilisateur ──
+    const [user, setUser] = useState<UserProfile | null>(null);
+    const [isLoadingUser, setIsLoadingUser] = useState(true);
+
+    // ── Formulaire informations personnelles ──
+    const [settingsForm, setSettingsForm] = useState({ firstName: "", lastName: "", email: "" });
+    const [settingsSaving, setSettingsSaving] = useState(false);
+    const [settingsMsg, setSettingsMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+    // ── Formulaire changement de mot de passe ──
+    const [pwOpen, setPwOpen] = useState(false);
+    const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    const [pwSaving, setPwSaving] = useState(false);
+    const [pwMsg, setPwMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+    // ── Chargement du profil au montage ──
+    useEffect(() => {
+        api()
+            .get("/users/me")
+            .then((res) => {
+                const data: UserProfile = res.data;
+                setUser(data);
+                setSettingsForm({
+                    firstName: data.firstName,
+                    lastName: data.lastName,
+                    email: data.email,
+                });
+            })
+            .catch(() => {
+                // Token expiré ou invalide → retour connexion
+                document.cookie = "auth_token=; path=/; max-age=0";
+                router.push("/auth/login");
+            })
+            .finally(() => setIsLoadingUser(false));
+    }, [router]);
+
+    // ── Déconnexion ──
+    const handleLogout = () => {
+        document.cookie = "auth_token=; path=/; max-age=0";
+        router.push("/auth/login");
+    };
+
+    // ── Sauvegarde du profil ──
+    const handleSaveProfile = async () => {
+        setSettingsSaving(true);
+        setSettingsMsg(null);
+        try {
+            const res = await api().patch("/users/me", {
+                firstName: settingsForm.firstName.trim(),
+                lastName: settingsForm.lastName.trim(),
+                email: settingsForm.email.trim().toLowerCase(),
+            });
+            setUser(res.data);
+            setSettingsMsg({ type: "success", text: "Profil mis à jour avec succès." });
+        } catch {
+            setSettingsMsg({ type: "error", text: "Erreur lors de la mise à jour du profil." });
+        } finally {
+            setSettingsSaving(false);
+        }
+    };
+
+    // ── Changement de mot de passe ──
+    const handleChangePassword = async () => {
+        if (pwForm.newPassword !== pwForm.confirmPassword) {
+            setPwMsg({ type: "error", text: "Les nouveaux mots de passe ne correspondent pas." });
+            return;
+        }
+        if (pwForm.newPassword.length < 8) {
+            setPwMsg({ type: "error", text: "Le nouveau mot de passe doit contenir au moins 8 caractères." });
+            return;
+        }
+        setPwSaving(true);
+        setPwMsg(null);
+        try {
+            await api().post("/users/me/change-password", {
+                currentPassword: pwForm.currentPassword,
+                newPassword: pwForm.newPassword,
+            });
+            setPwMsg({ type: "success", text: "Mot de passe changé avec succès." });
+            setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+            setTimeout(() => { setPwOpen(false); setPwMsg(null); }, 2000);
+        } catch {
+            setPwMsg({ type: "error", text: "Mot de passe actuel incorrect." });
+        } finally {
+            setPwSaving(false);
+        }
+    };
+
+    // ── Dérivés ──
+    const fullName = user ? `${user.firstName} ${user.lastName}` : "…";
+    const initiale = user ? user.firstName.charAt(0).toUpperCase() : "…";
 
     const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
         { id: "overview", label: "Vue d'ensemble", icon: <Activity size={16} /> },
@@ -86,6 +166,16 @@ export default function AccountDashboard() {
         { id: "billing", label: "Facturation", icon: <CreditCard size={16} /> },
         { id: "settings", label: "Paramètres", icon: <Settings size={16} /> },
     ];
+
+    if (isLoadingUser) {
+        return (
+            <AppLayout>
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                    <div className="text-gray-400 text-sm">Chargement du profil…</div>
+                </div>
+            </AppLayout>
+        );
+    }
 
     return (
         <AppLayout>
@@ -95,39 +185,33 @@ export default function AccountDashboard() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                         <div className="flex items-center gap-5">
                             <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-blue-900/40 flex-shrink-0">
-                                {MOCK_USER.name.charAt(0)}
+                                {initiale}
                             </div>
                             <div>
-                                <p className="text-gray-400 text-sm mb-0.5">
-                                    Espace client
-                                </p>
+                                <p className="text-gray-400 text-sm mb-0.5">Espace client</p>
                                 <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                                    Bonjour, {MOCK_USER.name.split(" ")[0]} 👋
+                                    Bonjour, {user?.firstName ?? "…"} 👋
                                 </h1>
                                 <p className="text-gray-400 text-sm mt-0.5">
-                                    {MOCK_USER.company} · {MOCK_USER.email}
+                                    {user?.email ?? ""}
                                 </p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
                             <Link href="/support">
-                                <Button
-                                    variant="ghost"
-                                    className="text-gray-300 hover:text-white text-sm"
-                                >
+                                <Button variant="ghost" className="text-gray-300 hover:text-white text-sm">
                                     <LifeBuoy size={15} className="mr-2" />
                                     Support
                                 </Button>
                             </Link>
-                            <Link href="/auth/login">
-                                <Button
-                                    variant="ghost"
-                                    className="text-gray-300 hover:text-white text-sm"
-                                >
-                                    <LogOut size={15} className="mr-2" />
-                                    Déconnexion
-                                </Button>
-                            </Link>
+                            <Button
+                                variant="ghost"
+                                className="text-gray-300 hover:text-white text-sm"
+                                onClick={handleLogout}
+                            >
+                                <LogOut size={15} className="mr-2" />
+                                Déconnexion
+                            </Button>
                         </div>
                     </div>
 
@@ -162,50 +246,35 @@ export default function AccountDashboard() {
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
                                     <div className="flex items-center justify-between mb-4">
-                                        <span className="text-sm font-medium text-gray-500">
-                                            Abonnements actifs
-                                        </span>
+                                        <span className="text-sm font-medium text-gray-500">Abonnements actifs</span>
                                         <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center">
                                             <Shield size={18} className="text-blue-600" />
                                         </div>
                                     </div>
-                                    <p className="text-4xl font-bold text-gray-900">
-                                        {MOCK_USER.activeSubscriptions}
-                                    </p>
-                                    <p className="text-xs text-gray-400 mt-1">
-                                        sur 5 solutions disponibles
-                                    </p>
+                                    <p className="text-4xl font-bold text-gray-900">{DEMO_SUBSCRIPTIONS.length}</p>
+                                    <p className="text-xs text-gray-400 mt-1">sur 5 solutions disponibles</p>
                                 </div>
 
                                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
                                     <div className="flex items-center justify-between mb-4">
-                                        <span className="text-sm font-medium text-gray-500">
-                                            Prochaine facturation
-                                        </span>
+                                        <span className="text-sm font-medium text-gray-500">Prochaine facturation</span>
                                         <div className="w-9 h-9 bg-purple-50 rounded-xl flex items-center justify-center">
                                             <CreditCard size={18} className="text-purple-600" />
                                         </div>
                                     </div>
-                                    <p className="text-4xl font-bold text-gray-900">
-                                        {MOCK_USER.nextBillingDate}
-                                    </p>
-                                    <p className="text-xs text-gray-400 mt-1">
-                                        Renouvellement automatique
-                                    </p>
+                                    <p className="text-4xl font-bold text-gray-900">15 Oct</p>
+                                    <p className="text-xs text-gray-400 mt-1">Renouvellement automatique</p>
                                 </div>
 
                                 <div className="bg-black rounded-3xl p-6 shadow-sm text-white">
                                     <div className="flex items-center justify-between mb-4">
-                                        <span className="text-sm font-medium text-gray-400">
-                                            Score de sécurité
-                                        </span>
+                                        <span className="text-sm font-medium text-gray-400">Score de sécurité</span>
                                         <div className="w-9 h-9 bg-blue-600/20 rounded-xl flex items-center justify-center">
                                             <Lock size={18} className="text-blue-400" />
                                         </div>
                                     </div>
                                     <p className="text-4xl font-bold">
-                                        92
-                                        <span className="text-xl text-gray-400 font-normal">/100</span>
+                                        92<span className="text-xl text-gray-400 font-normal">/100</span>
                                     </p>
                                     <p className="text-xs text-green-400 mt-1 flex items-center gap-1">
                                         <CheckCircle size={11} /> Excellent — Tous les systèmes opérationnels
@@ -219,9 +288,7 @@ export default function AccountDashboard() {
                                 <div className="lg:col-span-2 space-y-6">
                                     <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
                                         <div className="flex items-center justify-between mb-6">
-                                            <h2 className="text-lg font-bold text-gray-900">
-                                                Mes abonnements
-                                            </h2>
+                                            <h2 className="text-lg font-bold text-gray-900">Mes abonnements</h2>
                                             <button
                                                 onClick={() => setActiveTab("subscriptions")}
                                                 className="text-sm text-blue-600 hover:underline flex items-center gap-1"
@@ -230,11 +297,8 @@ export default function AccountDashboard() {
                                             </button>
                                         </div>
                                         <div className="space-y-3">
-                                            {activeSubscriptions.map((p) => (
-                                                <div
-                                                    key={p.id}
-                                                    className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors"
-                                                >
+                                            {DEMO_SUBSCRIPTIONS.map((p) => (
+                                                <div key={p.id} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors">
                                                     <div className="flex items-center gap-4">
                                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${CATEGORY_COLORS[p.category]}`}>
                                                             {CATEGORY_ICONS[p.category]}
@@ -246,14 +310,10 @@ export default function AccountDashboard() {
                                                     </div>
                                                     <div className="text-right flex-shrink-0">
                                                         <p className="font-semibold text-gray-900 text-sm">
-                                                            {p.price}€
-                                                            <span className="text-gray-400 font-normal">
-                                                                /{p.period === "monthly" ? "mois" : "an"}
-                                                            </span>
+                                                            {p.price}€<span className="text-gray-400 font-normal">/{p.period === "monthly" ? "mois" : "an"}</span>
                                                         </p>
                                                         <span className="inline-flex items-center gap-1 text-[11px] text-green-600 font-medium">
-                                                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                                                            Actif
+                                                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />Actif
                                                         </span>
                                                     </div>
                                                 </div>
@@ -261,25 +321,19 @@ export default function AccountDashboard() {
                                         </div>
                                         <div className="mt-4 pt-4 border-t border-gray-100">
                                             <Link href="/catalog">
-                                                <Button variant="outline" className="w-full text-sm">
-                                                    Ajouter une solution
-                                                </Button>
+                                                <Button variant="outline" className="w-full text-sm">Ajouter une solution</Button>
                                             </Link>
                                         </div>
                                     </div>
 
                                     {/* Activity feed */}
                                     <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                                        <h2 className="text-lg font-bold text-gray-900 mb-6">
-                                            Activité récente
-                                        </h2>
+                                        <h2 className="text-lg font-bold text-gray-900 mb-6">Activité récente</h2>
                                         <div className="space-y-4">
                                             {MOCK_ACTIVITY.map((event) => (
                                                 <div key={event.id} className="flex items-start gap-4">
                                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                                                        event.type === "success" ? "bg-green-100"
-                                                        : event.type === "warning" ? "bg-yellow-100"
-                                                        : "bg-blue-100"
+                                                        event.type === "success" ? "bg-green-100" : event.type === "warning" ? "bg-yellow-100" : "bg-blue-100"
                                                     }`}>
                                                         {event.type === "success" ? (
                                                             <CheckCircle size={15} className="text-green-600" />
@@ -294,8 +348,7 @@ export default function AccountDashboard() {
                                                         <p className="text-xs text-gray-400">{event.detail}</p>
                                                     </div>
                                                     <div className="flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
-                                                        <Clock size={11} />
-                                                        {event.time}
+                                                        <Clock size={11} />{event.time}
                                                     </div>
                                                 </div>
                                             ))}
@@ -309,16 +362,20 @@ export default function AccountDashboard() {
                                         <h2 className="text-lg font-bold text-gray-900 mb-5">Mon compte</h2>
                                         <div className="space-y-4">
                                             <div>
-                                                <p className="text-xs text-gray-400 mb-0.5">Nom complet</p>
-                                                <p className="text-sm font-medium text-gray-900">{MOCK_USER.name}</p>
+                                                <p className="text-xs text-gray-400 mb-0.5">Prénom</p>
+                                                <p className="text-sm font-medium text-gray-900">{user?.firstName ?? "—"}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-gray-400 mb-0.5">Nom</p>
+                                                <p className="text-sm font-medium text-gray-900">{user?.lastName ?? "—"}</p>
                                             </div>
                                             <div>
                                                 <p className="text-xs text-gray-400 mb-0.5">Email</p>
-                                                <p className="text-sm font-medium text-gray-900">{MOCK_USER.email}</p>
+                                                <p className="text-sm font-medium text-gray-900">{user?.email ?? "—"}</p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-400 mb-0.5">Entreprise</p>
-                                                <p className="text-sm font-medium text-gray-900">{MOCK_USER.company}</p>
+                                                <p className="text-xs text-gray-400 mb-0.5">Rôle</p>
+                                                <p className="text-sm font-medium text-gray-900 capitalize">{user?.role?.toLowerCase() ?? "—"}</p>
                                             </div>
                                         </div>
                                         <div className="mt-5 pt-5 border-t border-gray-100">
@@ -343,17 +400,13 @@ export default function AccountDashboard() {
                                             ].map((item, i) =>
                                                 item.href ? (
                                                     <Link key={i} href={item.href} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors group">
-                                                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                            {item.icon}
-                                                        </div>
+                                                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">{item.icon}</div>
                                                         <span className="text-sm text-gray-700 group-hover:text-gray-900 flex-grow">{item.label}</span>
                                                         <ChevronRight size={14} className="text-gray-400" />
                                                     </Link>
                                                 ) : (
                                                     <button key={i} onClick={item.action} className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors group">
-                                                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                            {item.icon}
-                                                        </div>
+                                                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">{item.icon}</div>
                                                         <span className="text-sm text-gray-700 group-hover:text-gray-900 flex-grow text-left">{item.label}</span>
                                                         <ChevronRight size={14} className="text-gray-400" />
                                                     </button>
@@ -372,14 +425,14 @@ export default function AccountDashboard() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Mes abonnements</h2>
-                                    <p className="text-gray-500 text-sm mt-1">{MOCK_USER.activeSubscriptions} abonnement(s) actif(s)</p>
+                                    <p className="text-gray-500 text-sm mt-1">{DEMO_SUBSCRIPTIONS.length} abonnement(s) actif(s)</p>
                                 </div>
                                 <Link href="/catalog">
                                     <Button variant="accent">Ajouter une solution</Button>
                                 </Link>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {activeSubscriptions.map((p) => (
+                                {DEMO_SUBSCRIPTIONS.map((p) => (
                                     <div key={p.id} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
                                         <div className="flex items-start justify-between mb-5">
                                             <div className="flex items-center gap-3">
@@ -392,16 +445,14 @@ export default function AccountDashboard() {
                                                 </div>
                                             </div>
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold">
-                                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                                                Actif
+                                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />Actif
                                             </span>
                                         </div>
                                         <p className="text-sm text-gray-500 mb-5 leading-relaxed">{p.shortDescription}</p>
                                         <ul className="space-y-2 mb-6">
                                             {p.features.map((f) => (
                                                 <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
-                                                    <CheckCircle size={14} className="text-green-500 flex-shrink-0" />
-                                                    {f}
+                                                    <CheckCircle size={14} className="text-green-500 flex-shrink-0" />{f}
                                                 </li>
                                             ))}
                                         </ul>
@@ -419,9 +470,7 @@ export default function AccountDashboard() {
                                 <h3 className="font-bold text-gray-900 mb-1">Complétez votre protection</h3>
                                 <p className="text-sm text-gray-500 mb-4">3 solutions supplémentaires sont disponibles pour renforcer votre sécurité.</p>
                                 <Link href="/catalog">
-                                    <Button variant="accent" size="sm">
-                                        Explorer le catalogue
-                                    </Button>
+                                    <Button variant="accent" size="sm">Explorer le catalogue</Button>
                                 </Link>
                             </div>
                         </div>
@@ -486,9 +535,9 @@ export default function AccountDashboard() {
                                     <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
                                         <h3 className="font-bold text-gray-900 mb-3">Prochaine échéance</h3>
                                         <p className="text-3xl font-bold text-gray-900">69,98 €</p>
-                                        <p className="text-sm text-gray-400 mt-1">Le {MOCK_USER.nextBillingDate}</p>
+                                        <p className="text-sm text-gray-400 mt-1">Le 15 octobre</p>
                                         <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400">
-                                            Inclut {MOCK_USER.activeSubscriptions} abonnements actifs
+                                            Inclut {DEMO_SUBSCRIPTIONS.length} abonnements actifs
                                         </div>
                                     </div>
                                 </div>
@@ -503,61 +552,172 @@ export default function AccountDashboard() {
                                 <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Paramètres du compte</h2>
                                 <p className="text-gray-500 text-sm mt-1">Gérez vos informations personnelles et préférences</p>
                             </div>
+
+                            {/* Informations personnelles */}
                             <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
                                 <h3 className="font-bold text-gray-900 mb-5">Informations personnelles</h3>
                                 <div className="space-y-4">
-                                    {[
-                                        { label: "Nom complet", value: MOCK_USER.name, type: "text" },
-                                        { label: "Email", value: MOCK_USER.email, type: "email" },
-                                        { label: "Entreprise", value: MOCK_USER.company, type: "text" },
-                                    ].map((field) => (
-                                        <div key={field.label}>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
                                             <input
-                                                type={field.type}
-                                                defaultValue={field.value}
+                                                type="text"
+                                                value={settingsForm.firstName}
+                                                onChange={(e) => setSettingsForm((p) => ({ ...p, firstName: e.target.value }))}
                                                 className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                                             />
                                         </div>
-                                    ))}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                                            <input
+                                                type="text"
+                                                value={settingsForm.lastName}
+                                                onChange={(e) => setSettingsForm((p) => ({ ...p, lastName: e.target.value }))}
+                                                className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <input
+                                            type="email"
+                                            value={settingsForm.email}
+                                            onChange={(e) => setSettingsForm((p) => ({ ...p, email: e.target.value }))}
+                                            className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                        />
+                                    </div>
                                 </div>
+
+                                {settingsMsg && (
+                                    <div className={`mt-4 px-4 py-3 rounded-xl text-sm ${
+                                        settingsMsg.type === "success"
+                                            ? "bg-green-50 text-green-700 border border-green-100"
+                                            : "bg-red-50 text-red-700 border border-red-100"
+                                    }`}>
+                                        {settingsMsg.text}
+                                    </div>
+                                )}
+
                                 <div className="mt-5">
-                                    <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full">
-                                        Sauvegarder les modifications
+                                    <Button
+                                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-full"
+                                        onClick={handleSaveProfile}
+                                        disabled={settingsSaving}
+                                    >
+                                        {settingsSaving ? "Sauvegarde…" : "Sauvegarder les modifications"}
                                     </Button>
                                 </div>
                             </div>
+
+                            {/* Sécurité */}
                             <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
                                 <h3 className="font-bold text-gray-900 mb-5">Sécurité</h3>
                                 <div className="space-y-3">
-                                    {[
-                                        { label: "Changer le mot de passe", desc: "Dernière modification il y a 3 mois", icon: <Lock size={16} className="text-gray-500" /> },
-                                        { label: "Authentification à deux facteurs", desc: "Non activée — recommandée", icon: <Shield size={16} className="text-gray-500" /> },
-                                        { label: "Sessions actives", desc: "1 session active", icon: <Activity size={16} className="text-gray-500" /> },
-                                    ].map((item) => (
-                                        <button key={item.label} className="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+                                    {/* Changer le mot de passe — expandable */}
+                                    <div className="rounded-2xl bg-gray-50 overflow-hidden">
+                                        <button
+                                            onClick={() => { setPwOpen((v) => !v); setPwMsg(null); }}
+                                            className="w-full flex items-center justify-between p-4 hover:bg-gray-100 transition-colors text-left"
+                                        >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">{item.icon}</div>
+                                                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                                                    <Lock size={16} className="text-gray-500" />
+                                                </div>
                                                 <div>
-                                                    <p className="text-sm font-medium text-gray-900">{item.label}</p>
-                                                    <p className="text-xs text-gray-400">{item.desc}</p>
+                                                    <p className="text-sm font-medium text-gray-900">Changer le mot de passe</p>
+                                                    <p className="text-xs text-gray-400">Sécurisez votre compte avec un nouveau mot de passe</p>
                                                 </div>
                                             </div>
-                                            <ChevronRight size={16} className="text-gray-400" />
+                                            <ChevronRight size={16} className={`text-gray-400 transition-transform ${pwOpen ? "rotate-90" : ""}`} />
                                         </button>
-                                    ))}
+
+                                        {pwOpen && (
+                                            <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-4">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Mot de passe actuel</label>
+                                                    <input
+                                                        type="password"
+                                                        value={pwForm.currentPassword}
+                                                        onChange={(e) => setPwForm((p) => ({ ...p, currentPassword: e.target.value }))}
+                                                        className="w-full p-2.5 rounded-lg bg-white border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        placeholder="••••••••"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Nouveau mot de passe</label>
+                                                    <input
+                                                        type="password"
+                                                        value={pwForm.newPassword}
+                                                        onChange={(e) => setPwForm((p) => ({ ...p, newPassword: e.target.value }))}
+                                                        className="w-full p-2.5 rounded-lg bg-white border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        placeholder="Minimum 8 caractères"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Confirmer le nouveau mot de passe</label>
+                                                    <input
+                                                        type="password"
+                                                        value={pwForm.confirmPassword}
+                                                        onChange={(e) => setPwForm((p) => ({ ...p, confirmPassword: e.target.value }))}
+                                                        className="w-full p-2.5 rounded-lg bg-white border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        placeholder="••••••••"
+                                                    />
+                                                </div>
+                                                {pwMsg && (
+                                                    <div className={`px-3 py-2 rounded-lg text-xs ${
+                                                        pwMsg.type === "success"
+                                                            ? "bg-green-50 text-green-700"
+                                                            : "bg-red-50 text-red-700"
+                                                    }`}>
+                                                        {pwMsg.text}
+                                                    </div>
+                                                )}
+                                                <Button
+                                                    size="sm"
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-full"
+                                                    onClick={handleChangePassword}
+                                                    disabled={pwSaving}
+                                                >
+                                                    {pwSaving ? "Modification…" : "Modifier le mot de passe"}
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <button className="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                                                <Shield size={16} className="text-gray-500" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">Authentification à deux facteurs</p>
+                                                <p className="text-xs text-gray-400">Non activée — recommandée</p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight size={16} className="text-gray-400" />
+                                    </button>
+                                    <button className="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                                                <Activity size={16} className="text-gray-500" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-900">Sessions actives</p>
+                                                <p className="text-xs text-gray-400">1 session active</p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight size={16} className="text-gray-400" />
+                                    </button>
                                 </div>
                             </div>
+
+                            {/* Zone de danger */}
                             <div className="bg-white rounded-3xl p-6 shadow-sm border border-red-100">
                                 <h3 className="font-bold text-red-600 mb-2">Zone de danger</h3>
                                 <p className="text-sm text-gray-500 mb-4">
                                     La suppression de votre compte est irréversible et annule tous vos abonnements.
                                 </p>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-red-600 border-red-200 hover:bg-red-50"
-                                >
+                                <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50">
                                     Supprimer mon compte
                                 </Button>
                             </div>
