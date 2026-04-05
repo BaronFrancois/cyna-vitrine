@@ -26,29 +26,29 @@ function TileCard({ v, index }: { v: CisaVulnerability; index: number }) {
             href={`https://nvd.nist.gov/vuln/detail/${v.cveID}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="group block bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="group block bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-800 hover:shadow-xl hover:shadow-zinc-950/50 hover:-translate-y-1 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyna-600"
             style={{ animationDelay: `${index * 60}ms` }}
         >
             {/* En-tête de la tile */}
             <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="flex items-center gap-2">
                     {isRansomware ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-100">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-950/50 text-red-400 border border-red-800">
                             <AlertTriangle className="w-3 h-3" />
                             Ransomware
                         </span>
                     ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-950/50 text-cyna-500 border border-violet-800">
                             <ShieldAlert className="w-3 h-3" />
                             Exploitation active
                         </span>
                     )}
                 </div>
-                <ExternalLink className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors shrink-0 mt-0.5" />
+                <ExternalLink className="w-4 h-4 text-gray-600 group-hover:text-gray-400 transition-colors shrink-0 mt-0.5" />
             </div>
 
             {/* Nom de la vulnérabilité */}
-            <h3 className="text-gray-900 font-semibold text-base leading-snug mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+            <h3 className="text-gray-100 font-semibold text-base leading-snug mb-2 group-hover:text-cyna-500 transition-colors line-clamp-2">
                 {v.vulnerabilityName}
             </h3>
 
@@ -58,8 +58,8 @@ function TileCard({ v, index }: { v: CisaVulnerability; index: number }) {
             </p>
 
             {/* Pied de tile */}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                <span className="font-mono text-xs text-blue-400 font-medium">
+            <div className="flex items-center justify-between pt-4 border-t border-zinc-700">
+                <span className="font-mono text-xs text-cyna-500 font-medium">
                     {v.cveID}
                 </span>
                 <span className="text-xs text-gray-400">
@@ -72,14 +72,14 @@ function TileCard({ v, index }: { v: CisaVulnerability; index: number }) {
 
 function TileSkeleton() {
     return (
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 animate-pulse">
-            <div className="h-6 w-28 bg-gray-100 rounded-full mb-4" />
-            <div className="h-4 w-full bg-gray-100 rounded mb-2" />
-            <div className="h-4 w-3/4 bg-gray-100 rounded mb-4" />
-            <div className="h-3 w-1/2 bg-gray-100 rounded mb-4" />
-            <div className="flex justify-between pt-4 border-t border-gray-100">
-                <div className="h-3 w-24 bg-gray-100 rounded" />
-                <div className="h-3 w-20 bg-gray-100 rounded" />
+        <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-800 animate-pulse">
+            <div className="h-6 w-28 bg-zinc-800 rounded-full mb-4" />
+            <div className="h-4 w-full bg-zinc-800 rounded mb-2" />
+            <div className="h-4 w-3/4 bg-zinc-800 rounded mb-4" />
+            <div className="h-3 w-1/2 bg-zinc-800 rounded mb-4" />
+            <div className="flex justify-between pt-4 border-t border-zinc-700">
+                <div className="h-3 w-24 bg-zinc-800 rounded" />
+                <div className="h-3 w-20 bg-zinc-800 rounded" />
             </div>
         </div>
     );
@@ -97,16 +97,16 @@ export default function CyberNewsFeed() {
     }, []);
 
     return (
-        <section className="py-28 bg-gray-50">
+        <section className="py-28 bg-zinc-950">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 {/* En-tête section */}
                 <div className="mb-14 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
                     <div>
-                        <p className="text-blue-600 font-semibold text-sm tracking-wide uppercase mb-3">
+                        <p className="text-cyna-600 font-semibold text-sm tracking-wide uppercase mb-3">
                             Veille en temps réel · Source CISA
                         </p>
-                        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight leading-tight">
+                        <h2 className="text-4xl md:text-5xl font-bold text-gray-100 tracking-tight leading-tight">
                             Les dernières menaces
                             <br />
                             <span className="text-gray-400 font-light">activement exploitées.</span>
@@ -122,14 +122,14 @@ export default function CyberNewsFeed() {
                     <div className="hidden md:flex flex-col gap-3 shrink-0">
                         <Link
                             href="/catalog"
-                            className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-full transition-colors text-sm"
+                            className="inline-flex items-center justify-center gap-2 bg-cyna-600 hover:bg-cyna-700 text-white font-semibold px-6 py-3 rounded-full transition-colors text-sm"
                         >
                             Voir nos solutions
                             <ArrowRight className="w-4 h-4" />
                         </Link>
                         <Link
                             href="/support"
-                            className="inline-flex items-center justify-center gap-2 border border-gray-200 hover:border-gray-400 text-gray-700 hover:text-gray-900 font-medium px-6 py-3 rounded-full transition-colors text-sm bg-white"
+                            className="inline-flex items-center justify-center gap-2 border border-zinc-700 hover:border-zinc-500 text-gray-300 hover:text-gray-100 font-medium px-6 py-3 rounded-full transition-colors text-sm bg-transparent"
                         >
                             Demander un audit gratuit
                         </Link>
@@ -156,14 +156,14 @@ export default function CyberNewsFeed() {
                 <div className="mt-10 flex flex-col sm:flex-row gap-3 md:hidden">
                     <Link
                         href="/catalog"
-                        className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3.5 rounded-full transition-colors"
+                        className="flex-1 inline-flex items-center justify-center gap-2 bg-cyna-600 hover:bg-cyna-700 text-white font-semibold px-6 py-3.5 rounded-full transition-colors"
                     >
                         Voir nos solutions
                         <ArrowRight className="w-4 h-4" />
                     </Link>
                     <Link
                         href="/support"
-                        className="flex-1 inline-flex items-center justify-center gap-2 border border-gray-200 text-gray-700 font-medium px-6 py-3.5 rounded-full transition-colors bg-white"
+                        className="flex-1 inline-flex items-center justify-center gap-2 border border-zinc-700 text-gray-300 font-medium px-6 py-3.5 rounded-full transition-colors bg-transparent"
                     >
                         Demander un audit gratuit
                     </Link>

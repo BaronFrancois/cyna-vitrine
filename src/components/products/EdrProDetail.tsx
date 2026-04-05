@@ -11,10 +11,10 @@ const THREATS = [
 ];
 
 const SEVERITY_STYLES: Record<string, string> = {
-    critical: "bg-red-100 text-red-700 border-red-200",
-    high: "bg-orange-100 text-orange-700 border-orange-200",
-    medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
-    low: "bg-green-100 text-green-700 border-green-200",
+    critical: "bg-red-950/50 text-red-400 border-red-800",
+    high: "bg-orange-950/50 text-orange-400 border-orange-800",
+    medium: "bg-yellow-950/50 text-yellow-400 border-yellow-800",
+    low: "bg-green-950/50 text-green-400 border-green-800",
 };
 
 const STATS = [
@@ -30,12 +30,12 @@ export default function EdrProDetail() {
 
             {/* Stats */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-8">Performances en temps réel</h2>
+                <h2 className="text-2xl font-bold text-gray-100 mb-8">Performances en temps réel</h2>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                     {STATS.map((s) => (
-                        <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                        <div key={s.label} className="bg-zinc-900 rounded-2xl border border-zinc-700 shadow-sm p-6">
                             <div className="text-3xl mb-3">{s.icon}</div>
-                            <div className="text-2xl font-bold text-gray-900 mb-1">{s.value}</div>
+                            <div className="text-2xl font-bold text-gray-100 mb-1">{s.value}</div>
                             <div className="text-sm text-gray-400">{s.label}</div>
                         </div>
                     ))}
@@ -45,7 +45,7 @@ export default function EdrProDetail() {
             {/* Threat Timeline */}
             <div>
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Timeline des menaces (aujourd'hui)</h2>
+                    <h2 className="text-2xl font-bold text-gray-100">Timeline des menaces (aujourd'hui)</h2>
                     <span className="flex items-center gap-2 text-sm text-green-600 font-medium bg-green-50 border border-green-200 px-3 py-1 rounded-full">
                         <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                         Live
@@ -73,7 +73,7 @@ export default function EdrProDetail() {
                                 </span>
                                 <span className="text-white flex-1 truncate">{t.type}</span>
                                 <span className="text-gray-400 text-xs flex-shrink-0">{t.host}</span>
-                                <span className="text-blue-400 text-xs font-semibold flex-shrink-0">{t.action}</span>
+                                <span className="text-cyna-500 text-xs font-semibold flex-shrink-0">{t.action}</span>
                             </div>
                         ))}
                     </div>
@@ -82,9 +82,9 @@ export default function EdrProDetail() {
 
             {/* AI Engine */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-3xl p-8 border border-yellow-100">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Moteur IA comportemental</h3>
-                    <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                <div className="bg-gradient-to-br from-yellow-950/20 to-orange-950/20 rounded-3xl p-8 border border-yellow-900/50">
+                    <h3 className="text-xl font-bold text-gray-100 mb-2">Moteur IA comportemental</h3>
+                    <p className="text-gray-400 text-sm mb-6 leading-relaxed">
                         Notre modèle analyse en continu les comportements des processus, fichiers et connexions réseau
                         pour détecter toute anomalie, même sans signature connue.
                     </p>
@@ -96,11 +96,11 @@ export default function EdrProDetail() {
                             { label: "Réponse automatisée", pct: 87 },
                         ].map((item) => (
                             <div key={item.label}>
-                                <div className="flex justify-between text-xs text-gray-600 mb-1 font-medium">
+                                <div className="flex justify-between text-xs text-gray-300 mb-1 font-medium">
                                     <span>{item.label}</span>
                                     <span>{item.pct}%</span>
                                 </div>
-                                <div className="h-2 bg-yellow-100 rounded-full overflow-hidden">
+                                <div className="h-2 bg-yellow-950/40 rounded-full overflow-hidden">
                                     <div
                                         className="h-full bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full"
                                         style={{ width: `${item.pct}%` }}

@@ -9,10 +9,10 @@ const PROVIDERS = [
         score: 94,
         resources: 312,
         issues: 7,
-        color: "from-orange-50 to-amber-50",
-        border: "border-orange-200",
+        color: "from-orange-950/30 to-amber-950/30",
+        border: "border-orange-800/50",
         bar: "from-orange-400 to-amber-400",
-        text: "text-orange-700",
+        text: "text-orange-400",
     },
     {
         name: "Microsoft Azure",
@@ -21,10 +21,10 @@ const PROVIDERS = [
         score: 98,
         resources: 178,
         issues: 2,
-        color: "from-blue-50 to-sky-50",
-        border: "border-blue-200",
-        bar: "from-blue-500 to-sky-400",
-        text: "text-blue-700",
+        color: "from-violet-950/30 to-purple-950/30",
+        border: "border-violet-800/50",
+        bar: "from-[#7c3aed] to-[#d946ef]",
+        text: "text-cyna-500",
     },
     {
         name: "Google Cloud Platform",
@@ -33,10 +33,10 @@ const PROVIDERS = [
         score: 91,
         resources: 94,
         issues: 11,
-        color: "from-green-50 to-emerald-50",
-        border: "border-green-200",
+        color: "from-green-950/30 to-emerald-950/30",
+        border: "border-green-800/50",
         bar: "from-green-500 to-emerald-400",
-        text: "text-green-700",
+        text: "text-green-400",
     },
 ];
 
@@ -50,9 +50,9 @@ const CSPM_CHECKS = [
 ];
 
 const STATUS_STYLES: Record<string, { icon: string; style: string }> = {
-    pass: { icon: "✓", style: "text-green-600 bg-green-50 border-green-200" },
-    warn: { icon: "⚠", style: "text-yellow-600 bg-yellow-50 border-yellow-200" },
-    fail: { icon: "✗", style: "text-red-600 bg-red-50 border-red-200" },
+    pass: { icon: "✓", style: "text-green-400 bg-green-950/40 border-green-800" },
+    warn: { icon: "⚠", style: "text-yellow-400 bg-yellow-950/40 border-yellow-800" },
+    fail: { icon: "✗", style: "text-red-400 bg-red-950/40 border-red-800" },
 };
 
 const CONTAINER_STATS = [
@@ -68,7 +68,7 @@ export default function CloudShieldDetail() {
 
             {/* Multi-cloud providers */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">Protection multi-cloud unifiée</h2>
+                <h2 className="text-2xl font-bold text-gray-100 mb-3">Protection multi-cloud unifiée</h2>
                 <p className="text-gray-500 mb-8">
                     Score de conformité et visibilité en temps réel sur l'ensemble de vos clouds.
                 </p>
@@ -86,10 +86,10 @@ export default function CloudShieldDetail() {
                             {/* Score */}
                             <div className="mb-4">
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-gray-600 font-medium">Score conformité</span>
+                                    <span className="text-gray-300 font-medium">Score conformité</span>
                                     <span className={`font-bold ${p.text}`}>{p.score}%</span>
                                 </div>
-                                <div className="h-2.5 bg-white/70 rounded-full overflow-hidden">
+                                <div className="h-2.5 bg-black/30 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full bg-gradient-to-r ${p.bar} rounded-full`}
                                         style={{ width: `${p.score}%` }}
@@ -98,12 +98,12 @@ export default function CloudShieldDetail() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-3 text-sm">
-                                <div className="bg-white/60 rounded-xl p-3 text-center">
-                                    <div className="font-bold text-gray-900">{p.resources}</div>
+                                <div className="bg-black/20 rounded-xl p-3 text-center">
+                                    <div className="font-bold text-gray-100">{p.resources}</div>
                                     <div className="text-xs text-gray-400">Ressources</div>
                                 </div>
-                                <div className={`rounded-xl p-3 text-center ${p.issues > 5 ? "bg-orange-100" : "bg-green-100"}`}>
-                                    <div className={`font-bold ${p.issues > 5 ? "text-orange-700" : "text-green-700"}`}>{p.issues}</div>
+                                <div className={`rounded-xl p-3 text-center ${p.issues > 5 ? "bg-orange-950/40" : "bg-green-950/40"}`}>
+                                    <div className={`font-bold ${p.issues > 5 ? "text-orange-400" : "text-green-400"}`}>{p.issues}</div>
                                     <div className="text-xs text-gray-500">Anomalies</div>
                                 </div>
                             </div>
@@ -114,18 +114,18 @@ export default function CloudShieldDetail() {
 
             {/* CSPM Checks */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">CSPM — Contrôles de posture</h2>
+                <h2 className="text-2xl font-bold text-gray-100 mb-3">CSPM — Contrôles de posture</h2>
                 <p className="text-gray-500 mb-6">Vérifications continues des bonnes pratiques de sécurité cloud.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {CSPM_CHECKS.map((check) => {
                         const s = STATUS_STYLES[check.status];
                         return (
-                            <div key={check.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-start gap-4">
+                            <div key={check.label} className="bg-zinc-900 rounded-2xl border border-zinc-700 shadow-sm p-5 flex items-start gap-4">
                                 <span className={`w-7 h-7 rounded-full border flex items-center justify-center text-xs font-bold flex-shrink-0 ${s.style}`}>
                                     {s.icon}
                                 </span>
                                 <div>
-                                    <div className="font-semibold text-gray-900 text-sm">{check.label}</div>
+                                    <div className="font-semibold text-gray-100 text-sm">{check.label}</div>
                                     <div className="text-xs text-gray-400 mt-0.5">{check.detail}</div>
                                 </div>
                             </div>
@@ -135,9 +135,9 @@ export default function CloudShieldDetail() {
             </div>
 
             {/* Container security */}
-            <div className="bg-gradient-to-br from-sky-950 to-indigo-950 rounded-3xl p-8 lg:p-12 text-white">
+            <div className="bg-gradient-to-br from-violet-950 to-[#1e0b3a] rounded-3xl p-8 lg:p-12 text-white">
                 <h2 className="text-2xl font-bold mb-2">Sécurité conteneurs & Kubernetes</h2>
-                <p className="text-sky-300 mb-8 text-sm">
+                <p className="text-violet-300 mb-8 text-sm">
                     Scan des images, protection runtime et network policies pour vos clusters.
                 </p>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
@@ -145,7 +145,7 @@ export default function CloudShieldDetail() {
                         <div key={s.label} className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
                             <div className="text-3xl mb-2">{s.icon}</div>
                             <div className="text-2xl font-bold">{s.value}</div>
-                            <div className="text-xs text-sky-300 mt-1">{s.label}</div>
+                            <div className="text-xs text-violet-300 mt-1">{s.label}</div>
                         </div>
                     ))}
                 </div>
@@ -157,7 +157,7 @@ export default function CloudShieldDetail() {
                     ].map((item) => (
                         <div key={item.label} className="bg-white/5 border border-white/10 rounded-2xl p-5">
                             <div className="font-semibold text-white mb-1 text-sm">{item.label}</div>
-                            <div className="text-xs text-sky-300">{item.desc}</div>
+                            <div className="text-xs text-violet-300">{item.desc}</div>
                         </div>
                     ))}
                 </div>
@@ -165,8 +165,8 @@ export default function CloudShieldDetail() {
 
             {/* Identity */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
-                    <h3 className="text-xl font-bold text-gray-900 mb-5">Gestion des identités cloud</h3>
+                <div className="bg-zinc-900 rounded-3xl border border-zinc-700 shadow-sm p-8">
+                    <h3 className="text-xl font-bold text-gray-100 mb-5">Gestion des identités cloud</h3>
                     <div className="space-y-4">
                         {[
                             { label: "Comptes à privilèges excessifs", value: "4", alert: true },
@@ -174,20 +174,20 @@ export default function CloudShieldDetail() {
                             { label: "Service Accounts actifs", value: "87", alert: false },
                             { label: "Politiques IAM auditées", value: "100%", alert: false },
                         ].map((row) => (
-                            <div key={row.label} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
-                                <span className="text-sm text-gray-600">{row.label}</span>
-                                <span className={`text-sm font-bold px-3 py-0.5 rounded-full ${row.alert ? "text-orange-600 bg-orange-50" : "text-green-600 bg-green-50"}`}>
+                            <div key={row.label} className="flex items-center justify-between py-3 border-b border-zinc-800 last:border-0">
+                                <span className="text-sm text-gray-400">{row.label}</span>
+                                <span className={`text-sm font-bold px-3 py-0.5 rounded-full ${row.alert ? "text-orange-400 bg-orange-950/40" : "text-green-400 bg-green-950/40"}`}>
                                     {row.value}
                                 </span>
                             </div>
                         ))}
                     </div>
                 </div>
-                <div className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-3xl border border-sky-100 p-8">
-                    <h3 className="text-xl font-bold text-gray-900 mb-5">Intégrations supportées</h3>
+                <div className="bg-gradient-to-br from-violet-950/30 to-purple-950/30 rounded-3xl border border-violet-900/50 p-8">
+                    <h3 className="text-xl font-bold text-gray-100 mb-5">Intégrations supportées</h3>
                     <div className="grid grid-cols-2 gap-3">
                         {["AWS IAM", "Azure AD", "GCP IAM", "Okta", "HashiCorp Vault", "Terraform", "Kubernetes RBAC", "GitHub Actions"].map((tool) => (
-                            <div key={tool} className="bg-white rounded-xl border border-sky-100 px-4 py-2.5 text-sm font-medium text-gray-700 text-center">
+                            <div key={tool} className="bg-zinc-900 rounded-xl border border-violet-900/50 px-4 py-2.5 text-sm font-medium text-gray-300 text-center">
                                 {tool}
                             </div>
                         ))}

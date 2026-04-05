@@ -18,7 +18,7 @@ const AppLayoutRegLog: React.FC<AppLayoutProps> = ({
         <link rel="icon" href="/favicon.ico" />
       </Head>
      
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#09090f] flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           {children}
         </div>
@@ -44,7 +44,7 @@ const AppLayoutRegLog: React.FC<AppLayoutProps> = ({
         }
        
         .form-input {
-          @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200;
+          @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyna-600 focus:border-transparent transition duration-200;
         }
        
         .form-input-error {
@@ -56,11 +56,11 @@ const AppLayoutRegLog: React.FC<AppLayoutProps> = ({
         }
        
         .submit-button {
-          @apply w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200;
+          @apply w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-cyna-600 hover:bg-cyna-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyna-600 transition duration-200;
         }
        
         .submit-button:disabled {
-          @apply bg-blue-400 cursor-not-allowed;
+          @apply bg-cyna-400 cursor-not-allowed;
         }
        
         .form-footer {
@@ -68,7 +68,7 @@ const AppLayoutRegLog: React.FC<AppLayoutProps> = ({
         }
        
         .form-link {
-          @apply font-medium text-blue-600 hover:text-blue-500;
+          @apply font-medium text-cyna-600 hover:text-cyna-500;
         }
        
         /* Animation de chargement */

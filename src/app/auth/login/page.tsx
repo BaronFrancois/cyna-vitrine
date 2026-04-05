@@ -1,238 +1,218 @@
 "use client";
 
-// Importations des dépendances nécessaires
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
 import AppLayout from '@/layout/AppLayout';
+import Link from 'next/link';
 
-// Interface pour typer les données du formulaire
 interface FormData {
-	email: string;
-	password: string;
+    email: string;
+    password: string;
 }
 
-// Interface pour typer les erreurs du formulaire
 interface FormErrors {
-	email?: string;
-	password?: string;
-	general?: string;
+    email?: string;
+    password?: string;
+    general?: string;
 }
 
-// Composant principal de la page de connexion
+type ErrorKind = 'wrong_password' | 'unconfirmed' | 'generic';
+
+function classifyError(error: unknown): ErrorKind {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    const msg: string =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? '';
+
+    if (status === 403 || msg.toLowerCase().includes('confirm') || msg.toLowerCase().includes('validé')) {
+        return 'unconfirmed';
+    }
+    if (status === 401) return 'wrong_password';
+    return 'generic';
+}
+
 export default function Login() {
-	// Initialisation du routeur pour la navigation
-	const router = useRouter();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirectTo = searchParams.get('redirect') ?? '/dashboard';
 
-	// État pour stocker les données du formulaire
-	const [formData, setFormData] = useState<FormData>({
-		email: '',
-		password: ''
-	});
+    const [formData, setFormData] = useState<FormData>({ email: '', password: '' });
+    const [errors, setErrors] = useState<FormErrors>({});
+    const [errorKind, setErrorKind] = useState<ErrorKind | null>(null);
+    const [rememberMe, setRememberMe] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-	// État pour gérer les erreurs de validation
-	const [errors, setErrors] = useState<FormErrors>({});
+    const validateForm = (): boolean => {
+        const newErrors: FormErrors = {};
+        if (!formData.email) {
+            newErrors.email = "L'email est requis";
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            newErrors.email = "Format d'email invalide";
+        }
+        if (!formData.password) {
+            newErrors.password = 'Le mot de passe est requis';
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
-	// État pour gérer l'affichage du chargement pendant la soumission
-	const [isLoading, setIsLoading] = useState(false);
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (errors[name as keyof FormErrors]) {
+            setErrors(prev => ({ ...prev, [name]: undefined }));
+        }
+    };
 
-	/**
-	 * Valide les données du formulaire
-	 * @returns true si le formulaire est valide, false sinon
-	 */
-	const validateForm = (): boolean => {
-		const newErrors: FormErrors = {};
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!validateForm()) return;
 
-		// Validation de l'email
-		if (!formData.email) {
-			newErrors.email = 'L\'email est requis';
-		} else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-			newErrors.email = 'Format d\'email invalide';
-		}
+        setIsLoading(true);
+        setErrors({});
+        setErrorKind(null);
 
-		// Validation du mot de passe
-		if (!formData.password) {
-			newErrors.password = 'Le mot de passe est requis';
-		} else if (formData.password.length < 6) {
-			newErrors.password = 'Le mot de passe doit contenir au moins 6 caractères';
-		}
+        try {
+            const res = await api().post('/auth/login', {
+                email: formData.email,
+                password: formData.password,
+            });
 
-		// Mise à jour des erreurs et retour de la validité
-		setErrors(newErrors);
-		return Object.keys(newErrors).length === 0;
-	};
+            const token: string = res.data?.access_token ?? res.data?.token ?? '';
+            const maxAge = rememberMe ? 30 * 24 * 3600 : 7 * 24 * 3600;
+            document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}`;
+            if (token) localStorage.setItem('token', token);
 
-	/**
-	 * Gère les changements dans les champs du formulaire
-	 * @param e - Événement de changement d'input
-	 */
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = e.target;
+            router.push(redirectTo);
+        } catch (error) {
+            const kind = classifyError(error);
+            setErrorKind(kind);
 
-		// Met à jour les données du formulaire
-		setFormData(prev => ({
-			...prev,
-			[name]: value
-		}));
+            if (kind === 'wrong_password') {
+                setErrors({ general: 'Mot de passe incorrect.' });
+            } else if (kind === 'unconfirmed') {
+                setErrors({ general: 'Votre compte n\'est pas encore confirmé. Vérifiez votre boîte email.' });
+            } else {
+                setErrors({ general: 'Une erreur est survenue. Veuillez réessayer.' });
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-		// Efface l'erreur du champ lorsque l'utilisateur commence à taper
-		if (errors[name as keyof FormErrors]) {
-			setErrors(prev => ({
-				...prev,
-				[name]: undefined
-			}));
-		}
-	};
+    return (
+        <AppLayout>
+            <div className="flex min-h-[calc(100vh-10rem)] w-full flex-col items-center justify-center bg-gradient-to-br from-[#0a0a23] via-[#1a1a40] to-[#2a2a60] py-12 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-md w-full space-y-8 bg-zinc-900 border border-zinc-700 p-8 rounded-lg shadow-md">
+                    <div>
+                        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-100">
+                            Connectez-vous à votre compte
+                        </h2>
+                    </div>
 
-	/**
-	 * Gère la soumission du formulaire
-	 * @param e - Événement de soumission du formulaire
-	 */
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
+                    {/* Erreur générale */}
+                    {errors.general && (
+                        <div className="bg-red-950/40 border-l-4 border-red-500 p-4 rounded-r-lg">
+                            <p className="text-sm text-red-400">{errors.general}</p>
+                            {errorKind === 'wrong_password' && (
+                                <p className="mt-1 text-sm text-red-400">
+                                    <Link href="/forgot-password" className="font-medium underline hover:text-red-300">
+                                        Mot de passe oublié ?
+                                    </Link>
+                                </p>
+                            )}
+                            {errorKind === 'unconfirmed' && (
+                                <p className="mt-1 text-sm text-red-400">
+                                    Vérifiez vos spams ou{' '}
+                                    <Link href="/support#contact" className="font-medium underline hover:text-red-300">
+                                        contactez le support
+                                    </Link>{' '}
+                                    si le problème persiste.
+                                </p>
+                            )}
+                        </div>
+                    )}
 
-		// Valide le formulaire avant soumission
-		if (!validateForm()) return;
+                    <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+                        <div className="rounded-md shadow-sm space-y-4">
+                            <div>
+                                <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+                                    Email
+                                </label>
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    autoComplete="email"
+                                    required
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    className={`mt-1 block w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-zinc-600'} bg-zinc-800 text-gray-100 placeholder-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-cyna-600 focus:border-cyna-600`}
+                                    placeholder="Entrez votre adresse mail"
+                                />
+                                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                            </div>
 
-		// Active l'état de chargement et réinitialise les erreurs
-		setIsLoading(true);
-		setErrors({});
+                            <div>
+                                <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                                    Mot de passe
+                                </label>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    autoComplete="current-password"
+                                    required
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    className={`mt-1 block w-full px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-zinc-600'} bg-zinc-800 text-gray-100 placeholder-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-cyna-600 focus:border-cyna-600`}
+                                    placeholder="Entrez votre mot de passe"
+                                />
+                                {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+                            </div>
+                        </div>
 
-		try {
-			// Envoi des données de connexion au serveur
-			const reponse = await api().post('/auth/login', formData);
+                        {/* Se souvenir de moi + Mot de passe oublié */}
+                        <div className="flex items-center justify-between">
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    checked={rememberMe}
+                                    onChange={e => setRememberMe(e.target.checked)}
+                                    className="h-4 w-4 rounded border-gray-300 text-cyna-600 focus:ring-cyna-600"
+                                />
+                                <span className="text-sm text-gray-400">Se souvenir de moi</span>
+                            </label>
+                            <Link href="/forgot-password" className="text-sm font-medium text-cyna-600 hover:text-cyna-500">
+                                Mot de passe oublié ?
+                            </Link>
+                        </div>
 
-			if (reponse.status !== 200) {
-				throw new Error('Échec de la connexion');
-				setErrors({
-					general: 'Échec de la connexion'
-				});
-				return;
-			}
+                        <div>
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-cyna-600 hover:bg-cyna-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyna-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {isLoading ? 'Connexion en cours...' : 'Se connecter'}
+                            </button>
+                        </div>
+                    </form>
 
-			if (reponse.status === 200) {
-				document.cookie = `auth_token=${reponse.data.accessToken}; path=/; max-age=${7 * 24 * 3600}`;
-				// Redirection vers le tableau de bord après connexion réussie
-				router.push('/dashboard');
-				return;
-			}
-		} catch (error) {
-			// Gestion des erreurs
-			setErrors({
-				general: error instanceof Error ? error.message : 'Une erreur est survenue'
-			});
-		} finally {
-			// Désactive l'état de chargement dans tous les cas
-			setIsLoading(false);
-		}
-	};
+                    <div className="relative flex items-center">
+                        <div className="flex-grow border-t border-zinc-700"></div>
+                        <span className="mx-3 text-sm text-gray-500">Ou</span>
+                        <div className="flex-grow border-t border-zinc-700"></div>
+                    </div>
 
-	return (
-		<AppLayout>
-			<div className="flex min-h-[calc(100vh-10rem)] w-full flex-col items-center justify-center bg-gradient-to-br from-[#0a0a23] via-[#1a1a40] to-[#2a2a60] py-12 px-4 sm:px-6 lg:px-8">
-			{/* Carte du formulaire avec ombre et espacement */}
-			<div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
-				{/* En-tête du formulaire */}
-				<div>
-					<h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-						Connectez-vous à votre compte
-					</h2>
-				</div>
-
-				{/* Affichage des erreurs générales */}
-				{errors.general && (
-					<div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-						<p className="text-sm text-red-700">{errors.general}</p>
-					</div>
-				)}
-
-				{/* Formulaire principal */}
-				<form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-					{/* Conteneur des champs du formulaire avec espacement */}
-					<div className="rounded-md shadow-sm space-y-4">
-						{/* Groupe de champ email */}
-						<div>
-							<label htmlFor="email" className="block text-sm font-medium text-gray-700">
-								Email
-							</label>
-							<input
-								id="email"
-								name="email"
-								type="email"
-								autoComplete="email"
-								required
-								value={formData.email}
-								onChange={handleChange}
-								className={`mt-1 block w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
-								placeholder="Entrez votre adresse mail"
-							/>
-							{/* Affichage des erreurs de validation pour l'email */}
-							{errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-						</div>
-
-						{/* Groupe de champ mot de passe */}
-						<div>
-							<label htmlFor="password" className="block text-sm font-medium text-gray-700">
-								Mot de passe
-							</label>
-							<input
-								id="password"
-								name="password"
-								type="password"
-								autoComplete="current-password"
-								required
-								value={formData.password}
-								onChange={handleChange}
-								className={`mt-1 block w-full px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
-								placeholder="Entrez votre mot de passe"
-							/>
-							{/* Affichage des erreurs de validation pour le mot de passe */}
-							{errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-						</div>
-					</div>
-
-					{/* Conteneur du bouton de soumission */}
-					<div>
-						<button
-							type="submit"
-							disabled={isLoading}
-							className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							{isLoading ? 'Connexion en cours...' : 'Se connecter'}
-						</button>
-					</div>
-				</form>
-
-				{/* Lien mot de passe oublié + séparateur */}
-				<div className="mt-6">
-					<div className="flex flex-col space-y-4">
-						{/* Lien "Mot de passe oublié" aligné à droite */}
-						<div className="flex items-center justify-end">
-							<a href="/forgot-password" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
-								Mot de passe oublié ?
-							</a>
-						</div>
-
-						{/* Séparateur "Ou" */}
-						<div className="relative flex items-center">
-							<div className="flex-grow border-t border-gray-300"></div>
-							<span className="mx-3 text-sm text-gray-500">Ou</span>
-							<div className="flex-grow border-t border-gray-300"></div>
-						</div>
-					</div>
-
-					{/* Section d'inscription */}
-					<div className="mt-6">
-						<p className="text-center text-sm text-gray-600">
-							Pas encore de compte ?{' '}
-							<a href="/auth/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-								Créer un compte
-							</a>
-						</p>
-					</div>
-				</div>
-			</div>
-			</div>
-		</AppLayout>
-	);
+                    <div className="text-center text-sm text-gray-400">
+                        Pas encore de compte ?{' '}
+                        <Link href="/auth/register" className="font-medium text-cyna-600 hover:text-cyna-500">
+                            Créer un compte
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        </AppLayout>
+    );
 }

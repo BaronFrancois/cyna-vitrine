@@ -26,7 +26,7 @@ type CartContextValue = {
     itemCount: number;
     addToCart: (item: CartItem) => void;
     removeFromCart: (id: string) => void;
-    updateQuantity: (id: string, quantity: number) => void;
+    updateCartItem: (id: string, updates: Partial<CartItem>) => void;
     clearCart: () => void;
     total: number;
 };
@@ -72,9 +72,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setItems((prev) => prev.filter((item) => item.id !== id));
     }, []);
 
-    const updateQuantity = useCallback((id: string, quantity: number) => {
+    const updateCartItem = useCallback((id: string, updates: Partial<CartItem>) => {
         setItems((prev) =>
-            prev.map((item) => (item.id === id ? { ...item, quantity } : item))
+            prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
         );
     }, []);
 
@@ -99,7 +99,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             itemCount,
             addToCart,
             removeFromCart,
-            updateQuantity,
+            updateCartItem,
             clearCart,
             total,
         }),
@@ -109,7 +109,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             itemCount,
             addToCart,
             removeFromCart,
-            updateQuantity,
+            updateCartItem,
             clearCart,
             total,
         ]

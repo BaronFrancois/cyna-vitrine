@@ -84,16 +84,16 @@ export default function ForgotPassword() {
   return (
     <AppLayout>
     <div className="flex min-h-[calc(100vh-10rem)] w-full flex-col items-center justify-center bg-gradient-to-br from-[#0a0a23] via-[#1a1a40] to-[#2a2a60] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
+      <div className="max-w-md w-full space-y-8 bg-zinc-900 border border-zinc-700 p-8 rounded-lg shadow-md">
 
         {/* ── Étape 1 : saisie de l'email ── */}
         {step === 'email' && (
           <>
             <div>
-              <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-100">
                 Mot de passe oublié
               </h2>
-              <p className="mt-2 text-center text-sm text-gray-600">
+              <p className="mt-2 text-center text-sm text-gray-400">
                 Saisissez votre adresse email. Vous recevrez un code à 6 chiffres.
               </p>
             </div>
@@ -106,7 +106,7 @@ export default function ForgotPassword() {
 
             <form className="mt-8 space-y-6" onSubmit={handleEmailSubmit} suppressHydrationWarning>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-300">
                   Email
                 </label>
                 <input
@@ -121,8 +121,8 @@ export default function ForgotPassword() {
                     setErrors((prev) => ({ ...prev, email: undefined }));
                   }}
                   className={`mt-1 block w-full px-3 py-2 border ${
-                    errors.email ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                    errors.email ? 'border-red-500' : 'border-zinc-600'
+                  } rounded-md shadow-sm bg-zinc-800 text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-cyna-600 focus:border-cyna-600`}
                   placeholder="Entrez votre adresse email"
                 />
                 {errors.email && (
@@ -135,7 +135,7 @@ export default function ForgotPassword() {
                   suppressHydrationWarning
                   type="submit"
                   disabled={isLoading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-cyna-600 hover:bg-cyna-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyna-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? 'Envoi en cours…' : 'Recevoir le code'}
                 </button>
@@ -143,7 +143,7 @@ export default function ForgotPassword() {
             </form>
 
             <div className="text-center text-sm">
-              <a href="/auth/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+              <a href="/auth/login" className="font-medium text-cyna-600 hover:text-cyna-500">
                 ← Retour à la connexion
               </a>
             </div>
@@ -157,7 +157,7 @@ export default function ForgotPassword() {
               <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
                 Nouveau mot de passe
               </h2>
-              <p className="mt-2 text-center text-sm text-gray-600">
+              <p className="mt-2 text-center text-sm text-gray-400">
                 Un code à 6 chiffres a été envoyé à{' '}
                 <span className="font-medium text-gray-900">{email}</span>.
               </p>
@@ -171,7 +171,7 @@ export default function ForgotPassword() {
 
             <form className="mt-8 space-y-4" onSubmit={handleResetSubmit}>
               <div>
-                <label htmlFor="code" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="code" className="block text-sm font-medium text-gray-300">
                   Code de vérification
                 </label>
                 <input
@@ -185,8 +185,8 @@ export default function ForgotPassword() {
                     setErrors((prev) => ({ ...prev, code: undefined }));
                   }}
                   className={`mt-1 block w-full px-3 py-2 border ${
-                    errors.code ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-center text-xl tracking-widest font-mono`}
+                    errors.code ? 'border-red-500' : 'border-zinc-600'
+                  } rounded-md shadow-sm bg-zinc-800 text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-cyna-600 focus:border-cyna-600 text-center text-xl tracking-widest font-mono`}
                   placeholder="123456"
                 />
                 {errors.code && (
@@ -195,7 +195,7 @@ export default function ForgotPassword() {
               </div>
 
               <div>
-                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-300">
                   Nouveau mot de passe
                 </label>
                 <input
@@ -208,8 +208,8 @@ export default function ForgotPassword() {
                     setErrors((prev) => ({ ...prev, newPassword: undefined }));
                   }}
                   className={`mt-1 block w-full px-3 py-2 border ${
-                    errors.newPassword ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                    errors.newPassword ? 'border-red-500' : 'border-zinc-600'
+                  } rounded-md shadow-sm bg-zinc-800 text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-cyna-600 focus:border-cyna-600`}
                   placeholder="Minimum 6 caractères"
                 />
                 {errors.newPassword && (
@@ -218,7 +218,7 @@ export default function ForgotPassword() {
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
                   Confirmer le mot de passe
                 </label>
                 <input
@@ -231,8 +231,8 @@ export default function ForgotPassword() {
                     setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
                   }}
                   className={`mt-1 block w-full px-3 py-2 border ${
-                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500`}
+                    errors.confirmPassword ? 'border-red-500' : 'border-zinc-600'
+                  } rounded-md shadow-sm bg-zinc-800 text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-cyna-600 focus:border-cyna-600`}
                   placeholder="Retapez votre mot de passe"
                 />
                 {errors.confirmPassword && (
@@ -244,7 +244,7 @@ export default function ForgotPassword() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-cyna-600 hover:bg-cyna-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyna-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? 'Réinitialisation…' : 'Réinitialiser mon mot de passe'}
                 </button>
@@ -257,7 +257,7 @@ export default function ForgotPassword() {
                     setConfirmPassword('');
                     setErrors({});
                   }}
-                  className="w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="w-full flex justify-center py-2 px-4 border border-zinc-600 text-sm font-medium rounded-md text-gray-300 bg-zinc-800 hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyna-600"
                 >
                   ← Renvoyer un code
                 </button>
@@ -269,9 +269,9 @@ export default function ForgotPassword() {
         {/* ── Étape 3 : succès ── */}
         {step === 'success' && (
           <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-950/40 mb-4">
               <svg
-                className="h-8 w-8 text-green-600"
+                className="h-8 w-8 text-green-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -284,17 +284,17 @@ export default function ForgotPassword() {
                 />
               </svg>
             </div>
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
+            <h2 className="text-3xl font-extrabold text-gray-100 mb-2">
               Mot de passe réinitialisé
             </h2>
-            <p className="text-sm text-gray-600 mb-6">
+            <p className="text-sm text-gray-400 mb-6">
               Votre mot de passe a été mis à jour avec succès.
               <br />
               Vous pouvez maintenant vous reconnecter.
             </p>
             <a
               href="/auth/login"
-              className="w-full inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+              className="w-full inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-cyna-600 hover:bg-cyna-700"
             >
               Se connecter
             </a>

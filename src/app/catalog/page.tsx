@@ -44,10 +44,10 @@ function CatalogContent() {
 
                 {/* Catalog Hero */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-10 md:mb-12">
-                    <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4 tracking-tight">
+                    <h1 className="text-4xl md:text-6xl font-bold text-gray-100 mb-4 tracking-tight">
                         Trouvez la bonne protection.
                     </h1>
-                    <p className="text-xl text-gray-500 mb-6 md:mb-8">
+                    <p className="text-xl text-gray-400 mb-6 md:mb-8">
                         Explorez notre suite d&apos;outils de cybersécurité nouvelle génération.
                     </p>
                     {/* Desktop : recherche centrée sous le sous-titre (la loupe header est masquée) */}
@@ -57,14 +57,14 @@ function CatalogContent() {
                 </div>
 
                 {/* Filter Bar — padding vertical pour ne pas tronquer les box-shadow des pastilles */}
-                <div className="sticky top-16 z-40 bg-white/90 backdrop-blur-md border-b border-gray-200 mb-12">
+                <div className="sticky top-16 z-40 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800 mb-12">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 sm:pb-6">
                         {/* Mobile: dropdown */}
                         <div className="sm:hidden">
                             <select
                                 value={activeFilter}
                                 onChange={(e) => handleFilterChange(e.target.value)}
-                                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-cyna-500"
+                                className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-cyna-500"
                                 aria-label="Filtrer par catégorie"
                             >
                                 {categories.map((cat) => (
@@ -100,7 +100,7 @@ function CatalogContent() {
                         {filteredProducts.map((product) => (
                             <div
                                 key={product.id}
-                                className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group"
+                                className="bg-zinc-900 rounded-3xl shadow-lg border border-zinc-800 overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group"
                             >
                                 <div className="h-64 overflow-hidden relative">
                                     <img
@@ -126,20 +126,20 @@ function CatalogContent() {
                                         {product.category}
                                     </div>
 
-                                    <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                                    <h3 className="text-2xl font-bold text-gray-100 mb-2">
                                         {product.name}
                                     </h3>
 
-                                    <p className="text-gray-500 text-sm leading-relaxed mb-6">
+                                    <p className="text-gray-400 text-sm leading-relaxed mb-6">
                                         {product.shortDescription}
                                     </p>
 
-                                    <div className="mt-auto pt-6 border-t border-gray-100 flex items-center justify-between">
+                                    <div className="mt-auto pt-6 border-t border-zinc-700 flex items-center justify-between">
                                         <div>
-                                            <span className="text-lg font-semibold text-gray-900">
+                                            <span className="text-lg font-semibold text-gray-100">
                                                 {product.price}€
                                             </span>
-                                            <span className="text-gray-400 text-xs">
+                                            <span className="text-gray-500 text-xs">
                                                 {" "}
                                                 / {product.period === "monthly" ? "mois" : "an"}
                                             </span>

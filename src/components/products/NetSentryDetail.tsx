@@ -25,9 +25,9 @@ const IDS_EVENTS = [
 ];
 
 const SEVERITY_STYLES: Record<string, string> = {
-    critical: "bg-red-100 text-red-700 border-red-200",
-    high: "bg-orange-100 text-orange-700 border-orange-200",
-    medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    critical: "bg-red-950/50 text-red-400 border-red-800",
+    high: "bg-orange-950/50 text-orange-400 border-orange-800",
+    medium: "bg-yellow-950/50 text-yellow-400 border-yellow-800",
 };
 
 const ZERO_TRUST_STEPS = [
@@ -45,11 +45,11 @@ export default function NetSentryDetail() {
         <div className="space-y-16">
 
             {/* Maintenance banner */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-2xl px-6 py-4 flex items-start gap-4">
+            <div className="bg-yellow-950/30 border border-yellow-800/50 rounded-2xl px-6 py-4 flex items-start gap-4">
                 <span className="text-2xl flex-shrink-0">🔧</span>
                 <div>
-                    <div className="font-semibold text-yellow-800 mb-1">Produit en maintenance planifiée</div>
-                    <p className="text-sm text-yellow-700">
+                    <div className="font-semibold text-yellow-400 mb-1">Produit en maintenance planifiée</div>
+                    <p className="text-sm text-yellow-500/80">
                         Net Sentry est temporairement indisponible pour une mise à jour majeure de son moteur d'inspection.
                         Les clients existants ne sont pas impactés. Disponibilité prévue : prochainement.
                     </p>
@@ -58,11 +58,11 @@ export default function NetSentryDetail() {
 
             {/* Traffic chart */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">Analyse du trafic réseau</h2>
+                <h2 className="text-2xl font-bold text-gray-100 mb-3">Analyse du trafic réseau</h2>
                 <p className="text-gray-500 mb-8">
                     Inspection approfondie des paquets (DPI) avec détection d'anomalies par apprentissage automatique.
                 </p>
-                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
+                <div className="bg-zinc-900 rounded-3xl border border-zinc-700 shadow-sm p-8">
                     <div className="flex items-end justify-between gap-2 h-40 mb-3">
                         {TRAFFIC_BARS.map((bar) => (
                             <div key={bar.label} className="flex-1 flex flex-col items-center gap-1">
@@ -101,7 +101,7 @@ export default function NetSentryDetail() {
 
             {/* IDS / IPS */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Prévention d'intrusion (IDS/IPS)</h2>
+                <h2 className="text-2xl font-bold text-gray-100 mb-6">Prévention d'intrusion (IDS/IPS)</h2>
                 <div className="bg-gray-950 rounded-3xl overflow-hidden shadow-2xl">
                     <div className="flex items-center gap-2 px-5 py-4 bg-gray-900 border-b border-gray-800">
                         <span className="w-3 h-3 rounded-full bg-red-500" />
@@ -127,8 +127,8 @@ export default function NetSentryDetail() {
 
             {/* DDoS */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl border border-orange-100 p-8">
-                    <h3 className="text-xl font-bold text-gray-900 mb-5">Protection DDoS</h3>
+                <div className="bg-gradient-to-br from-orange-950/30 to-red-950/30 rounded-3xl border border-orange-900/50 p-8">
+                    <h3 className="text-xl font-bold text-gray-100 mb-5">Protection DDoS</h3>
                     <div className="space-y-4">
                         {[
                             { label: "Capacité de mitigation", value: "5 Tbps", highlight: true },
@@ -137,9 +137,9 @@ export default function NetSentryDetail() {
                             { label: "Attaques bloquées / mois", value: "2 847" },
                             { label: "Disponibilité garantie", value: "99.99%" },
                         ].map((row) => (
-                            <div key={row.label} className="flex items-center justify-between py-3 border-b border-orange-100 last:border-0">
-                                <span className="text-sm text-gray-600">{row.label}</span>
-                                <span className={`text-sm font-bold ${row.highlight ? "text-orange-600 text-lg" : "text-gray-900"}`}>
+                            <div key={row.label} className="flex items-center justify-between py-3 border-b border-orange-900/50 last:border-0">
+                                <span className="text-sm text-gray-400">{row.label}</span>
+                                <span className={`text-sm font-bold ${row.highlight ? "text-orange-400 text-lg" : "text-gray-100"}`}>
                                     {row.value}
                                 </span>
                             </div>
@@ -173,8 +173,8 @@ export default function NetSentryDetail() {
             </div>
 
             {/* Protocols */}
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Protocoles et couverture</h3>
+            <div className="bg-zinc-900 rounded-3xl border border-zinc-700 shadow-sm p-8">
+                <h3 className="text-xl font-bold text-gray-100 mb-6">Protocoles et couverture</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {[
                         { proto: "HTTP/S", desc: "Layer 7 inspection" },
@@ -186,7 +186,7 @@ export default function NetSentryDetail() {
                         { proto: "RDP", desc: "Accès bureau distant" },
                         { proto: "BGP/OSPF", desc: "Routage protégé" },
                     ].map((item) => (
-                        <div key={item.proto} className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                        <div key={item.proto} className="bg-zinc-800 rounded-2xl p-4 border border-zinc-700">
                             <div className="font-mono font-bold text-orange-600 text-sm">{item.proto}</div>
                             <div className="text-xs text-gray-400 mt-1">{item.desc}</div>
                         </div>

@@ -35,7 +35,7 @@ function Tile({ v }: { v: CisaVulnerability }) {
                         Ransomware actif
                     </span>
                 ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/20">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyna-600/15 text-cyna-500 border border-cyna-600/25">
                         <ShieldAlert className="w-3 h-3" />
                         Exploitation active
                     </span>
@@ -45,7 +45,7 @@ function Tile({ v }: { v: CisaVulnerability }) {
 
             {/* Titre */}
             <div className="flex-1">
-                <p className="text-white font-semibold text-sm leading-snug line-clamp-2 group-hover:text-blue-300 transition-colors mb-1.5">
+                <p className="text-white font-semibold text-sm leading-snug line-clamp-2 group-hover:text-violet-200 transition-colors mb-1.5">
                     {v.vulnerabilityName}
                 </p>
                 <p className="text-white/40 text-xs">
@@ -60,7 +60,7 @@ function Tile({ v }: { v: CisaVulnerability }) {
 
             {/* Pied */}
             <div className="flex items-center justify-between pt-3 border-t border-white/[0.08]">
-                <span className="font-mono text-xs text-blue-400 font-semibold">{v.cveID}</span>
+                <span className="font-mono text-xs text-cyna-500 font-semibold">{v.cveID}</span>
                 <span className="text-white/30 text-xs">{formatDate(v.dateAdded)}</span>
             </div>
         </a>
@@ -111,7 +111,7 @@ export default function DashboardMockup() {
             {/* Barre du haut */}
             <div className="flex items-center justify-between gap-4 bg-white/[0.05] border border-white/[0.08] rounded-2xl px-5 py-3">
                 <div className="flex items-center gap-2.5">
-                    <Activity className="w-4 h-4 text-blue-400 shrink-0" />
+                    <Activity className="w-4 h-4 text-cyna-500 shrink-0" />
                     <span className="text-white/70 text-sm font-medium">
                         {data
                             ? <><span className="text-white font-bold">{data.total.toLocaleString("fr-FR")}</span> vulnérabilités surveillées</>
@@ -156,7 +156,7 @@ export default function DashboardMockup() {
                 </Link>
                 <Link
                     href="/catalog"
-                    className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm py-3 rounded-2xl transition-colors duration-200"
+                    className="flex-1 inline-flex items-center justify-center gap-2 bg-cyna-600 hover:bg-cyna-500 text-white font-semibold text-sm py-3 rounded-2xl transition-colors duration-200"
                 >
                     Voir les offres
                     <ArrowRight className="w-4 h-4" />

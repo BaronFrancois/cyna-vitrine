@@ -12,10 +12,12 @@ import { notFound } from "next/navigation";
 import EdrProDetail from "@/components/products/EdrProDetail";
 import XdrMaxDetail from "@/components/products/XdrMaxDetail";
 import SocManagedDetail from "@/components/products/SocManagedDetail";
+import ProductCarousel from "@/components/products/ProductCarousel";
+import SimilarServices from "@/components/products/SimilarServices";
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-    EDR: { bg: "bg-violet-100", text: "text-violet-800", border: "border-violet-200" },
-    XDR: { bg: "bg-fuchsia-100", text: "text-fuchsia-800", border: "border-fuchsia-200" },
-    SOC: { bg: "bg-purple-100", text: "text-purple-800", border: "border-purple-200" },
+    EDR: { bg: "bg-violet-950/50", text: "text-violet-300", border: "border-violet-800" },
+    XDR: { bg: "bg-fuchsia-950/50", text: "text-fuchsia-300", border: "border-fuchsia-800" },
+    SOC: { bg: "bg-purple-950/50", text: "text-purple-300", border: "border-purple-800" },
 };
 
 const PRODUCT_DETAIL_COMPONENTS: Record<string, React.FC> = {
@@ -75,7 +77,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
                         <div
                             role="status"
-                            className="flex flex-col gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900 sm:flex-row sm:items-center sm:justify-between"
+                            className="flex flex-col gap-3 rounded-2xl border border-green-800 bg-green-950/40 px-4 py-3 text-sm text-green-300 sm:flex-row sm:items-center sm:justify-between"
                         >
                             <span>
                                 <strong>{product.name}</strong> a été ajouté à votre panier.
@@ -92,12 +94,12 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
                 {/* Breadcrumb */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
-                    <nav className="flex items-center gap-2 text-sm text-gray-400">
-                        <Link href="/" className="hover:text-gray-700 transition-colors">Accueil</Link>
+                    <nav className="flex items-center gap-2 text-sm text-gray-500">
+                        <Link href="/" className="hover:text-gray-300 transition-colors">Accueil</Link>
                         <span>/</span>
-                        <Link href="/catalog" className="hover:text-gray-700 transition-colors">Catalogue</Link>
+                        <Link href="/catalog" className="hover:text-gray-300 transition-colors">Catalogue</Link>
                         <span>/</span>
-                        <span className="text-gray-900 font-medium">{product.name}</span>
+                        <span className="text-gray-200 font-medium">{product.name}</span>
                     </nav>
                 </div>
 
@@ -112,35 +114,30 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                     {product.category}
                                 </span>
                                 {product.status === "available" && (
-                                    <span className="text-xs font-semibold text-green-600 bg-green-50 border border-green-200 px-3 py-1 rounded-full">
-                                        ● Disponible
+                                    <span className="text-xs font-semibold text-green-400 bg-green-950/40 border border-green-800 px-3 py-1 rounded-full">
+                                        ● Disponible immédiatement
                                     </span>
                                 )}
-                                {product.status === "maintenance" && (
-                                    <span className="text-xs font-semibold text-yellow-600 bg-yellow-50 border border-yellow-200 px-3 py-1 rounded-full">
-                                        ● Maintenance
-                                    </span>
-                                )}
-                                {product.status === "coming_soon" && (
-                                    <span className="text-xs font-semibold text-gray-500 bg-gray-50 border border-gray-200 px-3 py-1 rounded-full">
-                                        ● Bientôt disponible
+                                {(product.status === "maintenance" || product.status === "coming_soon") && (
+                                    <span className="text-xs font-semibold text-yellow-400 bg-yellow-950/40 border border-yellow-800 px-3 py-1 rounded-full">
+                                        ● Service momentanément indisponible
                                     </span>
                                 )}
                             </div>
 
-                            <h1 className="text-5xl font-bold text-gray-900 mb-5 tracking-tight leading-tight">
+                            <h1 className="text-5xl font-bold text-gray-100 mb-5 tracking-tight leading-tight">
                                 {product.name}
                             </h1>
 
-                            <p className="text-lg text-gray-500 mb-8 leading-relaxed">
+                            <p className="text-lg text-gray-400 mb-8 leading-relaxed">
                                 {product.fullDescription}
                             </p>
 
                             {/* Features */}
                             <ul className="grid grid-cols-2 gap-3 mb-10">
                                 {product.features.map((f) => (
-                                    <li key={f} className="flex items-center gap-2.5 text-gray-700 text-sm font-medium">
-                                        <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 text-xs font-bold">
+                                    <li key={f} className="flex items-center gap-2.5 text-gray-300 text-sm font-medium">
+                                        <span className="w-5 h-5 rounded-full bg-violet-950/60 text-cyna-500 flex items-center justify-center flex-shrink-0 text-xs font-bold">
                                             ✓
                                         </span>
                                         {f}
@@ -151,30 +148,25 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                             {/* Pricing */}
                             <div className="mb-6">
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-4xl font-bold text-gray-900">{product.price}€</span>
-                                    <span className="text-gray-400 text-sm ml-1">
+                                    <span className="text-4xl font-bold text-gray-100">{product.price}€</span>
+                                    <span className="text-gray-500 text-sm ml-1">
                                         / {product.period === "monthly" ? "mois" : "an"}
                                     </span>
                                 </div>
                                 {product.period === "monthly" && (
-                                    <p className="text-xs text-gray-400 mt-1">Facturation mensuelle · Résiliation à tout moment.</p>
+                                    <p className="text-xs text-gray-500 mt-1">Facturation mensuelle · Résiliation à tout moment.</p>
                                 )}
                             </div>
 
                             {/* CTA */}
                             <div className="flex gap-3">
                                 {product.status === "available" ? (
-                                    <>
-                                        <Button size="lg" variant="primary" onClick={handleAddToCart}>
-                                            Ajouter au panier
-                                        </Button>
-                                        <Button size="lg" variant="outline" type="button" onClick={handleBuyNow}>
-                                            Acheter maintenant
-                                        </Button>
-                                    </>
+                                    <Button size="lg" variant="primary" onClick={handleBuyNow} className="font-bold tracking-wide w-full sm:w-auto px-8">
+                                        S'ABONNER MAINTENANT
+                                    </Button>
                                 ) : (
-                                    <Button size="lg" variant="secondary" disabled>
-                                        Indisponible actuellement
+                                    <Button size="lg" variant="secondary" disabled className="font-bold tracking-wide w-full sm:w-auto px-8 opacity-70">
+                                        SERVICE INDISPONIBLE
                                     </Button>
                                 )}
                             </div>
@@ -182,18 +174,12 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
                         {/* Right: Image */}
                         <div className="relative">
-                            <div className="rounded-3xl overflow-hidden shadow-2xl aspect-video">
-                                <img
-                                    src={product.image}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                            <div className="absolute -bottom-5 -left-5 bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
-                                <p className="text-xs text-gray-400 font-medium">À partir de</p>
-                                <p className="text-xl font-bold text-gray-900">
+                            <ProductCarousel mainImage={product.image} productName={product.name} />
+                            <div className="absolute -bottom-5 -left-5 bg-zinc-900 rounded-2xl shadow-xl p-4 border border-zinc-700">
+                                <p className="text-xs text-gray-500 font-medium">À partir de</p>
+                                <p className="text-xl font-bold text-gray-100">
                                     {product.price}€
-                                    <span className="text-sm font-normal text-gray-400">
+                                    <span className="text-sm font-normal text-gray-500">
                                         /{product.period === "monthly" ? "mois" : "an"}
                                     </span>
                                 </p>
@@ -202,7 +188,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     </div>
 
                     {/* Divider */}
-                    <div className="border-t border-gray-100 mb-20" />
+                    <div className="border-t border-zinc-800 mb-20" />
 
                     {/* Product-specific section */}
                     {DetailComponent && <DetailComponent />}
@@ -210,7 +196,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     {/* Bottom CTA */}
                     <div className="mt-20 bg-gradient-to-br from-cyna-600 to-[#4c1d95] rounded-3xl p-12 text-center text-white">
                         <h2 className="text-3xl font-bold mb-3">Prêt à sécuriser votre organisation ?</h2>
-                        <p className="text-blue-200 mb-8 text-lg">
+                        <p className="text-violet-200 mb-8 text-lg">
                             Commencez dès aujourd'hui avec {product.name}.
                         </p>
                         <div className="flex justify-center gap-4">
@@ -239,6 +225,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                         </div>
                     </div>
                 </div>
+                
+                {/* 7. Services similaires */}
+                <SimilarServices currentProductId={product.id} currentCategory={product.category} />
             </div>
         </AppLayout>
     );

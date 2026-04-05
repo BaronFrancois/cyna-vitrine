@@ -21,6 +21,12 @@ import {
     Lock,
     Settings,
     LifeBuoy,
+    MapPin,
+    Plus,
+    Trash2,
+    Pencil,
+    Star,
+    X,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -44,9 +50,9 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-    EDR: "bg-violet-100 text-violet-800",
-    XDR: "bg-fuchsia-100 text-fuchsia-800",
-    SOC: "bg-purple-100 text-purple-800",
+    EDR: "bg-violet-950/50 text-violet-300",
+    XDR: "bg-fuchsia-950/50 text-fuchsia-300",
+    SOC: "bg-purple-950/50 text-purple-300",
 };
 
 const MOCK_ACTIVITY = [
@@ -60,7 +66,215 @@ const MOCK_ACTIVITY = [
 // Pour la démo — sera remplacé par l'API abonnements
 const DEMO_SUBSCRIPTIONS = PRODUCTS.filter((_, i) => i < 2);
 
-type Tab = "overview" | "subscriptions" | "billing" | "settings";
+type Tab = "overview" | "subscriptions" | "billing" | "addresses" | "settings";
+
+// ── Types adresses / paiements ─────────────────────────────────────────────────
+
+interface Address {
+    id: number;
+    firstName: string;
+    lastName: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    region?: string;
+    postalCode: string;
+    country: string;
+    phone?: string;
+    isDefault: boolean;
+}
+
+interface PaymentMethod {
+    id: number;
+    brand: string;
+    last4: string;
+    expMonth: number;
+    expYear: number;
+    isDefault: boolean;
+}
+
+const MOCK_ADDRESSES: Address[] = [
+    { id: 1, firstName: "Jean", lastName: "Dupont", addressLine1: "12 rue de la Paix", city: "Paris", postalCode: "75001", country: "France", phone: "+33 6 12 34 56 78", isDefault: true },
+];
+
+const MOCK_PAYMENTS: PaymentMethod[] = [
+    { id: 1, brand: "VISA", last4: "4242", expMonth: 12, expYear: 2027, isDefault: true },
+];
+
+const BLANK_ADDRESS: Omit<Address, "id" | "isDefault"> = {
+    firstName: "", lastName: "", addressLine1: "", addressLine2: "", city: "", region: "", postalCode: "", country: "France", phone: "",
+};
+
+// ── Données historique commandes ───────────────────────────────────────────────
+
+const MOCK_ORDERS = [
+    { id: 101, service: "Détection étendue (XDR)", category: "XDR", period: "Mensuel", date: "2026-02-01", amount: 39.99, status: "active" },
+    { id: 102, service: "Protection avancée (EDR)", category: "EDR", period: "Mensuel", date: "2026-02-01", amount: 29.99, status: "active" },
+    { id: 103, service: "Détection étendue (XDR)", category: "XDR", period: "Mensuel", date: "2026-01-01", amount: 39.99, status: "active" },
+    { id: 104, service: "Protection avancée (EDR)", category: "EDR", period: "Mensuel", date: "2026-01-01", amount: 29.99, status: "active" },
+    { id: 105, service: "SOC managé", category: "SOC", period: "Annuel", date: "2025-12-01", amount: 299.99, status: "cancelled" },
+    { id: 106, service: "Détection étendue (XDR)", category: "XDR", period: "Mensuel", date: "2025-11-01", amount: 39.99, status: "active" },
+    { id: 107, service: "Protection avancée (EDR)", category: "EDR", period: "Mensuel", date: "2025-10-01", amount: 29.99, status: "active" },
+];
+
+const STATUS_LABEL: Record<string, string> = { active: "Active", cancelled: "Résiliée", renewed: "Renouvelée" };
+const STATUS_CLASS: Record<string, string> = {
+    active: "bg-green-950/40 text-green-400",
+    cancelled: "bg-red-950/40 text-red-400",
+    renewed: "bg-violet-950/40 text-violet-400",
+};
+
+function BillingTab({ payments, setDefaultPayment, deletePayment, subsCount }: {
+    payments: PaymentMethod[];
+    setDefaultPayment: (id: number) => void;
+    deletePayment: (id: number) => void;
+    subsCount: number;
+}) {
+    const [search, setSearch] = useState("");
+    const [filterYear, setFilterYear] = useState<string>("all");
+    const [filterCategory, setFilterCategory] = useState<string>("all");
+    const [filterStatus, setFilterStatus] = useState<string>("all");
+
+    const years = [...new Set(MOCK_ORDERS.map(o => o.date.slice(0, 4)))].sort((a, b) => Number(b) - Number(a));
+    const categories = [...new Set(MOCK_ORDERS.map(o => o.category))];
+
+    const filtered = MOCK_ORDERS.filter(o => {
+        const matchYear = filterYear === "all" || o.date.startsWith(filterYear);
+        const matchCat = filterCategory === "all" || o.category === filterCategory;
+        const matchStatus = filterStatus === "all" || o.status === filterStatus;
+        const matchSearch = !search || o.service.toLowerCase().includes(search.toLowerCase()) || o.date.includes(search);
+        return matchYear && matchCat && matchStatus && matchSearch;
+    });
+
+    const byYear = years.reduce<Record<string, typeof MOCK_ORDERS>>((acc, y) => {
+        const rows = filtered.filter(o => o.date.startsWith(y));
+        if (rows.length) acc[y] = rows;
+        return acc;
+    }, {});
+
+    const selectClass = "px-3 py-2 rounded-xl bg-zinc-800 border border-zinc-700 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600";
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-100 tracking-tight">Facturation & Commandes</h2>
+                    <p className="text-gray-400 text-sm mt-1">Historique de toutes vos commandes</p>
+                </div>
+            </div>
+
+            {/* Filtres + recherche */}
+            <div className="flex flex-wrap gap-3">
+                <input
+                    type="text"
+                    placeholder="Rechercher par service ou date…"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="flex-1 min-w-[200px] px-4 py-2 rounded-xl bg-zinc-800 border border-zinc-700 text-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600"
+                />
+                <select value={filterYear} onChange={e => setFilterYear(e.target.value)} className={selectClass}>
+                    <option value="all">Toutes les années</option>
+                    {years.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+                <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className={selectClass}>
+                    <option value="all">Tous les services</option>
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className={selectClass}>
+                    <option value="all">Tous les statuts</option>
+                    <option value="active">Active</option>
+                    <option value="cancelled">Résiliée</option>
+                    <option value="renewed">Renouvelée</option>
+                </select>
+            </div>
+
+            {/* Commandes groupées par année */}
+            {Object.keys(byYear).length === 0 ? (
+                <div className="text-center py-12 text-gray-500 text-sm bg-zinc-900 rounded-3xl border border-zinc-700">
+                    Aucune commande ne correspond à vos filtres.
+                </div>
+            ) : (
+                Object.entries(byYear).map(([year, orders]) => (
+                    <div key={year}>
+                        <h3 className="text-lg font-bold text-gray-300 mb-3 flex items-center gap-2">
+                            <span className="w-px h-5 bg-cyna-600 block" />{year}
+                        </h3>
+                        <div className="bg-zinc-900 rounded-3xl border border-zinc-700 overflow-hidden">
+                            {orders.map((order, i) => (
+                                <div key={order.id} className={`flex items-center justify-between p-4 hover:bg-zinc-800 transition-colors ${i !== 0 ? "border-t border-zinc-700/60" : ""}`}>
+                                    <div className="flex items-center gap-4 min-w-0">
+                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-bold ${CATEGORY_COLORS[order.category] ?? "bg-zinc-700 text-gray-300"}`}>
+                                            {order.category}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium text-gray-200 truncate">{order.service}</p>
+                                            <p className="text-xs text-gray-500">{order.date} · {order.period}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4 flex-shrink-0">
+                                        <span className="text-sm font-semibold text-gray-200">{order.amount.toFixed(2)} €</span>
+                                        <span className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_CLASS[order.status]}`}>
+                                            {STATUS_LABEL[order.status]}
+                                        </span>
+                                        <button className="text-xs text-cyna-600 hover:underline whitespace-nowrap">
+                                            Facture PDF
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))
+            )}
+
+            {/* Méthodes de paiement + prochaine échéance */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
+                    <div className="flex items-center justify-between mb-5">
+                        <h3 className="font-bold text-gray-100">Méthodes de paiement</h3>
+                        <button className="text-sm text-cyna-600 hover:underline flex items-center gap-1">
+                            <Plus size={13} /> Ajouter
+                        </button>
+                    </div>
+                    {payments.length === 0 && <p className="text-sm text-gray-500">Aucune carte enregistrée.</p>}
+                    <div className="space-y-3">
+                        {payments.map(pm => (
+                            <div key={pm.id} className={`flex items-center justify-between p-3 rounded-2xl bg-zinc-800 ${pm.isDefault ? "ring-1 ring-cyna-600/50" : ""}`}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-11 h-7 bg-zinc-700 rounded-md flex items-center justify-center">
+                                        <span className="text-white text-[10px] font-bold">{pm.brand}</span>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-200">•••• •••• •••• {pm.last4}</p>
+                                        <p className="text-xs text-gray-500">Expire {String(pm.expMonth).padStart(2, "0")}/{pm.expYear}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {pm.isDefault ? (
+                                        <span className="text-xs text-cyna-500 font-medium flex items-center gap-1"><Star size={10} /> Défaut</span>
+                                    ) : (
+                                        <button onClick={() => setDefaultPayment(pm.id)} className="text-xs text-gray-400 hover:text-gray-200 transition-colors">Définir par défaut</button>
+                                    )}
+                                    <button onClick={() => deletePayment(pm.id)} className="p-1.5 rounded-lg hover:bg-red-950/40 text-gray-400 hover:text-red-400 transition-colors">
+                                        <Trash2 size={13} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
+                    <h3 className="font-bold text-gray-100 mb-3">Prochaine échéance</h3>
+                    <p className="text-3xl font-bold text-gray-100">69,98 €</p>
+                    <p className="text-sm text-gray-500 mt-1">Le 15 octobre</p>
+                    <div className="mt-4 pt-4 border-t border-zinc-700 text-xs text-gray-500">
+                        Inclut {subsCount} abonnements actifs
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 // ── Composant ─────────────────────────────────────────────────────────────────
 
@@ -76,6 +290,15 @@ export default function AccountDashboard() {
     const [settingsForm, setSettingsForm] = useState({ firstName: "", lastName: "", email: "" });
     const [settingsSaving, setSettingsSaving] = useState(false);
     const [settingsMsg, setSettingsMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+    // ── Adresses ──
+    const [addresses, setAddresses] = useState<Address[]>(MOCK_ADDRESSES);
+    const [addrForm, setAddrForm] = useState<Omit<Address, "id" | "isDefault">>(BLANK_ADDRESS);
+    const [editingAddrId, setEditingAddrId] = useState<number | null>(null);
+    const [addrFormOpen, setAddrFormOpen] = useState(false);
+
+    // ── Méthodes de paiement ──
+    const [payments, setPayments] = useState<PaymentMethod[]>(MOCK_PAYMENTS);
 
     // ── Formulaire changement de mot de passe ──
     const [pwOpen, setPwOpen] = useState(false);
@@ -156,6 +379,36 @@ export default function AccountDashboard() {
         }
     };
 
+    // ── Adresses : helpers ──
+    const openNewAddress = () => {
+        setAddrForm(BLANK_ADDRESS);
+        setEditingAddrId(null);
+        setAddrFormOpen(true);
+    };
+    const openEditAddress = (addr: Address) => {
+        const { id, isDefault, ...rest } = addr;
+        setAddrForm(rest);
+        setEditingAddrId(id);
+        setAddrFormOpen(true);
+    };
+    const saveAddress = () => {
+        if (!addrForm.firstName || !addrForm.lastName || !addrForm.addressLine1 || !addrForm.city || !addrForm.postalCode) return;
+        if (editingAddrId !== null) {
+            setAddresses(prev => prev.map(a => a.id === editingAddrId ? { ...a, ...addrForm } : a));
+        } else {
+            const newId = Date.now();
+            const isFirst = addresses.length === 0;
+            setAddresses(prev => [...prev, { id: newId, ...addrForm, isDefault: isFirst }]);
+        }
+        setAddrFormOpen(false);
+    };
+    const deleteAddress = (id: number) => setAddresses(prev => prev.filter(a => a.id !== id));
+    const setDefaultAddress = (id: number) => setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
+
+    // ── Paiements : helpers ──
+    const deletePayment = (id: number) => setPayments(prev => prev.filter(p => p.id !== id));
+    const setDefaultPayment = (id: number) => setPayments(prev => prev.map(p => ({ ...p, isDefault: p.id === id })));
+
     // ── Dérivés ──
     const fullName = user ? `${user.firstName} ${user.lastName}` : "…";
     const initiale = user ? user.firstName.charAt(0).toUpperCase() : "…";
@@ -164,14 +417,15 @@ export default function AccountDashboard() {
         { id: "overview", label: "Vue d'ensemble", icon: <Activity size={16} /> },
         { id: "subscriptions", label: "Abonnements", icon: <Shield size={16} /> },
         { id: "billing", label: "Facturation", icon: <CreditCard size={16} /> },
+        { id: "addresses", label: "Adresses", icon: <MapPin size={16} /> },
         { id: "settings", label: "Paramètres", icon: <Settings size={16} /> },
     ];
 
     if (isLoadingUser) {
         return (
             <AppLayout>
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                    <div className="text-gray-400 text-sm">Chargement du profil…</div>
+                <div className="min-h-screen bg-[#09090f] flex items-center justify-center">
+                    <div className="text-gray-500 text-sm">Chargement du profil…</div>
                 </div>
             </AppLayout>
         );
@@ -184,7 +438,7 @@ export default function AccountDashboard() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                         <div className="flex items-center gap-5">
-                            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-blue-900/40 flex-shrink-0">
+                            <div className="w-16 h-16 bg-cyna-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-violet-950/40 flex-shrink-0">
                                 {initiale}
                             </div>
                             <div>
@@ -223,7 +477,7 @@ export default function AccountDashboard() {
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors -mb-px ${
                                     activeTab === tab.id
-                                        ? "bg-white text-gray-900"
+                                        ? "bg-zinc-800 text-gray-100"
                                         : "text-gray-400 hover:text-gray-200"
                                 }`}
                             >
@@ -236,7 +490,7 @@ export default function AccountDashboard() {
             </div>
 
             {/* Content */}
-            <div className="bg-gray-50 min-h-[60vh]">
+            <div className="bg-[#09090f] min-h-[60vh]">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
                     {/* ── TAB: VUE D'ENSEMBLE ── */}
@@ -244,33 +498,33 @@ export default function AccountDashboard() {
                         <div className="space-y-8">
                             {/* Stats row */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                                <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
                                     <div className="flex items-center justify-between mb-4">
                                         <span className="text-sm font-medium text-gray-500">Abonnements actifs</span>
-                                        <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center">
-                                            <Shield size={18} className="text-blue-600" />
+                                        <div className="w-9 h-9 bg-violet-950/40 rounded-xl flex items-center justify-center">
+                                            <Shield size={18} className="text-cyna-600" />
                                         </div>
                                     </div>
-                                    <p className="text-4xl font-bold text-gray-900">{DEMO_SUBSCRIPTIONS.length}</p>
+                                    <p className="text-4xl font-bold text-gray-100">{DEMO_SUBSCRIPTIONS.length}</p>
                                     <p className="text-xs text-gray-400 mt-1">sur 5 solutions disponibles</p>
                                 </div>
 
-                                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                                <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
                                     <div className="flex items-center justify-between mb-4">
                                         <span className="text-sm font-medium text-gray-500">Prochaine facturation</span>
-                                        <div className="w-9 h-9 bg-purple-50 rounded-xl flex items-center justify-center">
+                                        <div className="w-9 h-9 bg-purple-950/40 rounded-xl flex items-center justify-center">
                                             <CreditCard size={18} className="text-purple-600" />
                                         </div>
                                     </div>
-                                    <p className="text-4xl font-bold text-gray-900">15 Oct</p>
+                                    <p className="text-4xl font-bold text-gray-100">15 Oct</p>
                                     <p className="text-xs text-gray-400 mt-1">Renouvellement automatique</p>
                                 </div>
 
                                 <div className="bg-black rounded-3xl p-6 shadow-sm text-white">
                                     <div className="flex items-center justify-between mb-4">
                                         <span className="text-sm font-medium text-gray-400">Score de sécurité</span>
-                                        <div className="w-9 h-9 bg-blue-600/20 rounded-xl flex items-center justify-center">
-                                            <Lock size={18} className="text-blue-400" />
+                                        <div className="w-9 h-9 bg-cyna-600/20 rounded-xl flex items-center justify-center">
+                                            <Lock size={18} className="text-cyna-500" />
                                         </div>
                                     </div>
                                     <p className="text-4xl font-bold">
@@ -286,30 +540,30 @@ export default function AccountDashboard() {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 {/* Left: subscriptions + activity */}
                                 <div className="lg:col-span-2 space-y-6">
-                                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                                    <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
                                         <div className="flex items-center justify-between mb-6">
-                                            <h2 className="text-lg font-bold text-gray-900">Mes abonnements</h2>
+                                            <h2 className="text-lg font-bold text-gray-100">Mes abonnements</h2>
                                             <button
                                                 onClick={() => setActiveTab("subscriptions")}
-                                                className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                                                className="text-sm text-cyna-600 hover:underline flex items-center gap-1"
                                             >
                                                 Tout voir <ChevronRight size={14} />
                                             </button>
                                         </div>
                                         <div className="space-y-3">
                                             {DEMO_SUBSCRIPTIONS.map((p) => (
-                                                <div key={p.id} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                                                <div key={p.id} className="flex items-center justify-between p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors">
                                                     <div className="flex items-center gap-4">
                                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${CATEGORY_COLORS[p.category]}`}>
                                                             {CATEGORY_ICONS[p.category]}
                                                         </div>
                                                         <div>
-                                                            <p className="font-semibold text-gray-900 text-sm">{p.name}</p>
+                                                            <p className="font-semibold text-gray-100 text-sm">{p.name}</p>
                                                             <p className="text-xs text-gray-400">{p.shortDescription}</p>
                                                         </div>
                                                     </div>
                                                     <div className="text-right flex-shrink-0">
-                                                        <p className="font-semibold text-gray-900 text-sm">
+                                                        <p className="font-semibold text-gray-100 text-sm">
                                                             {p.price}€<span className="text-gray-400 font-normal">/{p.period === "monthly" ? "mois" : "an"}</span>
                                                         </p>
                                                         <span className="inline-flex items-center gap-1 text-[11px] text-green-600 font-medium">
@@ -319,7 +573,7 @@ export default function AccountDashboard() {
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="mt-4 pt-4 border-t border-gray-100">
+                                        <div className="mt-4 pt-4 border-t border-zinc-700">
                                             <Link href="/catalog">
                                                 <Button variant="outline" className="w-full text-sm">Ajouter une solution</Button>
                                             </Link>
@@ -327,24 +581,24 @@ export default function AccountDashboard() {
                                     </div>
 
                                     {/* Activity feed */}
-                                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                                        <h2 className="text-lg font-bold text-gray-900 mb-6">Activité récente</h2>
+                                    <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
+                                        <h2 className="text-lg font-bold text-gray-100 mb-6">Activité récente</h2>
                                         <div className="space-y-4">
                                             {MOCK_ACTIVITY.map((event) => (
                                                 <div key={event.id} className="flex items-start gap-4">
                                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                                                        event.type === "success" ? "bg-green-100" : event.type === "warning" ? "bg-yellow-100" : "bg-blue-100"
+                                                        event.type === "success" ? "bg-green-950/50" : event.type === "warning" ? "bg-yellow-950/50" : "bg-violet-950/50"
                                                     }`}>
                                                         {event.type === "success" ? (
-                                                            <CheckCircle size={15} className="text-green-600" />
+                                                            <CheckCircle size={15} className="text-green-400" />
                                                         ) : event.type === "warning" ? (
-                                                            <AlertTriangle size={15} className="text-yellow-600" />
+                                                            <AlertTriangle size={15} className="text-yellow-400" />
                                                         ) : (
-                                                            <Bell size={15} className="text-blue-600" />
+                                                            <Bell size={15} className="text-cyna-500" />
                                                         )}
                                                     </div>
                                                     <div className="flex-grow">
-                                                        <p className="text-sm font-medium text-gray-900">{event.label}</p>
+                                                        <p className="text-sm font-medium text-gray-200">{event.label}</p>
                                                         <p className="text-xs text-gray-400">{event.detail}</p>
                                                     </div>
                                                     <div className="flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
@@ -358,30 +612,30 @@ export default function AccountDashboard() {
 
                                 {/* Right: account info + quick actions */}
                                 <div className="space-y-6">
-                                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                                        <h2 className="text-lg font-bold text-gray-900 mb-5">Mon compte</h2>
+                                    <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
+                                        <h2 className="text-lg font-bold text-gray-100 mb-5">Mon compte</h2>
                                         <div className="space-y-4">
                                             <div>
-                                                <p className="text-xs text-gray-400 mb-0.5">Prénom</p>
-                                                <p className="text-sm font-medium text-gray-900">{user?.firstName ?? "—"}</p>
+                                                <p className="text-xs text-gray-500 mb-0.5">Prénom</p>
+                                                <p className="text-sm font-medium text-gray-200">{user?.firstName ?? "—"}</p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-400 mb-0.5">Nom</p>
-                                                <p className="text-sm font-medium text-gray-900">{user?.lastName ?? "—"}</p>
+                                                <p className="text-xs text-gray-500 mb-0.5">Nom</p>
+                                                <p className="text-sm font-medium text-gray-200">{user?.lastName ?? "—"}</p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-400 mb-0.5">Email</p>
-                                                <p className="text-sm font-medium text-gray-900">{user?.email ?? "—"}</p>
+                                                <p className="text-xs text-gray-500 mb-0.5">Email</p>
+                                                <p className="text-sm font-medium text-gray-200">{user?.email ?? "—"}</p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-400 mb-0.5">Rôle</p>
-                                                <p className="text-sm font-medium text-gray-900 capitalize">{user?.role?.toLowerCase() ?? "—"}</p>
+                                                <p className="text-xs text-gray-500 mb-0.5">Rôle</p>
+                                                <p className="text-sm font-medium text-gray-200 capitalize">{user?.role?.toLowerCase() ?? "—"}</p>
                                             </div>
                                         </div>
-                                        <div className="mt-5 pt-5 border-t border-gray-100">
+                                        <div className="mt-5 pt-5 border-t border-zinc-700">
                                             <button
                                                 onClick={() => setActiveTab("settings")}
-                                                className="w-full flex items-center justify-between text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                                                className="w-full flex items-center justify-between text-sm text-gray-400 hover:text-gray-200 transition-colors"
                                             >
                                                 <span>Modifier le profil</span>
                                                 <ChevronRight size={16} />
@@ -389,26 +643,26 @@ export default function AccountDashboard() {
                                         </div>
                                     </div>
 
-                                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                                        <h2 className="text-lg font-bold text-gray-900 mb-5">Actions rapides</h2>
+                                    <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
+                                        <h2 className="text-lg font-bold text-gray-100 mb-5">Actions rapides</h2>
                                         <div className="space-y-2">
                                             {[
-                                                { icon: <Shield size={16} className="text-blue-600" />, label: "Gérer mes abonnements", action: () => setActiveTab("subscriptions") },
-                                                { icon: <CreditCard size={16} className="text-purple-600" />, label: "Historique de facturation", action: () => setActiveTab("billing") },
-                                                { icon: <LifeBuoy size={16} className="text-green-600" />, label: "Contacter le support", href: "/support" },
-                                                { icon: <Activity size={16} className="text-orange-600" />, label: "Explorer les solutions", href: "/catalog" },
+                                                { icon: <Shield size={16} className="text-cyna-500" />, label: "Gérer mes abonnements", action: () => setActiveTab("subscriptions") },
+                                                { icon: <CreditCard size={16} className="text-purple-400" />, label: "Historique de facturation", action: () => setActiveTab("billing") },
+                                                { icon: <LifeBuoy size={16} className="text-green-400" />, label: "Contacter le support", href: "/support" },
+                                                { icon: <Activity size={16} className="text-orange-400" />, label: "Explorer les solutions", href: "/catalog" },
                                             ].map((item, i) =>
                                                 item.href ? (
-                                                    <Link key={i} href={item.href} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors group">
-                                                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">{item.icon}</div>
-                                                        <span className="text-sm text-gray-700 group-hover:text-gray-900 flex-grow">{item.label}</span>
-                                                        <ChevronRight size={14} className="text-gray-400" />
+                                                    <Link key={i} href={item.href} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-zinc-800 transition-colors group">
+                                                        <div className="w-8 h-8 bg-zinc-800 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">{item.icon}</div>
+                                                        <span className="text-sm text-gray-300 group-hover:text-gray-100 flex-grow">{item.label}</span>
+                                                        <ChevronRight size={14} className="text-gray-500" />
                                                     </Link>
                                                 ) : (
-                                                    <button key={i} onClick={item.action} className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors group">
-                                                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">{item.icon}</div>
-                                                        <span className="text-sm text-gray-700 group-hover:text-gray-900 flex-grow text-left">{item.label}</span>
-                                                        <ChevronRight size={14} className="text-gray-400" />
+                                                    <button key={i} onClick={item.action} className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-zinc-800 transition-colors group">
+                                                        <div className="w-8 h-8 bg-zinc-800 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">{item.icon}</div>
+                                                        <span className="text-sm text-gray-300 group-hover:text-gray-100 flex-grow text-left">{item.label}</span>
+                                                        <ChevronRight size={14} className="text-gray-500" />
                                                     </button>
                                                 )
                                             )}
@@ -424,8 +678,8 @@ export default function AccountDashboard() {
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Mes abonnements</h2>
-                                    <p className="text-gray-500 text-sm mt-1">{DEMO_SUBSCRIPTIONS.length} abonnement(s) actif(s)</p>
+                                    <h2 className="text-2xl font-bold text-gray-100 tracking-tight">Mes abonnements</h2>
+                                    <p className="text-gray-400 text-sm mt-1">{DEMO_SUBSCRIPTIONS.length} abonnement(s) actif(s)</p>
                                 </div>
                                 <Link href="/catalog">
                                     <Button variant="accent">Ajouter une solution</Button>
@@ -433,42 +687,42 @@ export default function AccountDashboard() {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {DEMO_SUBSCRIPTIONS.map((p) => (
-                                    <div key={p.id} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
+                                    <div key={p.id} className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700 hover:shadow-lg transition-all duration-300">
                                         <div className="flex items-start justify-between mb-5">
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${CATEGORY_COLORS[p.category]}`}>
                                                     {CATEGORY_ICONS[p.category]}
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-bold text-gray-900">{p.name}</h3>
+                                                    <h3 className="font-bold text-gray-100">{p.name}</h3>
                                                     <span className="text-xs font-medium text-gray-400">{p.category}</span>
                                                 </div>
                                             </div>
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-950/40 text-green-400 text-xs font-semibold">
                                                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />Actif
                                             </span>
                                         </div>
                                         <p className="text-sm text-gray-500 mb-5 leading-relaxed">{p.shortDescription}</p>
                                         <ul className="space-y-2 mb-6">
                                             {p.features.map((f) => (
-                                                <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
+                                                <li key={f} className="flex items-center gap-2 text-sm text-gray-400">
                                                     <CheckCircle size={14} className="text-green-500 flex-shrink-0" />{f}
                                                 </li>
                                             ))}
                                         </ul>
-                                        <div className="pt-5 border-t border-gray-100 flex items-center justify-between">
+                                        <div className="pt-5 border-t border-zinc-700 flex items-center justify-between">
                                             <div>
-                                                <span className="text-xl font-bold text-gray-900">{p.price}€</span>
-                                                <span className="text-gray-400 text-sm"> / {p.period === "monthly" ? "mois" : "an"}</span>
+                                                <span className="text-xl font-bold text-gray-100">{p.price}€</span>
+                                                <span className="text-gray-500 text-sm"> / {p.period === "monthly" ? "mois" : "an"}</span>
                                             </div>
                                             <Button variant="outline" size="sm" className="rounded-full text-xs">Gérer</Button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-6 border border-blue-100">
-                                <h3 className="font-bold text-gray-900 mb-1">Complétez votre protection</h3>
-                                <p className="text-sm text-gray-500 mb-4">3 solutions supplémentaires sont disponibles pour renforcer votre sécurité.</p>
+                            <div className="bg-gradient-to-br from-violet-950/20 to-purple-950/20 rounded-3xl p-6 border border-violet-900/40">
+                                <h3 className="font-bold text-gray-100 mb-1">Complétez votre protection</h3>
+                                <p className="text-sm text-gray-400 mb-4">3 solutions supplémentaires sont disponibles pour renforcer votre sécurité.</p>
                                 <Link href="/catalog">
                                     <Button variant="accent" size="sm">Explorer le catalogue</Button>
                                 </Link>
@@ -478,68 +732,152 @@ export default function AccountDashboard() {
 
                     {/* ── TAB: FACTURATION ── */}
                     {activeTab === "billing" && (
-                        <div className="space-y-6">
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Facturation</h2>
-                                <p className="text-gray-500 text-sm mt-1">Historique et méthodes de paiement</p>
+                        <BillingTab payments={payments} setDefaultPayment={setDefaultPayment} deletePayment={deletePayment} subsCount={DEMO_SUBSCRIPTIONS.length} />
+                    )}
+
+                    {/* ── TAB: ADRESSES ── */}
+                    {activeTab === "addresses" && (
+                        <div className="max-w-2xl space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-100 tracking-tight">Carnet d'adresses</h2>
+                                    <p className="text-gray-400 text-sm mt-1">Adresses de facturation enregistrées</p>
+                                </div>
+                                <Button onClick={openNewAddress} className="gap-2 rounded-full">
+                                    <Plus size={15} /> Ajouter
+                                </Button>
                             </div>
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <div className="lg:col-span-2">
-                                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                                        <h3 className="font-bold text-gray-900 mb-5">Historique des factures</h3>
-                                        <div className="space-y-3">
-                                            {[
-                                                { date: "01 fév. 2026", label: "Abonnements Cyna — Fév. 2026", amount: "69,98 €", status: "Payée" },
-                                                { date: "01 jan. 2026", label: "Abonnements Cyna — Jan. 2026", amount: "69,98 €", status: "Payée" },
-                                                { date: "01 déc. 2025", label: "Abonnements Cyna — Déc. 2025", amount: "69,98 €", status: "Payée" },
-                                                { date: "01 nov. 2025", label: "Abonnements Cyna — Nov. 2025", amount: "69,98 €", status: "Payée" },
-                                            ].map((invoice, i) => (
-                                                <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
-                                                            <CreditCard size={16} className="text-gray-500" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-sm font-medium text-gray-900">{invoice.label}</p>
-                                                            <p className="text-xs text-gray-400">{invoice.date}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-4 flex-shrink-0">
-                                                        <span className="text-sm font-semibold text-gray-900">{invoice.amount}</span>
-                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-medium">
-                                                            <CheckCircle size={11} />{invoice.status}
-                                                        </span>
-                                                        <button className="text-xs text-blue-600 hover:underline">Télécharger</button>
-                                                    </div>
+
+                            {/* Liste des adresses */}
+                            <div className="space-y-4">
+                                {addresses.length === 0 && (
+                                    <div className="text-center py-12 text-gray-500 text-sm bg-zinc-900 rounded-3xl border border-zinc-700">
+                                        Aucune adresse enregistrée.
+                                    </div>
+                                )}
+                                {addresses.map(addr => (
+                                    <div key={addr.id} className={`bg-zinc-900 rounded-3xl p-5 border ${addr.isDefault ? "border-cyna-600/60" : "border-zinc-700"}`}>
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-9 h-9 rounded-xl bg-violet-950/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                    <MapPin size={16} className="text-cyna-500" />
                                                 </div>
-                                            ))}
+                                                <div className="text-sm text-gray-300 leading-relaxed">
+                                                    <p className="font-semibold text-gray-100">{addr.firstName} {addr.lastName}</p>
+                                                    <p>{addr.addressLine1}</p>
+                                                    {addr.addressLine2 && <p>{addr.addressLine2}</p>}
+                                                    <p>{addr.postalCode} {addr.city}{addr.region ? `, ${addr.region}` : ""}</p>
+                                                    <p>{addr.country}</p>
+                                                    {addr.phone && <p className="text-gray-400">{addr.phone}</p>}
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                                {addr.isDefault && (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyna-600/20 text-cyna-500 text-xs font-medium">
+                                                        <Star size={10} /> Par défaut
+                                                    </span>
+                                                )}
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    {!addr.isDefault && (
+                                                        <button onClick={() => setDefaultAddress(addr.id)} className="text-xs text-gray-400 hover:text-gray-200 transition-colors">
+                                                            Définir par défaut
+                                                        </button>
+                                                    )}
+                                                    <button onClick={() => openEditAddress(addr)} className="p-1.5 rounded-lg hover:bg-zinc-700 text-gray-400 hover:text-gray-200 transition-colors">
+                                                        <Pencil size={14} />
+                                                    </button>
+                                                    <button onClick={() => deleteAddress(addr.id)} className="p-1.5 rounded-lg hover:bg-red-950/40 text-gray-400 hover:text-red-400 transition-colors">
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="space-y-5">
-                                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                                        <h3 className="font-bold text-gray-900 mb-5">Méthode de paiement</h3>
-                                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl">
-                                            <div className="w-10 h-7 bg-gray-800 rounded-md flex items-center justify-center">
-                                                <span className="text-white text-[10px] font-bold">VISA</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">•••• •••• •••• 4242</p>
-                                                <p className="text-xs text-gray-400">Expire 12/27</p>
-                                            </div>
-                                        </div>
-                                        <button className="w-full mt-4 text-sm text-blue-600 hover:underline text-left">
-                                            Modifier la méthode de paiement
+                                ))}
+                            </div>
+
+                            {/* Formulaire ajout / édition */}
+                            {addrFormOpen && (
+                                <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-600 shadow-lg">
+                                    <div className="flex items-center justify-between mb-5">
+                                        <h3 className="font-bold text-gray-100">{editingAddrId ? "Modifier l'adresse" : "Nouvelle adresse"}</h3>
+                                        <button onClick={() => setAddrFormOpen(false)} className="text-gray-400 hover:text-gray-200">
+                                            <X size={18} />
                                         </button>
                                     </div>
-                                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                                        <h3 className="font-bold text-gray-900 mb-3">Prochaine échéance</h3>
-                                        <p className="text-3xl font-bold text-gray-900">69,98 €</p>
-                                        <p className="text-sm text-gray-400 mt-1">Le 15 octobre</p>
-                                        <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400">
-                                            Inclut {DEMO_SUBSCRIPTIONS.length} abonnements actifs
-                                        </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {([
+                                            { key: "firstName", label: "Prénom", col: 1 },
+                                            { key: "lastName", label: "Nom", col: 1 },
+                                            { key: "addressLine1", label: "Adresse (rue, numéro)", col: 2 },
+                                            { key: "addressLine2", label: "Complément (optionnel)", col: 2 },
+                                            { key: "city", label: "Ville", col: 1 },
+                                            { key: "postalCode", label: "Code postal", col: 1 },
+                                            { key: "region", label: "Région / Département", col: 2 },
+                                            { key: "country", label: "Pays", col: 2 },
+                                            { key: "phone", label: "Téléphone mobile", col: 2 },
+                                        ] as { key: keyof typeof addrForm; label: string; col: 1 | 2 }[]).map(({ key, label, col }) => (
+                                            <div key={key} className={col === 2 ? "col-span-2" : ""}>
+                                                <label className="block text-xs font-medium text-gray-400 mb-1">{label}</label>
+                                                <input
+                                                    type="text"
+                                                    value={addrForm[key] ?? ""}
+                                                    onChange={e => setAddrForm(p => ({ ...p, [key]: e.target.value }))}
+                                                    className="w-full p-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600"
+                                                />
+                                            </div>
+                                        ))}
                                     </div>
+                                    <div className="flex gap-3 mt-5">
+                                        <Button onClick={saveAddress} className="rounded-full gap-1">
+                                            {editingAddrId ? "Enregistrer" : "Ajouter l'adresse"}
+                                        </Button>
+                                        <Button variant="ghost" onClick={() => setAddrFormOpen(false)} className="rounded-full">
+                                            Annuler
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Méthodes de paiement */}
+                            <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-700">
+                                <div className="flex items-center justify-between mb-5">
+                                    <h3 className="font-bold text-gray-100">Méthodes de paiement</h3>
+                                    <button className="text-sm text-cyna-600 hover:underline flex items-center gap-1">
+                                        <Plus size={14} /> Ajouter une carte
+                                    </button>
+                                </div>
+                                {payments.length === 0 && (
+                                    <p className="text-sm text-gray-500">Aucune méthode de paiement enregistrée.</p>
+                                )}
+                                <div className="space-y-3">
+                                    {payments.map(pm => (
+                                        <div key={pm.id} className={`flex items-center justify-between p-3 rounded-2xl bg-zinc-800 ${pm.isDefault ? "ring-1 ring-cyna-600/50" : ""}`}>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-11 h-7 bg-zinc-700 rounded-md flex items-center justify-center">
+                                                    <span className="text-white text-[10px] font-bold">{pm.brand}</span>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-200">•••• •••• •••• {pm.last4}</p>
+                                                    <p className="text-xs text-gray-500">Expire {String(pm.expMonth).padStart(2, "0")}/{pm.expYear}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {pm.isDefault ? (
+                                                    <span className="text-xs text-cyna-500 font-medium flex items-center gap-1">
+                                                        <Star size={10} /> Défaut
+                                                    </span>
+                                                ) : (
+                                                    <button onClick={() => setDefaultPayment(pm.id)} className="text-xs text-gray-400 hover:text-gray-200 transition-colors">
+                                                        Définir par défaut
+                                                    </button>
+                                                )}
+                                                <button onClick={() => deletePayment(pm.id)} className="p-1.5 rounded-lg hover:bg-red-950/40 text-gray-400 hover:text-red-400 transition-colors">
+                                                    <Trash2 size={13} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
@@ -549,41 +887,41 @@ export default function AccountDashboard() {
                     {activeTab === "settings" && (
                         <div className="max-w-2xl space-y-6">
                             <div>
-                                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Paramètres du compte</h2>
-                                <p className="text-gray-500 text-sm mt-1">Gérez vos informations personnelles et préférences</p>
+                                <h2 className="text-2xl font-bold text-gray-100 tracking-tight">Paramètres du compte</h2>
+                                <p className="text-gray-400 text-sm mt-1">Gérez vos informations personnelles et préférences</p>
                             </div>
 
                             {/* Informations personnelles */}
-                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                                <h3 className="font-bold text-gray-900 mb-5">Informations personnelles</h3>
+                            <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
+                                <h3 className="font-bold text-gray-100 mb-5">Informations personnelles</h3>
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                                            <label className="block text-sm font-medium text-gray-300 mb-1">Prénom</label>
                                             <input
                                                 type="text"
                                                 value={settingsForm.firstName}
                                                 onChange={(e) => setSettingsForm((p) => ({ ...p, firstName: e.target.value }))}
-                                                className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                                className="w-full p-3 rounded-xl bg-zinc-800 border border-zinc-700 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600 transition"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                                            <label className="block text-sm font-medium text-gray-300 mb-1">Nom</label>
                                             <input
                                                 type="text"
                                                 value={settingsForm.lastName}
                                                 onChange={(e) => setSettingsForm((p) => ({ ...p, lastName: e.target.value }))}
-                                                className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                                className="w-full p-3 rounded-xl bg-zinc-800 border border-zinc-700 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600 transition"
                                             />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
                                         <input
                                             type="email"
                                             value={settingsForm.email}
                                             onChange={(e) => setSettingsForm((p) => ({ ...p, email: e.target.value }))}
-                                            className="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                            className="w-full p-3 rounded-xl bg-zinc-800 border border-zinc-700 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600 transition"
                                         />
                                     </div>
                                 </div>
@@ -591,8 +929,8 @@ export default function AccountDashboard() {
                                 {settingsMsg && (
                                     <div className={`mt-4 px-4 py-3 rounded-xl text-sm ${
                                         settingsMsg.type === "success"
-                                            ? "bg-green-50 text-green-700 border border-green-100"
-                                            : "bg-red-50 text-red-700 border border-red-100"
+                                            ? "bg-green-950/40 text-green-400 border border-green-800"
+                                            : "bg-red-950/40 text-red-400 border border-red-800"
                                     }`}>
                                         {settingsMsg.text}
                                     </div>
@@ -600,7 +938,7 @@ export default function AccountDashboard() {
 
                                 <div className="mt-5">
                                     <Button
-                                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-full"
+                                        className="bg-cyna-600 hover:bg-cyna-700 text-white rounded-full"
                                         onClick={handleSaveProfile}
                                         disabled={settingsSaving}
                                     >
@@ -610,21 +948,21 @@ export default function AccountDashboard() {
                             </div>
 
                             {/* Sécurité */}
-                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                                <h3 className="font-bold text-gray-900 mb-5">Sécurité</h3>
+                            <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
+                                <h3 className="font-bold text-gray-100 mb-5">Sécurité</h3>
                                 <div className="space-y-3">
                                     {/* Changer le mot de passe — expandable */}
-                                    <div className="rounded-2xl bg-gray-50 overflow-hidden">
+                                    <div className="rounded-2xl bg-zinc-800 overflow-hidden">
                                         <button
                                             onClick={() => { setPwOpen((v) => !v); setPwMsg(null); }}
-                                            className="w-full flex items-center justify-between p-4 hover:bg-gray-100 transition-colors text-left"
+                                            className="w-full flex items-center justify-between p-4 hover:bg-zinc-700 transition-colors text-left"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                                                <div className="w-8 h-8 bg-zinc-700 rounded-lg flex items-center justify-center shadow-sm">
                                                     <Lock size={16} className="text-gray-500" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-medium text-gray-900">Changer le mot de passe</p>
+                                                    <p className="text-sm font-medium text-gray-200">Changer le mot de passe</p>
                                                     <p className="text-xs text-gray-400">Sécurisez votre compte avec un nouveau mot de passe</p>
                                                 </div>
                                             </div>
@@ -632,49 +970,49 @@ export default function AccountDashboard() {
                                         </button>
 
                                         {pwOpen && (
-                                            <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-4">
+                                            <div className="px-4 pb-4 space-y-3 border-t border-zinc-700 pt-4">
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Mot de passe actuel</label>
+                                                    <label className="block text-xs font-medium text-gray-400 mb-1">Mot de passe actuel</label>
                                                     <input
                                                         type="password"
                                                         value={pwForm.currentPassword}
                                                         onChange={(e) => setPwForm((p) => ({ ...p, currentPassword: e.target.value }))}
-                                                        className="w-full p-2.5 rounded-lg bg-white border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        className="w-full p-2.5 rounded-lg bg-zinc-800 border border-zinc-700 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600"
                                                         placeholder="••••••••"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Nouveau mot de passe</label>
+                                                    <label className="block text-xs font-medium text-gray-400 mb-1">Nouveau mot de passe</label>
                                                     <input
                                                         type="password"
                                                         value={pwForm.newPassword}
                                                         onChange={(e) => setPwForm((p) => ({ ...p, newPassword: e.target.value }))}
-                                                        className="w-full p-2.5 rounded-lg bg-white border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        className="w-full p-2.5 rounded-lg bg-zinc-800 border border-zinc-700 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600"
                                                         placeholder="Minimum 8 caractères"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs font-medium text-gray-600 mb-1">Confirmer le nouveau mot de passe</label>
+                                                    <label className="block text-xs font-medium text-gray-400 mb-1">Confirmer le nouveau mot de passe</label>
                                                     <input
                                                         type="password"
                                                         value={pwForm.confirmPassword}
                                                         onChange={(e) => setPwForm((p) => ({ ...p, confirmPassword: e.target.value }))}
-                                                        className="w-full p-2.5 rounded-lg bg-white border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                        className="w-full p-2.5 rounded-lg bg-zinc-800 border border-zinc-700 text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600"
                                                         placeholder="••••••••"
                                                     />
                                                 </div>
                                                 {pwMsg && (
                                                     <div className={`px-3 py-2 rounded-lg text-xs ${
                                                         pwMsg.type === "success"
-                                                            ? "bg-green-50 text-green-700"
-                                                            : "bg-red-50 text-red-700"
+                                                            ? "bg-green-950/40 text-green-400"
+                                                            : "bg-red-950/40 text-red-400"
                                                     }`}>
                                                         {pwMsg.text}
                                                     </div>
                                                 )}
                                                 <Button
                                                     size="sm"
-                                                    className="bg-blue-600 hover:bg-blue-700 text-white rounded-full"
+                                                    className="bg-cyna-600 hover:bg-cyna-700 text-white rounded-full"
                                                     onClick={handleChangePassword}
                                                     disabled={pwSaving}
                                                 >
@@ -684,25 +1022,25 @@ export default function AccountDashboard() {
                                         )}
                                     </div>
 
-                                    <button className="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+                                    <button className="w-full flex items-center justify-between p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors text-left">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                                            <div className="w-8 h-8 bg-zinc-700 rounded-lg flex items-center justify-center shadow-sm">
                                                 <Shield size={16} className="text-gray-500" />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-medium text-gray-900">Authentification à deux facteurs</p>
+                                                <p className="text-sm font-medium text-gray-200">Authentification à deux facteurs</p>
                                                 <p className="text-xs text-gray-400">Non activée — recommandée</p>
                                             </div>
                                         </div>
                                         <ChevronRight size={16} className="text-gray-400" />
                                     </button>
-                                    <button className="w-full flex items-center justify-between p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+                                    <button className="w-full flex items-center justify-between p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors text-left">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                                            <div className="w-8 h-8 bg-zinc-700 rounded-lg flex items-center justify-center shadow-sm">
                                                 <Activity size={16} className="text-gray-500" />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-medium text-gray-900">Sessions actives</p>
+                                                <p className="text-sm font-medium text-gray-200">Sessions actives</p>
                                                 <p className="text-xs text-gray-400">1 session active</p>
                                             </div>
                                         </div>
@@ -712,12 +1050,12 @@ export default function AccountDashboard() {
                             </div>
 
                             {/* Zone de danger */}
-                            <div className="bg-white rounded-3xl p-6 shadow-sm border border-red-100">
-                                <h3 className="font-bold text-red-600 mb-2">Zone de danger</h3>
-                                <p className="text-sm text-gray-500 mb-4">
+                            <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-red-900/50">
+                                <h3 className="font-bold text-red-500 mb-2">Zone de danger</h3>
+                                <p className="text-sm text-gray-400 mb-4">
                                     La suppression de votre compte est irréversible et annule tous vos abonnements.
                                 </p>
-                                <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50">
+                                <Button variant="outline" size="sm" className="text-red-500 border-red-800 hover:bg-red-950/40">
                                     Supprimer mon compte
                                 </Button>
                             </div>

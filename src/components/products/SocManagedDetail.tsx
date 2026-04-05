@@ -18,9 +18,9 @@ const ALERTS = [
 ];
 
 const PRIORITY_STYLES: Record<string, string> = {
-    P1: "bg-red-100 text-red-700 border-red-200",
-    P2: "bg-orange-100 text-orange-700 border-orange-200",
-    P3: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    P1: "bg-red-950/50 text-red-400 border-red-800",
+    P2: "bg-orange-950/50 text-orange-400 border-orange-800",
+    P3: "bg-yellow-950/50 text-yellow-400 border-yellow-800",
 };
 
 const SLA = [
@@ -54,7 +54,7 @@ export default function SocManagedDetail() {
                         { label: "Alertes ouvertes", value: "12", color: "text-orange-400" },
                         { label: "Analystes en ligne", value: "5 / 6", color: "text-green-400" },
                         { label: "Incidents P1 actifs", value: "2", color: "text-red-400" },
-                        { label: "Événements / heure", value: "142K", color: "text-blue-400" },
+                        { label: "Événements / heure", value: "142K", color: "text-cyna-500" },
                     ].map((stat) => (
                         <div key={stat.label} className="text-center">
                             <div className={`text-3xl font-bold font-mono ${stat.color}`}>{stat.value}</div>
@@ -72,7 +72,7 @@ export default function SocManagedDetail() {
                             </span>
                             <span className="text-white text-sm flex-1 truncate font-mono">{a.desc}</span>
                             <span className="text-gray-500 text-xs flex-shrink-0">{a.time}</span>
-                            <span className="text-blue-400 text-xs flex-shrink-0">{a.analyst}</span>
+                            <span className="text-cyna-500 text-xs flex-shrink-0">{a.analyst}</span>
                         </div>
                     ))}
                 </div>
@@ -80,20 +80,20 @@ export default function SocManagedDetail() {
 
             {/* Team */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">Votre équipe d'analystes dédiée</h2>
-                <p className="text-gray-500 mb-8">Des experts certifiés vous couvrent 24h/24, 365 jours par an — sans exception.</p>
+                <h2 className="text-2xl font-bold text-gray-100 mb-3">Votre équipe d'analystes dédiée</h2>
+                <p className="text-gray-400 mb-8">Des experts certifiés vous couvrent 24h/24, 365 jours par an — sans exception.</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                     {ANALYSTS.map((analyst) => (
-                        <div key={analyst.name} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center hover:shadow-md transition-shadow">
+                        <div key={analyst.name} className="bg-zinc-900 rounded-2xl border border-zinc-700 shadow-sm p-5 text-center hover:shadow-md transition-shadow">
                             <div className="relative inline-block mb-3">
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm mx-auto">
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyna-600 to-violet-700 flex items-center justify-center text-white font-bold text-sm mx-auto">
                                     {analyst.avatar}
                                 </div>
-                                <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${analyst.status === "online" ? "bg-green-500" : "bg-yellow-400"}`} />
+                                <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-zinc-900 ${analyst.status === "online" ? "bg-green-500" : "bg-yellow-400"}`} />
                             </div>
-                            <div className="text-sm font-semibold text-gray-900">{analyst.name}</div>
+                            <div className="text-sm font-semibold text-gray-200">{analyst.name}</div>
                             <div className="text-xs text-gray-400 mt-0.5">{analyst.role}</div>
-                            <div className="text-xs text-gray-300 mt-0.5">{analyst.region}</div>
+                            <div className="text-xs text-gray-500 mt-0.5">{analyst.region}</div>
                         </div>
                     ))}
                 </div>
@@ -101,20 +101,20 @@ export default function SocManagedDetail() {
 
             {/* SLA */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Engagements de niveau de service (SLA)</h2>
+                <h2 className="text-2xl font-bold text-gray-100 mb-6">Engagements de niveau de service (SLA)</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     {SLA.map((s) => (
-                        <div key={s.label} className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 p-6">
-                            <div className="text-3xl font-bold text-blue-700 mb-2">{s.value}</div>
-                            <div className="text-sm font-semibold text-gray-800 mb-1">{s.label}</div>
-                            <div className="text-xs text-blue-400">{s.target}</div>
+                        <div key={s.label} className="bg-gradient-to-br from-violet-950/30 to-purple-950/30 rounded-2xl border border-violet-900/50 p-6">
+                            <div className="text-3xl font-bold text-cyna-500 mb-2">{s.value}</div>
+                            <div className="text-sm font-semibold text-gray-200 mb-1">{s.label}</div>
+                            <div className="text-xs text-cyna-600">{s.target}</div>
                         </div>
                     ))}
                 </div>
             </div>
 
             {/* Reporting */}
-            <div className="bg-gradient-to-br from-gray-900 to-indigo-950 rounded-3xl p-8 lg:p-12 text-white">
+            <div className="bg-gradient-to-br from-gray-900 to-violet-950 rounded-3xl p-8 lg:p-12 text-white">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
                     <div>
                         <h3 className="text-2xl font-bold mb-3">Rapports mensuels inclus</h3>
@@ -125,7 +125,7 @@ export default function SocManagedDetail() {
                         <ul className="space-y-2">
                             {["Synthèse exécutive PDF", "Détail de chaque incident", "Cartographie des menaces", "Recommandations prioritaires"].map((item) => (
                                 <li key={item} className="flex items-center gap-2 text-sm text-gray-300">
-                                    <span className="text-blue-400">→</span> {item}
+                                    <span className="text-cyna-500">→</span> {item}
                                 </li>
                             ))}
                         </ul>

@@ -126,7 +126,7 @@ export default function Register() {
         password: formData.password,
       });
 
-      router.push("/auth/login");
+      router.push(`/auth/confirm-email?email=${encodeURIComponent(formData.email.trim().toLowerCase())}`);
     } catch (error: unknown) {
       const msg =
         (error as { response?: { data?: { message?: string } } })?.response?.data?.message
@@ -139,14 +139,14 @@ export default function Register() {
 
   const inputClass = (field: keyof FormErrors) =>
     `w-full px-4 py-2 border ${
-      errors[field] ? "border-red-500" : "border-gray-300"
-    } rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent`;
+      errors[field] ? "border-red-500" : "border-zinc-600"
+    } bg-zinc-800 text-gray-200 placeholder-gray-500 rounded-md focus:ring-2 focus:ring-cyna-600 focus:border-transparent`;
 
   return (
     <AppLayout>
       <div className="flex min-h-[calc(100vh-10rem)] w-full flex-col items-center justify-center bg-gradient-to-br from-[#0a0a23] via-[#1a1a40] to-[#2a2a60] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+      <div className="w-full max-w-md bg-zinc-900 border border-zinc-700 rounded-lg shadow-md p-8">
+        <h2 className="text-2xl font-bold text-gray-100 mb-6 text-center">
           Créez votre compte
         </h2>
 
@@ -162,7 +162,7 @@ export default function Register() {
           {/* Prénom / Nom — côte à côte */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-1">
                 Prénom
               </label>
               <input
@@ -180,7 +180,7 @@ export default function Register() {
               )}
             </div>
             <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-1">
                 Nom
               </label>
               <input
@@ -201,7 +201,7 @@ export default function Register() {
 
           {/* Email */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
               Adresse email
             </label>
             <input
@@ -221,7 +221,7 @@ export default function Register() {
 
           {/* Mot de passe */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
               Mot de passe
             </label>
             <input
@@ -257,7 +257,7 @@ export default function Register() {
 
           {/* Confirmation du mot de passe */}
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">
               Confirmer le mot de passe
             </label>
             <input
@@ -281,15 +281,15 @@ export default function Register() {
               id="terms"
               name="terms"
               type="checkbox"
-              className="mt-0.5 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              className="mt-0.5 h-4 w-4 text-cyna-600 focus:ring-cyna-600 border-gray-300 rounded"
             />
-            <label htmlFor="terms" className="text-sm text-gray-700">
+            <label htmlFor="terms" className="text-sm text-gray-300">
               J'accepte les{" "}
-              <a href="/cgu" className="text-indigo-600 hover:text-indigo-500 font-medium">
+              <a href="/cgu" className="text-cyna-600 hover:text-cyna-500 font-medium">
                 conditions d'utilisation
               </a>{" "}
               et la{" "}
-              <a href="/mentions-legales" className="text-indigo-600 hover:text-indigo-500 font-medium">
+              <a href="/mentions-legales" className="text-cyna-600 hover:text-cyna-500 font-medium">
                 politique de confidentialité
               </a>
             </label>
@@ -302,7 +302,7 @@ export default function Register() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-cyna-600 hover:bg-cyna-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyna-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? "Inscription en cours…" : "S'inscrire"}
           </button>
@@ -310,7 +310,7 @@ export default function Register() {
 
         <div className="mt-6 text-center text-sm text-gray-600">
           Déjà un compte ?{" "}
-          <Link href="/auth/login" className="text-indigo-600 hover:text-indigo-500 font-medium">
+          <Link href="/auth/login" className="text-cyna-600 hover:text-cyna-500 font-medium">
             Connectez-vous
           </Link>
         </div>

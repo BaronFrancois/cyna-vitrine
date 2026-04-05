@@ -58,9 +58,9 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
     };
 
     const inputClasses = cn(
-        "border border-gray-200 focus:outline-none focus:ring-2 focus:ring-cyna-500",
+        "border border-zinc-700 bg-zinc-900 text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyna-500",
         isCatalogHero
-            ? "w-full rounded-full py-3.5 pl-12 pr-11 text-base shadow-sm bg-white"
+            ? "w-full rounded-full py-3.5 pl-12 pr-11 text-base shadow-sm"
             : "w-40 sm:w-64 rounded-lg p-2 pr-10"
     );
 
@@ -70,7 +70,7 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                 {!isCatalogHero && !open && (
                     <button
                         type="button"
-                        className="inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0 text-gray-500 shadow-none hover:text-cyna-600"
+                        className="inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0 text-white transition-colors hover:text-cyna-500 shadow-none"
                         onClick={() => setOpen(true)}
                         aria-label="Ouvrir la recherche"
                     >
@@ -104,7 +104,7 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                         {!isCatalogHero && (
                             <button
                                 type="button"
-                                className="absolute right-1 top-1.5 text-gray-500 hover:text-gray-900"
+                                className="absolute right-1 top-1.5 text-gray-500 hover:text-gray-200"
                                 onClick={() => setQuery("")}
                                 aria-label="Effacer"
                             >
@@ -125,7 +125,7 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                         {hasResults && (
                             <ul
                                 className={cn(
-                                    "absolute mt-2 max-h-72 overflow-y-auto rounded-xl border border-gray-200 bg-white text-left shadow-lg z-50",
+                                    "absolute mt-2 max-h-72 overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 text-left shadow-lg z-50",
                                     isCatalogHero
                                         ? "left-0 right-0 w-full"
                                         : "mt-1 w-[min(100vw-2rem,20rem)] sm:w-64"
@@ -135,7 +135,7 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                                     <li key={l.href}>
                                         <Link
                                             href={l.href}
-                                            className="block cursor-pointer p-2.5 text-sm text-gray-800 hover:bg-violet-50"
+                                            className="block cursor-pointer p-2.5 text-sm text-gray-200 hover:bg-violet-950/50"
                                             onClick={onPick}
                                         >
                                             {l.label}
@@ -147,10 +147,10 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                                     <li key={p.id}>
                                         <Link
                                             href={`/product/${p.id}`}
-                                            className="block cursor-pointer p-2.5 text-sm hover:bg-violet-50"
+                                            className="block cursor-pointer p-2.5 text-sm hover:bg-violet-950/50"
                                             onClick={onPick}
                                         >
-                                            <span className="font-medium text-gray-900">{p.name}</span>
+                                            <span className="font-medium text-gray-200">{p.name}</span>
                                             <span className="block truncate text-xs text-gray-500">
                                                 {p.category}
                                             </span>
@@ -163,7 +163,7 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                         {query.trim() && !hasResults && (
                             <div
                                 className={cn(
-                                    "absolute z-50 mt-2 rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-400 shadow-lg",
+                                    "absolute z-50 mt-2 rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm text-gray-500 shadow-lg",
                                     isCatalogHero ? "left-0 right-0 w-full" : "mt-1 w-[min(100vw-2rem,20rem)] sm:w-64"
                                 )}
                             >

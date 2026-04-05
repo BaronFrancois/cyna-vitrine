@@ -101,7 +101,7 @@ export default function ThreatFeed() {
                             >
                                 {/* Header */}
                                 <div className="flex items-start justify-between gap-2">
-                                    <span className="font-mono text-sm text-blue-400 font-semibold">
+                                    <span className="font-mono text-sm text-cyna-500 font-semibold">
                                         {v.cveID}
                                     </span>
                                     <RansomwareBadge use={v.knownRansomwareCampaignUse} />
@@ -132,7 +132,7 @@ export default function ThreatFeed() {
                                         href={`https://nvd.nist.gov/vuln/detail/${v.cveID}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-gray-600 hover:text-blue-400 transition-colors"
+                                        className="text-gray-600 hover:text-cyna-500 transition-colors"
                                         aria-label="Voir sur NVD"
                                     >
                                         <ExternalLink className="w-3.5 h-3.5" />
@@ -150,7 +150,7 @@ export default function ThreatFeed() {
                     </p>
                     <a
                         href="/support"
-                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3.5 rounded-full transition-colors duration-200"
+                        className="inline-flex items-center gap-2 bg-cyna-600 hover:bg-cyna-700 text-white font-semibold px-8 py-3.5 rounded-full transition-colors duration-200"
                     >
                         <Shield className="w-4 h-4" />
                         Obtenir un audit gratuit

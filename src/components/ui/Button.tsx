@@ -30,15 +30,15 @@ const VARIANT_CLASS: Record<NonNullable<ButtonProps["variant"]>, string> = {
     primary:
         "bg-cyna-600 text-white hover:bg-cyna-700 focus:ring-cyna-600",
     secondary:
-        "bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-300",
+        "bg-zinc-800 text-gray-200 hover:bg-zinc-700 focus:ring-zinc-600",
     ghost:
-        "bg-transparent text-cyna-600 hover:text-cyna-700 focus:ring-cyna-600",
+        "bg-transparent text-cyna-500 hover:text-cyna-400 focus:ring-cyna-600",
     outline:
-        "border border-gray-300 text-gray-700 hover:border-gray-400 bg-white focus:ring-gray-300",
+        "border border-zinc-600 text-gray-300 hover:border-zinc-500 bg-transparent focus:ring-zinc-500",
     accent:
-        "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-600",
+        "bg-cyna-600 text-white hover:bg-cyna-700 focus:ring-cyna-600",
     surface:
-        "bg-white text-blue-700 hover:bg-blue-50 focus:ring-blue-500",
+        "bg-zinc-700 text-gray-100 hover:bg-zinc-600 focus:ring-zinc-500",
     ghostInverse:
         "bg-transparent text-white hover:text-white focus:ring-white/60",
     dark: "bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-600",

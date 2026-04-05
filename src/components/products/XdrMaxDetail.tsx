@@ -2,12 +2,12 @@
 // Affiche le diagramme de corrélation cross-stack + incidents unifiés + sources de données
 
 const DATA_SOURCES = [
-    { label: "Terminaux", icon: "🖥️", count: "4 812", color: "bg-purple-100 border-purple-200 text-purple-800" },
-    { label: "Réseau", icon: "🌐", count: "38 flux", color: "bg-indigo-100 border-indigo-200 text-indigo-800" },
-    { label: "Cloud AWS", icon: "☁️", count: "12 services", color: "bg-sky-100 border-sky-200 text-sky-800" },
-    { label: "Cloud Azure", icon: "☁️", count: "8 services", color: "bg-blue-100 border-blue-200 text-blue-800" },
-    { label: "Emails", icon: "✉️", count: "2 180 / j", color: "bg-violet-100 border-violet-200 text-violet-800" },
-    { label: "Applications", icon: "📦", count: "24 apps", color: "bg-pink-100 border-pink-200 text-pink-800" },
+    { label: "Terminaux", icon: "🖥️", count: "4 812", color: "bg-purple-950/50 border-purple-800 text-purple-300" },
+    { label: "Réseau", icon: "🌐", count: "38 flux", color: "bg-violet-950/50 border-violet-800 text-violet-300" },
+    { label: "Cloud AWS", icon: "☁️", count: "12 services", color: "bg-fuchsia-950/50 border-fuchsia-800 text-fuchsia-300" },
+    { label: "Cloud Azure", icon: "☁️", count: "8 services", color: "bg-purple-950/50 border-purple-800 text-purple-300" },
+    { label: "Emails", icon: "✉️", count: "2 180 / j", color: "bg-violet-950/50 border-violet-800 text-violet-300" },
+    { label: "Applications", icon: "📦", count: "24 apps", color: "bg-pink-950/50 border-pink-800 text-pink-300" },
 ];
 
 const INCIDENTS = [
@@ -30,14 +30,14 @@ const INCIDENTS = [
 ];
 
 const SEVERITY_COLORS: Record<string, string> = {
-    critique: "bg-red-100 text-red-700 border-red-200",
-    élevée: "bg-orange-100 text-orange-700 border-orange-200",
-    moyenne: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    critique: "bg-red-950/50 text-red-400 border-red-800",
+    élevée: "bg-orange-950/50 text-orange-400 border-orange-800",
+    moyenne: "bg-yellow-950/50 text-yellow-400 border-yellow-800",
 };
 
 const STATUS_COLORS: Record<string, string> = {
-    "En cours d'investigation": "text-orange-600 bg-orange-50",
-    "Résolu": "text-green-600 bg-green-50",
+    "En cours d'investigation": "text-orange-400 bg-orange-950/40",
+    "Résolu": "text-green-400 bg-green-950/40",
 };
 
 export default function XdrMaxDetail() {
@@ -46,8 +46,8 @@ export default function XdrMaxDetail() {
 
             {/* Correlation diagram */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">Corrélation cross-stack unifiée</h2>
-                <p className="text-gray-500 mb-8">
+                <h2 className="text-2xl font-bold text-gray-100 mb-3">Corrélation cross-stack unifiée</h2>
+                <p className="text-gray-400 mb-8">
                     XDR Max ingère et corrèle les événements de toutes vos couches de sécurité en un seul moteur d'analyse.
                 </p>
 
@@ -67,16 +67,16 @@ export default function XdrMaxDetail() {
                     </div>
 
                     {/* Arrow */}
-                    <div className="flex flex-col items-center gap-1 text-gray-300">
-                        <div className="w-px h-6 bg-gray-200" />
-                        <div className="text-xs text-gray-400 font-medium px-3 py-1 bg-gray-100 rounded-full border border-gray-200">
+                    <div className="flex flex-col items-center gap-1 text-gray-600">
+                        <div className="w-px h-6 bg-zinc-700" />
+                        <div className="text-xs text-gray-400 font-medium px-3 py-1 bg-zinc-800 rounded-full border border-zinc-700">
                             Ingestion & Normalisation
                         </div>
-                        <div className="w-px h-6 bg-gray-200" />
+                        <div className="w-px h-6 bg-zinc-700" />
                     </div>
 
                     {/* XDR Core */}
-                    <div className="bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-3xl px-10 py-8 text-center shadow-2xl w-full max-w-md">
+                    <div className="bg-gradient-to-br from-[#7c3aed] to-[#4c1d95] text-white rounded-3xl px-10 py-8 text-center shadow-2xl w-full max-w-md">
                         <div className="text-4xl mb-3">🔮</div>
                         <div className="text-xl font-bold mb-1">Moteur XDR Cyna</div>
                         <div className="text-purple-200 text-sm">Corrélation · IA · Chasse aux menaces</div>
@@ -98,11 +98,11 @@ export default function XdrMaxDetail() {
 
                     {/* Arrow down */}
                     <div className="flex flex-col items-center gap-1">
-                        <div className="w-px h-6 bg-gray-200" />
-                        <div className="text-xs text-gray-400 font-medium px-3 py-1 bg-gray-100 rounded-full border border-gray-200">
+                        <div className="w-px h-6 bg-zinc-700" />
+                        <div className="text-xs text-gray-400 font-medium px-3 py-1 bg-zinc-800 rounded-full border border-zinc-700">
                             Incidents unifiés
                         </div>
-                        <div className="w-px h-6 bg-gray-200" />
+                        <div className="w-px h-6 bg-zinc-700" />
                     </div>
 
                     {/* Outputs */}
@@ -112,10 +112,10 @@ export default function XdrMaxDetail() {
                             { label: "Analyse des causes", icon: "🔍", desc: "Arbre de causalité complet" },
                             { label: "Réponse automatique", icon: "⚙️", desc: "Playbooks SOAR intégrés" },
                         ].map((out) => (
-                            <div key={out.label} className="bg-gray-50 border border-gray-200 rounded-2xl p-5 text-center">
+                            <div key={out.label} className="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 text-center">
                                 <div className="text-2xl mb-2">{out.icon}</div>
-                                <div className="font-semibold text-gray-900 text-sm">{out.label}</div>
-                                <div className="text-xs text-gray-400 mt-1">{out.desc}</div>
+                                <div className="font-semibold text-gray-200 text-sm">{out.label}</div>
+                                <div className="text-xs text-gray-500 mt-1">{out.desc}</div>
                             </div>
                         ))}
                     </div>
@@ -124,14 +124,14 @@ export default function XdrMaxDetail() {
 
             {/* Incident Examples */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Incidents corrélés en exemple</h2>
+                <h2 className="text-2xl font-bold text-gray-100 mb-6">Incidents corrélés en exemple</h2>
                 <div className="space-y-5">
                     {INCIDENTS.map((inc) => (
-                        <div key={inc.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div key={inc.id} className="bg-zinc-900 rounded-2xl border border-zinc-700 shadow-sm overflow-hidden">
                             <div className="flex items-start gap-4 p-6">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2 flex-wrap">
-                                        <span className="text-xs font-mono text-gray-400">{inc.id}</span>
+                                        <span className="text-xs font-mono text-gray-500">{inc.id}</span>
                                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${SEVERITY_COLORS[inc.severity]}`}>
                                             {inc.severity}
                                         </span>
@@ -139,10 +139,10 @@ export default function XdrMaxDetail() {
                                             {inc.status}
                                         </span>
                                     </div>
-                                    <p className="text-gray-900 font-semibold text-sm mb-3">{inc.title}</p>
+                                    <p className="text-gray-200 font-semibold text-sm mb-3">{inc.title}</p>
                                     <div className="flex flex-wrap gap-2 mb-4">
                                         {inc.sources.map((s) => (
-                                            <span key={s} className="text-xs bg-purple-50 text-purple-600 border border-purple-100 rounded-full px-2 py-0.5">
+                                            <span key={s} className="text-xs bg-purple-950/50 text-purple-300 border border-purple-800 rounded-full px-2 py-0.5">
                                                 {s}
                                             </span>
                                         ))}

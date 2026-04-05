@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     ShoppingBag,
     Menu,
@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { CynaLogo } from "./CynaLogo";
 import useCart from "@/hooks/useCart";
+import { ThemeToggle } from "./ThemeToggle";
 
 export default function AppHeader() {
     const pathname = usePathname();
@@ -34,13 +35,24 @@ export default function AppHeader() {
             isNavActive(path) && "nav-sku-header-active"
         );
 
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        const hasCookie = document.cookie.includes("auth_token=");
+        if (token || hasCookie) {
+            setIsAuthenticated(true);
+        }
+    }, []);
+
     return (
+        <>
         <nav
             className={cn(
-                "sticky top-0 z-50 w-full border-b border-white/30",
+                "sticky top-0 z-[60] w-full border-b border-white/10",
                 /* Mobile : moins de blur (backdrop-filter + sticky = saccades iOS/Android) */
-                "bg-white/92 backdrop-blur-sm backdrop-saturate-150 supports-[backdrop-filter]:bg-white/88",
-                "md:bg-white/45 md:backdrop-blur-xl md:supports-[backdrop-filter]:bg-white/30",
+                "bg-zinc-950/92 backdrop-blur-sm backdrop-saturate-150 supports-[backdrop-filter]:bg-zinc-950/88",
+                "md:bg-zinc-950/70 md:backdrop-blur-xl md:supports-[backdrop-filter]:bg-zinc-950/60",
                 /* Compositing GPU — évite le « tremblement » au scroll */
                 "isolate [transform:translateZ(0)] [-webkit-backface-visibility:hidden]"
             )}
@@ -54,10 +66,11 @@ export default function AppHeader() {
                                 className="flex flex-shrink-0 cursor-pointer items-center gap-2 py-1 font-semibold tracking-tight transition-opacity hover:opacity-85"
                                 aria-label="Accueil Cyna"
                             >
-                                <CynaLogo size={36} />
-                                <span className="hidden min-[400px]:inline bg-gradient-to-r from-[#4c1d95] via-[#7c3aed] to-[#d946ef] bg-clip-text text-base min-[400px]:text-xl text-transparent">
-                                    Cyna
-                                </span>
+                                <img 
+                                    src="/logo-cyna-white.svg" 
+                                    alt="Cyna" 
+                                    className="h-7 min-[400px]:h-8 w-auto mt-0.5" 
+                                />
                             </Link>
                             <Link href="/" className={cn(navClass("/"), "hidden md:inline-flex")}>
                                 Accueil
@@ -82,9 +95,10 @@ export default function AppHeader() {
                         >
                             <AppSearch />
                         </div>
+                        <ThemeToggle />
                         <Link
                             href="/cart"
-                            className="relative inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center text-gray-500 transition-colors hover:text-gray-900"
+                            className="relative inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center text-slate-200 transition-colors hover:text-cyna-500"
                             aria-label={
                                 itemCount > 0
                                     ? `Panier, ${itemCount} article${itemCount > 1 ? "s" : ""}`
@@ -98,18 +112,37 @@ export default function AppHeader() {
                                 </span>
                             )}
                         </Link>
-                        <Link
-                            href="/account"
-                            className="inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center text-gray-500 transition-colors hover:text-gray-900"
-                        >
-                            <User size={20} />
-                        </Link>
+                        {isAuthenticated ? (
+                            <Link
+                                href="/account"
+                                className={cn(
+                                    "hidden sm:inline-flex nav-sku-raised nav-sku-header-charte items-center justify-center text-sm font-medium transition-colors",
+                                    pathname === "/account" && "nav-sku-header-active"
+                                )}
+                            >
+                                Mon compte
+                            </Link>
+                        ) : (
+                            <Link
+                                href="/auth/login"
+                                className={cn(
+                                    "hidden sm:inline-flex nav-sku-raised nav-sku-header-login items-center justify-center text-sm font-medium transition-colors",
+                                    pathname === "/auth/login" && "nav-sku-header-active"
+                                )}
+                            >
+                                Se connecter
+                            </Link>
+                        )}
                         <div className="flex items-center md:hidden">
                             <Popover open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                                 <PopoverTrigger asChild>
                                     <button
                                         type="button"
-                                        className="relative inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center p-0 leading-none text-gray-500 transition-colors hover:text-gray-900"
+                                        className={cn(
+                                            "relative inline-flex shrink-0 cursor-pointer items-center justify-center p-0 transition-all duration-300",
+                                            "w-9 h-9 rounded-full text-slate-200 hover:text-cyna-500",
+                                            mobileMenuOpen ? "nav-sku-raised nav-sku-header-charte nav-sku-header-active border-0" : ""
+                                        )}
                                         aria-expanded={mobileMenuOpen}
                                         aria-label={
                                             mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"
@@ -139,23 +172,26 @@ export default function AppHeader() {
                                 </PopoverTrigger>
                                 <PopoverContent
                                     align="end"
-                                    sideOffset={0}
+                                    sideOffset={14}
                                     collisionPadding={{ right: 0, left: 8 }}
                                     className={cn(
-                                        "z-50 w-56 border-0 p-0 shadow-lg -mr-4 rounded-t-none rounded-b-2xl sm:-mr-6",
+                                        "z-[70] w-56 border-0 p-0 shadow-lg -mr-4 sm:-mr-6 rounded-none rounded-b-2xl",
                                         "duration-300 ease-out",
                                         "data-[state=open]:animate-in data-[state=closed]:animate-out",
                                         "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
-                                        "data-[side=bottom]:slide-in-from-top-4 data-[side=bottom]:slide-out-to-top-2"
+                                        "data-[side=bottom]:slide-in-from-top-10 data-[side=bottom]:slide-out-to-top-6"
                                     )}
                                 >
-                                    <div className="nav-mobile-popover-inner flex flex-col gap-1 p-2">
+                                    <div 
+                                        className="flex flex-col gap-1.5 p-3 rounded-none rounded-b-2xl border border-black/60 shadow-2xl relative z-[70] border-t-0"
+                                        style={{ background: 'linear-gradient(rgb(2, 0, 8) 0%, rgb(22, 11, 48) 100%)', boxShadow: 'rgba(0, 0, 0, 0.6) 0px 5px 11px 6px, rgba(131, 109, 203, 0.42) 0px -1px 0px 0px inset' }}
+                                    >
                                         <Link
                                             href="/"
                                             onClick={() => setMobileMenuOpen(false)}
                                             className={cn(
-                                                "block w-full rounded-xl px-3 py-2 text-center text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50",
-                                                pathname === "/" && "bg-violet-50 text-violet-700 font-semibold"
+                                                "block w-full nav-sku-raised text-center text-sm font-medium",
+                                                pathname === "/" && "nav-sku-header-charte nav-sku-header-active"
                                             )}
                                         >
                                             Accueil
@@ -164,8 +200,8 @@ export default function AppHeader() {
                                             href="/catalog"
                                             onClick={() => setMobileMenuOpen(false)}
                                             className={cn(
-                                                "block w-full rounded-xl px-3 py-2 text-center text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50",
-                                                pathname.startsWith("/catalog") && "bg-violet-50 text-violet-700 font-semibold"
+                                                "block w-full nav-sku-raised text-center text-sm font-medium",
+                                                pathname.startsWith("/catalog") && "nav-sku-header-charte nav-sku-header-active"
                                             )}
                                         >
                                             Solutions
@@ -174,34 +210,62 @@ export default function AppHeader() {
                                             href="/support"
                                             onClick={() => setMobileMenuOpen(false)}
                                             className={cn(
-                                                "block w-full rounded-xl px-3 py-2 text-center text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50",
-                                                pathname.startsWith("/support") && "bg-violet-50 text-violet-700 font-semibold"
+                                                "block w-full nav-sku-raised text-center text-sm font-medium",
+                                                pathname.startsWith("/support") && "nav-sku-header-charte nav-sku-header-active"
                                             )}
                                         >
                                             Support
                                         </Link>
 
-                                        <div className="my-1 h-px bg-gray-100" />
+                                        <div className="my-1.5 h-px bg-zinc-700/50" />
 
                                         <Link
                                             href="/cart"
                                             onClick={() => setMobileMenuOpen(false)}
-                                            className="flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                                            className={cn(
+                                                "flex w-full nav-sku-raised items-center justify-center gap-2 text-sm font-medium",
+                                                pathname === "/cart" && "nav-sku-header-charte nav-sku-header-active"
+                                            )}
                                         >
                                             <span>Panier</span>
                                             {itemCount > 0 && (
-                                                <span className="rounded-full bg-cyna-600 px-2 py-0.5 text-[11px] font-bold text-white">
+                                                <span className="rounded-full bg-cyna-500 shadow-inner px-2 py-0.5 text-[11px] font-bold text-white">
                                                     {itemCount > 99 ? "99+" : itemCount}
                                                 </span>
                                             )}
                                         </Link>
-                                        <Link
-                                            href="/account"
-                                            onClick={() => setMobileMenuOpen(false)}
-                                            className="block w-full rounded-xl px-3 py-2 text-center text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                                        >
-                                            Compte
-                                        </Link>
+                                        {isAuthenticated ? (
+                                            <Link
+                                                href="/account"
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className={cn(
+                                                    "block w-full nav-sku-raised text-center text-sm font-medium",
+                                                    pathname === "/account" && "nav-sku-header-charte nav-sku-header-active"
+                                                )}
+                                            >
+                                                Compte
+                                            </Link>
+                                        ) : (
+                                            <Link
+                                                href="/auth/login"
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                className={cn(
+                                                    "block w-full nav-sku-raised nav-sku-header-charte text-center text-sm font-medium text-white",
+                                                    pathname === "/auth/login" && "nav-sku-header-active"
+                                                )}
+                                            >
+                                                Se connecter
+                                            </Link>
+                                        )}
+
+                                        <div className="mt-2 mb-1 h-px bg-zinc-800/80" />
+                                        
+                                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 px-1 py-1 text-[11px] text-gray-400">
+                                            <Link href="/cgu" onClick={() => setMobileMenuOpen(false)} className="hover:text-cyna-500 transition-colors">CGU</Link>
+                                            <Link href="/mentions-legales" onClick={() => setMobileMenuOpen(false)} className="hover:text-cyna-500 transition-colors">Mentions légales</Link>
+                                            <Link href="/sav" onClick={() => setMobileMenuOpen(false)} className="hover:text-cyna-500 transition-colors">SAV</Link>
+                                            <Link href="/support#contact" onClick={() => setMobileMenuOpen(false)} className="hover:text-cyna-500 transition-colors">Contact</Link>
+                                        </div>
                                     </div>
                                 </PopoverContent>
                             </Popover>
@@ -210,5 +274,14 @@ export default function AppHeader() {
                 </div>
             </div>
         </nav>
+        {/* Backdrop for mobile menu */}
+        {mobileMenuOpen && (
+            <div 
+                className="fixed inset-0 top-16 z-[55] bg-black/50 backdrop-blur-md transition-all duration-300"
+                aria-hidden="true"
+                onClick={() => setMobileMenuOpen(false)}
+            />
+        )}
+        </>
     );
 }

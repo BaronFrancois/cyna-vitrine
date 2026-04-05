@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Facebook, Twitter, Linkedin } from "lucide-react";
 
 export default function AppFooter() {
     const links = [
@@ -9,10 +10,10 @@ export default function AppFooter() {
     ] as const;
 
     return (
-        <footer className="bg-gray-50 border-t border-gray-200">
+        <footer className="hidden md:block bg-zinc-950 border-t border-zinc-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <nav
-                    className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-center gap-x-8 gap-y-3 text-sm text-gray-600"
+                    className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-center gap-x-8 gap-y-3 text-sm text-gray-400"
                     aria-label="Liens pied de page"
                 >
                     {links.map((item) => (
@@ -25,7 +26,19 @@ export default function AppFooter() {
                         </Link>
                     ))}
                 </nav>
-                <p className="text-center text-xs text-gray-400 mt-8">
+
+                <div className="flex justify-center items-center gap-6 mt-8">
+                    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-cyna-500 transition-colors" aria-label="Facebook">
+                        <Facebook className="w-5 h-5" />
+                    </a>
+                    <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-cyna-500 transition-colors" aria-label="Twitter">
+                        <Twitter className="w-5 h-5" />
+                    </a>
+                    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-cyna-500 transition-colors" aria-label="LinkedIn">
+                        <Linkedin className="w-5 h-5" />
+                    </a>
+                </div>
+                <p className="text-center text-xs text-gray-600 mt-8">
                     © {new Date().getFullYear()} Cyna. Tous droits réservés.
                 </p>
             </div>
