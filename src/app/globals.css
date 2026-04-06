@@ -46,7 +46,48 @@ html.light {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Titres vitrine : même police (Geist), même échelle, alignement gauche par défaut */
+.cyna-heading {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.5rem;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  text-align: left;
+}
+@media (min-width: 768px) {
+  .cyna-heading {
+    font-size: 1.875rem;
+  }
+}
+.cyna-heading--center {
+  text-align: center;
+}
+
+.cyna-legal-body h2 {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.5rem;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  text-align: left;
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+  color: #e5e7eb;
+}
+.cyna-legal-body h2:first-child {
+  margin-top: 0;
+}
+@media (min-width: 768px) {
+  .cyna-legal-body h2 {
+    font-size: 1.875rem;
+  }
+}
+html.light .cyna-legal-body h2 {
+  color: #2a2a44;
 }
 
 /* ============================================================
@@ -172,14 +213,12 @@ body {
   box-shadow: 0 1px #0006, 0 4px 8px #00000047, inset 0 1px #ffffff0f, 0 0 0 1px #ffffff0f;
 }
 
-/* Header & filtres catalogue actifs : teinte sombre + inner shadow */
-.nav-sku-header-active {
+/* Actif — pastilles sans variante violet (repli rare) */
+.nav-sku-raised.nav-sku-header-active:not(.nav-sku-header-login):not(.nav-sku-header-charte) {
   background: linear-gradient(180deg, #14141e 0%, #0f0f1a 100%) !important;
   color: #e0e0f0 !important;
   border: 1px solid rgba(255, 255, 255, 0.10) !important;
   transform: translateY(1px);
-}
-.nav-sku-raised.nav-sku-header-active {
   box-shadow:
     inset 0 2px 6px rgba(0, 0, 0, 0.50),
     inset 0 1px 2px rgba(0, 0, 0, 0.30),
@@ -199,19 +238,26 @@ body {
     color: #ffffff;
     background: linear-gradient(#3800f4 0%, #9003a8 100%);
     box-shadow: 0 2px #00000059, 0 3px 8px #0000009c, inset 0 1px #ffffffa3, 0px 2px 5px 0px #000000;
+    min-height: 2.25rem;
+    height: 2.25rem;
+    padding: 0 1rem;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
 }
 .nav-sku-raised.nav-sku-header-login:hover:not(.nav-sku-header-active) {
     color: #ffffff;
     border-color: #ffffff1f;
     box-shadow: 0 1px #0006, 0 4px 8px #00000047, inset 0 1px #ffffff0f, 0 0 0 1px #ffffff0f;
 }
+/* Actif — pastilles header / filtres (charte demandée) */
 .nav-sku-raised.nav-sku-header-login.nav-sku-header-active {
     transform: translateY(1px);
     cursor: pointer !important;
     color: #fff !important;
-    background: linear-gradient(#1f0574 0%, #310039 100%) !important;
-    border: 1px solid #00000080 !important;
-    box-shadow: inset 0 8px 6px 3px #0000009e, inset 0 1px 6px #0811966b, inset 0 0 0 1px #b5b5b557, inset 0 -1px #ffffff75 !important;
+    background: linear-gradient(#2606a8 0%, #5c0670 100%) !important;
+    border: 1px solid #00000061 !important;
+    box-shadow: 0 1px #8965ed, inset 0 2px 5px #000000bd, inset 0 1px #ffffff24 !important;
 }
 .nav-sku-raised.nav-sku-header-charte:hover:not(.nav-sku-header-active) {
   color: #ddd6fe;
@@ -377,10 +423,42 @@ html.light .nav-sku-raised.nav-sku-header-charte {
     0 3px 8px rgba(124,58,237,0.10),
     inset 0 1px 0 rgba(255,255,255,0.70) !important;
 }
-html.light .nav-sku-raised:hover:not(.nav-sku-header-active) {
+/* Même pastille « pleine » violet CDC que Se connecter / Acheter (thème clair) */
+html.light .nav-sku-raised.nav-sku-header-login {
+  background: linear-gradient(180deg, #7c3aed 0%, #5b21b6 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(91, 33, 182, 0.45) !important;
+  box-shadow:
+    0 2px 0 rgba(91, 33, 182, 0.35),
+    0 4px 12px rgba(124, 58, 237, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+  min-height: 2.25rem;
+  height: 2.25rem;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+}
+html.light .nav-sku-raised.nav-sku-header-login:hover:not(.nav-sku-header-active) {
+  color: #ffffff !important;
+  border-color: rgba(124, 58, 237, 0.55) !important;
+  box-shadow:
+    0 1px 0 rgba(91, 33, 182, 0.25),
+    0 5px 14px rgba(124, 58, 237, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+html.light .nav-sku-raised.nav-sku-header-login.nav-sku-header-active {
+  transform: translateY(1px);
+  cursor: pointer !important;
+  color: #fff !important;
+  background: linear-gradient(#2606a8 0%, #5c0670 100%) !important;
+  border: 1px solid #00000061 !important;
+  box-shadow: 0 1px #8965ed, inset 0 2px 5px #000000bd, inset 0 1px #ffffff24 !important;
+}
+html.light .nav-sku-raised:hover:not(.nav-sku-header-active):not(.nav-sku-header-login) {
   color: #4c1d95 !important;
 }
-html.light .nav-sku-header-active {
+html.light .nav-sku-header-active:not(.nav-sku-header-login) {
   background: linear-gradient(180deg, #ddd6fe 0%, #c4b5fd 100%) !important;
   color: #3b0764 !important;
 }
@@ -414,6 +492,9 @@ html.light .hover\:bg-zinc-700:hover  { background-color: #e0e0f4 !important; }
 
 /* ── Bouton outline sur fond clair ── */
 html.light .btn-sku.border.border-zinc-600 { border-color: #9090c8 !important; }
+html.light .btn-sku.border-2 {
+  border-color: color-mix(in srgb, var(--cyna-violet-600) 88%, #312e81) !important;
+}
 
 /* ── Transitions globales pour le passage de thème ── */
 body,

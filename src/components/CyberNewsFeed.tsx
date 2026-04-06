@@ -106,7 +106,7 @@ export default function CyberNewsFeed() {
                         <p className="text-cyna-600 font-semibold text-sm tracking-wide uppercase mb-3">
                             Veille en temps réel · Source CISA
                         </p>
-                        <h2 className="text-4xl md:text-5xl font-bold text-gray-100 tracking-tight leading-tight">
+                        <h2 className="cyna-heading text-gray-100">
                             Les dernières menaces
                             <br />
                             <span className="text-gray-400 font-light">activement exploitées.</span>

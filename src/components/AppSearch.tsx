@@ -5,27 +5,33 @@ import { Search, X } from "lucide-react";
 import Link from "next/link";
 import { PRODUCTS } from "../../constants";
 import { cn } from "@/lib/utils";
-
-const QUICK_LINKS: { label: string; href: string }[] = [
-    { label: "Accueil", href: "/" },
-    { label: "Catalogue", href: "/catalog" },
-    { label: "Support", href: "/support" },
-    { label: "Panier", href: "/cart" },
-    { label: "Compte", href: "/account" },
-];
+import { useI18n } from "@/context/I18nContext";
 
 type AppSearchVariant = "header" | "catalogInline";
 
 export default function AppSearch({ variant = "header" }: { variant?: AppSearchVariant }) {
+    const { t } = useI18n();
     const isCatalogHero = variant === "catalogInline";
     const [open, setOpen] = useState(isCatalogHero);
     const [query, setQuery] = useState("");
     const containerRef = useRef<HTMLDivElement>(null);
 
+    const quickLinks = useMemo(
+        () => [
+            { label: t("nav.home"), href: "/" },
+            { label: t("nav.catalog"), href: "/catalog" },
+            { label: t("nav.search"), href: "/search" },
+            { label: t("nav.support"), href: "/support" },
+            { label: t("nav.cart"), href: "/cart" },
+            { label: t("nav.account"), href: "/account" },
+        ],
+        [t]
+    );
+
     const { navHits, productHits } = useMemo(() => {
         const q = query.trim().toLowerCase();
-        if (!q) return { navHits: [] as typeof QUICK_LINKS, productHits: [] as typeof PRODUCTS };
-        const navHits = QUICK_LINKS.filter((l) => l.label.toLowerCase().includes(q));
+        if (!q) return { navHits: [] as typeof quickLinks, productHits: [] as typeof PRODUCTS };
+        const navHits = quickLinks.filter((l) => l.label.toLowerCase().includes(q));
         const productHits = PRODUCTS.filter(
             (p) =>
                 p.name.toLowerCase().includes(q) ||
@@ -34,7 +40,7 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                 p.id.toLowerCase().includes(q)
         );
         return { navHits, productHits };
-    }, [query]);
+    }, [query, quickLinks]);
 
     const hasResults = query.trim() && (navHits.length > 0 || productHits.length > 0);
 
@@ -72,7 +78,7 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                         type="button"
                         className="inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0 text-white transition-colors hover:text-cyna-500 shadow-none"
                         onClick={() => setOpen(true)}
-                        aria-label="Ouvrir la recherche"
+                        aria-label={t("search.open")}
                     >
                         <Search className="h-5 w-5" aria-hidden />
                     </button>
@@ -95,18 +101,18 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                             autoFocus={!isCatalogHero}
                             placeholder={
                                 isCatalogHero
-                                    ? "Rechercher un produit, une catégorie…"
-                                    : "Produits, pages…"
+                                    ? t("search.placeholderHero")
+                                    : t("search.placeholderHeader")
                             }
                             className={inputClasses}
-                            aria-label="Recherche"
+                            aria-label={t("search.label")}
                         />
                         {!isCatalogHero && (
                             <button
                                 type="button"
                                 className="absolute right-1 top-1.5 text-gray-500 hover:text-gray-200"
                                 onClick={() => setQuery("")}
-                                aria-label="Effacer"
+                                aria-label={t("search.clear")}
                             >
                                 <X />
                             </button>
@@ -116,13 +122,13 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                                 type="button"
                                 className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
                                 onClick={() => setQuery("")}
-                                aria-label="Effacer la recherche"
+                                aria-label={t("search.clearHero")}
                             >
                                 <X className="h-4 w-4" />
                             </button>
                         )}
 
-                        {hasResults && (
+                        {query.trim() && (
                             <ul
                                 className={cn(
                                     "absolute mt-2 max-h-72 overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 text-left shadow-lg z-50",
@@ -131,6 +137,15 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                                         : "mt-1 w-[min(100vw-2rem,20rem)] sm:w-64"
                                 )}
                             >
+                                <li>
+                                    <Link
+                                        href={`/search?q=${encodeURIComponent(query.trim())}`}
+                                        className="block cursor-pointer p-2.5 text-sm font-medium text-cyna-400 hover:bg-violet-950/50"
+                                        onClick={onPick}
+                                    >
+                                        {t("search.advanced")}
+                                    </Link>
+                                </li>
                                 {navHits.map((l) => (
                                     <li key={l.href}>
                                         <Link
@@ -139,7 +154,7 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                                             onClick={onPick}
                                         >
                                             {l.label}
-                                            <span className="ml-1 text-xs text-gray-400">Page</span>
+                                            <span className="ml-1 text-xs text-gray-400">{t("search.pageBadge")}</span>
                                         </Link>
                                     </li>
                                 ))}
@@ -157,18 +172,12 @@ export default function AppSearch({ variant = "header" }: { variant?: AppSearchV
                                         </Link>
                                     </li>
                                 ))}
-                            </ul>
-                        )}
-
-                        {query.trim() && !hasResults && (
-                            <div
-                                className={cn(
-                                    "absolute z-50 mt-2 rounded-xl border border-zinc-700 bg-zinc-900 p-3 text-sm text-gray-500 shadow-lg",
-                                    isCatalogHero ? "left-0 right-0 w-full" : "mt-1 w-[min(100vw-2rem,20rem)] sm:w-64"
+                                {!hasResults && (
+                                    <li className="px-2.5 py-2 text-xs text-gray-500 border-t border-zinc-800">
+                                        {t("search.noQuick")}
+                                    </li>
                                 )}
-                            >
-                                Aucun résultat
-                            </div>
+                            </ul>
                         )}
                     </div>
                 )}

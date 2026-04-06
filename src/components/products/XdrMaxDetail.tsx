@@ -46,7 +46,7 @@ export default function XdrMaxDetail() {
 
             {/* Correlation diagram */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-100 mb-3">Corrélation cross-stack unifiée</h2>
+                <h2 className="cyna-heading text-gray-100 mb-3">Corrélation cross-stack unifiée</h2>
                 <p className="text-gray-400 mb-8">
                     XDR Max ingère et corrèle les événements de toutes vos couches de sécurité en un seul moteur d'analyse.
                 </p>
@@ -124,7 +124,7 @@ export default function XdrMaxDetail() {
 
             {/* Incident Examples */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-100 mb-6">Incidents corrélés en exemple</h2>
+                <h2 className="cyna-heading text-gray-100 mb-6">Incidents corrélés en exemple</h2>
                 <div className="space-y-5">
                     {INCIDENTS.map((inc) => (
                         <div key={inc.id} className="bg-zinc-900 rounded-2xl border border-zinc-700 shadow-sm overflow-hidden">

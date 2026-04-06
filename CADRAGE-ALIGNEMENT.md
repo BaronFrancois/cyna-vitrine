@@ -74,4 +74,18 @@ Légende : **R** = réalise, **A** = approuve (formateur), **C** = consulté, **
 
 ---
 
+## 6. Mise à jour CDCF (plan de conformité)
+
+- **Accueil** : carrousel, blocs texte, catégories et produits vedettes branchés sur l’API publique (`publicFetch`, `cyna-api` carousel / home-text-blocks / categories / products).
+- **Recherche** : `GET /products/search`, indexes PostgreSQL (`pg_trgm`), page `/search` et pagination catalogue.
+- **Checkout** : Stripe (Elements / PaymentIntent) ; PayPal documenté comme option complémentaire ; gestion des lignes panier indisponibles.
+- **Compte** : commandes, abonnements, adresses, moyens de paiement via routes API authentifiées.
+- **Back-office** : application `cyna-admin` (tableaux, analytics) + **2FA TOTP** admin (`otplib` v13, routes setup/confirm).
+- **i18n** : contexte `I18nProvider` (FR / EN), `lang` sur `<html>`, libellés shell (header, footer, recherche, carrousel). Thème **sombre uniquement** (`forcedTheme="dark"`).
+- **Accessibilité** : carrousel (région, `aria-live`, masquage des diapos inactives) ; formulaire contact (`htmlFor`, `aria-invalid`, `role="alert"`) ; modale chat (`role="dialog"`, `aria-modal`, libellés boutons).
+- **Mobile** : dossier `cyna-mobile` (Expo) listant les catégories via l’API — second dépôt Git possible.
+- **Documentation livrables** : `docs/CDCF-LIVRABLES.md` (installation, Swagger, canevas DCT, SPA, stack mobile).
+
+---
+
 *Document à mettre à jour à chaque itération.*

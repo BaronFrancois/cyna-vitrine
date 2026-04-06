@@ -2,21 +2,22 @@
 
 import { useState, useEffect } from "react";
 import {
+    Home,
     ShoppingBag,
     Menu,
     X,
-    User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AppSearch from "./AppSearch";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { CynaLogo } from "./CynaLogo";
 import useCart from "@/hooks/useCart";
-import { ThemeToggle } from "./ThemeToggle";
+import { useI18n } from "@/context/I18nContext";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export default function AppHeader() {
+    const { t } = useI18n();
     const pathname = usePathname();
     const { itemCount } = useCart();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -31,7 +32,7 @@ export default function AppHeader() {
 
     const navClass = (path: string) =>
         cn(
-            "nav-sku-raised nav-sku-header-charte text-sm font-medium whitespace-nowrap px-3 py-1.5 transition-colors",
+            "nav-sku-raised nav-sku-header-login inline-flex items-center justify-center gap-1.5 text-sm font-medium leading-none whitespace-nowrap transition-colors",
             isNavActive(path) && "nav-sku-header-active"
         );
 
@@ -64,7 +65,7 @@ export default function AppHeader() {
                             <Link
                                 href="/"
                                 className="flex flex-shrink-0 cursor-pointer items-center gap-2 py-1 font-semibold tracking-tight transition-opacity hover:opacity-85"
-                                aria-label="Accueil Cyna"
+                                aria-label={t("header.logoAria")}
                             >
                                 <img 
                                     src="/logo-cyna-white.svg" 
@@ -72,16 +73,21 @@ export default function AppHeader() {
                                     className="h-7 min-[400px]:h-8 w-auto mt-0.5" 
                                 />
                             </Link>
-                            <Link href="/" className={cn(navClass("/"), "hidden md:inline-flex")}>
-                                Accueil
+                            <Link
+                                href="/"
+                                className={cn(navClass("/"), "hidden md:inline-flex")}
+                                aria-label={t("header.home")}
+                                title={t("header.home")}
+                            >
+                                <Home className="h-[1.125rem] w-[1.125rem] shrink-0" aria-hidden />
                             </Link>
                         </div>
                         <div className="hidden md:flex items-center space-x-1 overflow-visible py-0.5">
                             <Link href="/catalog" className={navClass("/catalog")}>
-                                Solutions
+                                {t("header.solutions")}
                             </Link>
                             <Link href="/support" className={navClass("/support")}>
-                                Support
+                                {t("header.support")}
                             </Link>
                         </div>
                     </div>
@@ -95,14 +101,16 @@ export default function AppHeader() {
                         >
                             <AppSearch />
                         </div>
-                        <ThemeToggle />
+                        <LanguageSwitcher />
                         <Link
                             href="/cart"
                             className="relative inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center text-slate-200 transition-colors hover:text-cyna-500"
                             aria-label={
                                 itemCount > 0
-                                    ? `Panier, ${itemCount} article${itemCount > 1 ? "s" : ""}`
-                                    : "Panier"
+                                    ? itemCount > 1
+                                        ? t("header.cartWithCountPlural", { count: itemCount })
+                                        : t("header.cartWithCount", { count: itemCount })
+                                    : t("header.cart")
                             }
                         >
                             <ShoppingBag size={20} />
@@ -116,21 +124,21 @@ export default function AppHeader() {
                             <Link
                                 href="/account"
                                 className={cn(
-                                    "hidden sm:inline-flex nav-sku-raised nav-sku-header-charte items-center justify-center text-sm font-medium transition-colors",
+                                    "hidden sm:inline-flex nav-sku-raised nav-sku-header-login items-center justify-center text-sm font-medium leading-none transition-colors",
                                     pathname === "/account" && "nav-sku-header-active"
                                 )}
                             >
-                                Mon compte
+                                {t("header.account")}
                             </Link>
                         ) : (
                             <Link
                                 href="/auth/login"
                                 className={cn(
-                                    "hidden sm:inline-flex nav-sku-raised nav-sku-header-login items-center justify-center text-sm font-medium transition-colors",
+                                    "hidden sm:inline-flex nav-sku-raised nav-sku-header-login items-center justify-center text-sm font-medium leading-none transition-colors",
                                     pathname === "/auth/login" && "nav-sku-header-active"
                                 )}
                             >
-                                Se connecter
+                                {t("header.login")}
                             </Link>
                         )}
                         <div className="flex items-center md:hidden">
@@ -141,11 +149,11 @@ export default function AppHeader() {
                                         className={cn(
                                             "relative inline-flex shrink-0 cursor-pointer items-center justify-center p-0 transition-all duration-300",
                                             "w-9 h-9 rounded-full text-slate-200 hover:text-cyna-500",
-                                            mobileMenuOpen ? "nav-sku-raised nav-sku-header-charte nav-sku-header-active border-0" : ""
+                                            mobileMenuOpen ? "nav-sku-raised nav-sku-header-login nav-sku-header-active border-0" : ""
                                         )}
                                         aria-expanded={mobileMenuOpen}
                                         aria-label={
-                                            mobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"
+                                            mobileMenuOpen ? t("header.menuClose") : t("header.menuOpen")
                                         }
                                     >
                                         <Menu
@@ -190,31 +198,33 @@ export default function AppHeader() {
                                             href="/"
                                             onClick={() => setMobileMenuOpen(false)}
                                             className={cn(
-                                                "block w-full nav-sku-raised text-center text-sm font-medium",
-                                                pathname === "/" && "nav-sku-header-charte nav-sku-header-active"
+                                                "flex w-full min-h-9 items-center justify-center gap-2 nav-sku-raised nav-sku-header-login text-sm font-medium leading-none",
+                                                pathname === "/" && "nav-sku-header-active"
                                             )}
+                                            aria-label={t("header.home")}
                                         >
-                                            Accueil
+                                            <Home className="h-4 w-4 shrink-0" aria-hidden />
+                                            <span className="sr-only">{t("header.home")}</span>
                                         </Link>
                                         <Link
                                             href="/catalog"
                                             onClick={() => setMobileMenuOpen(false)}
                                             className={cn(
-                                                "block w-full nav-sku-raised text-center text-sm font-medium",
-                                                pathname.startsWith("/catalog") && "nav-sku-header-charte nav-sku-header-active"
+                                                "flex w-full min-h-9 items-center justify-center nav-sku-raised nav-sku-header-login text-center text-sm font-medium",
+                                                pathname.startsWith("/catalog") && "nav-sku-header-active"
                                             )}
                                         >
-                                            Solutions
+                                            {t("header.solutions")}
                                         </Link>
                                         <Link
                                             href="/support"
                                             onClick={() => setMobileMenuOpen(false)}
                                             className={cn(
-                                                "block w-full nav-sku-raised text-center text-sm font-medium",
-                                                pathname.startsWith("/support") && "nav-sku-header-charte nav-sku-header-active"
+                                                "flex w-full min-h-9 items-center justify-center nav-sku-raised nav-sku-header-login text-center text-sm font-medium",
+                                                pathname.startsWith("/support") && "nav-sku-header-active"
                                             )}
                                         >
-                                            Support
+                                            {t("header.support")}
                                         </Link>
 
                                         <div className="my-1.5 h-px bg-zinc-700/50" />
@@ -223,11 +233,11 @@ export default function AppHeader() {
                                             href="/cart"
                                             onClick={() => setMobileMenuOpen(false)}
                                             className={cn(
-                                                "flex w-full nav-sku-raised items-center justify-center gap-2 text-sm font-medium",
-                                                pathname === "/cart" && "nav-sku-header-charte nav-sku-header-active"
+                                                "flex w-full min-h-9 nav-sku-raised nav-sku-header-login items-center justify-center gap-2 text-sm font-medium",
+                                                pathname === "/cart" && "nav-sku-header-active"
                                             )}
                                         >
-                                            <span>Panier</span>
+                                            <span>{t("header.cart")}</span>
                                             {itemCount > 0 && (
                                                 <span className="rounded-full bg-cyna-500 shadow-inner px-2 py-0.5 text-[11px] font-bold text-white">
                                                     {itemCount > 99 ? "99+" : itemCount}
@@ -239,32 +249,32 @@ export default function AppHeader() {
                                                 href="/account"
                                                 onClick={() => setMobileMenuOpen(false)}
                                                 className={cn(
-                                                    "block w-full nav-sku-raised text-center text-sm font-medium",
-                                                    pathname === "/account" && "nav-sku-header-charte nav-sku-header-active"
+                                                    "flex w-full min-h-9 items-center justify-center nav-sku-raised nav-sku-header-login text-center text-sm font-medium",
+                                                    pathname === "/account" && "nav-sku-header-active"
                                                 )}
                                             >
-                                                Compte
+                                                {t("header.accountShort")}
                                             </Link>
                                         ) : (
                                             <Link
                                                 href="/auth/login"
                                                 onClick={() => setMobileMenuOpen(false)}
                                                 className={cn(
-                                                    "block w-full nav-sku-raised nav-sku-header-charte text-center text-sm font-medium text-white",
+                                                    "flex w-full min-h-9 items-center justify-center nav-sku-raised nav-sku-header-login text-center text-sm font-medium",
                                                     pathname === "/auth/login" && "nav-sku-header-active"
                                                 )}
                                             >
-                                                Se connecter
+                                                {t("header.login")}
                                             </Link>
                                         )}
 
                                         <div className="mt-2 mb-1 h-px bg-zinc-800/80" />
                                         
                                         <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 px-1 py-1 text-[11px] text-gray-400">
-                                            <Link href="/cgu" onClick={() => setMobileMenuOpen(false)} className="hover:text-cyna-500 transition-colors">CGU</Link>
-                                            <Link href="/mentions-legales" onClick={() => setMobileMenuOpen(false)} className="hover:text-cyna-500 transition-colors">Mentions légales</Link>
-                                            <Link href="/sav" onClick={() => setMobileMenuOpen(false)} className="hover:text-cyna-500 transition-colors">SAV</Link>
-                                            <Link href="/support#contact" onClick={() => setMobileMenuOpen(false)} className="hover:text-cyna-500 transition-colors">Contact</Link>
+                                            <Link href="/cgu" onClick={() => setMobileMenuOpen(false)} className="hover:text-cyna-500 transition-colors">{t("footer.cgu")}</Link>
+                                            <Link href="/mentions-legales" onClick={() => setMobileMenuOpen(false)} className="hover:text-cyna-500 transition-colors">{t("footer.legal")}</Link>
+                                            <Link href="/sav" onClick={() => setMobileMenuOpen(false)} className="hover:text-cyna-500 transition-colors">{t("footer.sav")}</Link>
+                                            <Link href="/support#contact" onClick={() => setMobileMenuOpen(false)} className="hover:text-cyna-500 transition-colors">{t("footer.contact")}</Link>
                                         </div>
                                     </div>
                                 </PopoverContent>

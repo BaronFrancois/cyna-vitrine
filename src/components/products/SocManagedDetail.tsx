@@ -80,7 +80,7 @@ export default function SocManagedDetail() {
 
             {/* Team */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-100 mb-3">Votre équipe d'analystes dédiée</h2>
+                <h2 className="cyna-heading text-gray-100 mb-3">Votre équipe d'analystes dédiée</h2>
                 <p className="text-gray-400 mb-8">Des experts certifiés vous couvrent 24h/24, 365 jours par an — sans exception.</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                     {ANALYSTS.map((analyst) => (
@@ -101,7 +101,7 @@ export default function SocManagedDetail() {
 
             {/* SLA */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-100 mb-6">Engagements de niveau de service (SLA)</h2>
+                <h2 className="cyna-heading text-gray-100 mb-6">Engagements de niveau de service (SLA)</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     {SLA.map((s) => (
                         <div key={s.label} className="bg-gradient-to-br from-violet-950/30 to-purple-950/30 rounded-2xl border border-violet-900/50 p-6">
@@ -117,7 +117,7 @@ export default function SocManagedDetail() {
             <div className="bg-gradient-to-br from-gray-900 to-violet-950 rounded-3xl p-8 lg:p-12 text-white">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
                     <div>
-                        <h3 className="text-2xl font-bold mb-3">Rapports mensuels inclus</h3>
+                        <h3 className="cyna-heading text-gray-100 mb-3">Rapports mensuels inclus</h3>
                         <p className="text-gray-400 mb-6 leading-relaxed">
                             Chaque mois, recevez un rapport détaillé : résumé des incidents, tendances des menaces,
                             recommandations et métriques de performance de votre SOC.

@@ -2,11 +2,15 @@
 
 import { useState, useEffect } from "react";
 import useCart from "@/hooks/useCart";
+import { cartLineIsAvailable } from "@/lib/cartAvailability";
 import AppLayout from "@/layout/AppLayout";
 import Link from "next/link";
 import { PRODUCTS } from "@/constant";
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2, LogIn, UserPlus, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { buttonClassName } from "@/components/ui/Button";
+import { useI18n } from "@/context/I18nContext";
+import { interpolate } from "@/i18n/messages";
 
 const TVA_RATE = 0.20;
 
@@ -20,13 +24,14 @@ function QuantityStepper({
     onChange: (v: number) => void;
     disabled?: boolean;
 }) {
+    const { t } = useI18n();
     return (
         <div className="flex items-center gap-1">
             <button
                 onClick={() => onChange(Math.max(1, value - 1))}
                 disabled={disabled || value <= 1}
                 className="w-7 h-7 flex items-center justify-center rounded-lg bg-zinc-800 border border-zinc-700 text-gray-300 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                aria-label="Diminuer la quantité"
+                aria-label={t("cart.decreaseQty")}
             >
                 <Minus className="w-3 h-3" />
             </button>
@@ -37,7 +42,7 @@ function QuantityStepper({
                 onClick={() => onChange(Math.min(99, value + 1))}
                 disabled={disabled || value >= 99}
                 className="w-7 h-7 flex items-center justify-center rounded-lg bg-zinc-800 border border-zinc-700 text-gray-300 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                aria-label="Augmenter la quantité"
+                aria-label={t("cart.increaseQty")}
             >
                 <Plus className="w-3 h-3" />
             </button>
@@ -47,17 +52,18 @@ function QuantityStepper({
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 function EmptyCart({ isAuthenticated }: { isAuthenticated: boolean }) {
+    const { t } = useI18n();
     return (
         <AppLayout>
             <div className="mx-auto flex min-h-[min(60vh,720px)] w-full max-w-2xl flex-col items-center justify-center px-4 py-16 text-center sm:py-24">
                 <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-zinc-800 border border-zinc-700">
                     <ShoppingBag className="w-9 h-9 text-gray-400" />
                 </div>
-                <h2 className="text-3xl font-bold text-gray-100 mb-3">
-                    Votre panier est vide.
+                <h2 className="cyna-heading text-gray-100 mb-3">
+                    {t("cart.empty.title")}
                 </h2>
                 <p className="mb-8 max-w-md text-gray-400">
-                    Sécurisez vos systèmes avec nos outils premium.
+                    {t("cart.empty.subtitle")}
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                     {!isAuthenticated && (
@@ -66,14 +72,14 @@ function EmptyCart({ isAuthenticated }: { isAuthenticated: boolean }) {
                             className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-zinc-600 text-gray-300 hover:border-zinc-400 hover:text-gray-100 text-sm font-medium transition-colors"
                         >
                             <LogIn className="w-4 h-4" />
-                            Se connecter
+                            {t("header.login")}
                         </Link>
                     )}
                     <Link
                         href="/catalog"
                         className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-cyna-600 hover:bg-cyna-700 text-white text-sm font-semibold transition-colors"
                     >
-                        Découvrir nos solutions
+                        {t("cart.empty.discover")}
                         <ArrowRight className="w-4 h-4" />
                     </Link>
                 </div>
@@ -84,6 +90,7 @@ function EmptyCart({ isAuthenticated }: { isAuthenticated: boolean }) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Cart() {
+    const { t } = useI18n();
     const { items, total, removeFromCart, updateCartItem } = useCart();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -98,10 +105,7 @@ export default function Cart() {
     }
 
     // Availability
-    const isCartAvailable = items.every((item) => {
-        const prod = PRODUCTS.find((p) => p.id === item.id);
-        return prod?.status === "available";
-    });
+    const isCartAvailable = items.every((item) => cartLineIsAvailable(item));
 
     // Totaux
     const subtotalHT = total;
@@ -129,17 +133,23 @@ export default function Cart() {
 
                 {/* ── En-tête ── */}
                 <div className="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-                    <h1 className="text-3xl sm:text-4xl font-bold text-gray-100 tracking-tight">
-                        Mon panier
+                    <h1 className="cyna-heading text-gray-100">
+                        {t("cart.title")}
                         <span className="ml-3 text-lg font-normal text-gray-500">
-                            ({items.reduce((n, i) => n + i.quantity, 0)} article{items.reduce((n, i) => n + i.quantity, 0) > 1 ? "s" : ""})
+                            {items.reduce((n, i) => n + i.quantity, 0) > 1
+                                ? interpolate(t("cart.itemsCountPlural"), {
+                                      n: items.reduce((n, i) => n + i.quantity, 0),
+                                  })
+                                : interpolate(t("cart.itemsCount"), {
+                                      n: items.reduce((n, i) => n + i.quantity, 0),
+                                  })}
                         </span>
                     </h1>
                     <Link
                         href="/catalog"
                         className="inline-flex items-center gap-1.5 text-sm text-cyna-500 hover:text-cyna-400 font-medium transition-colors"
                     >
-                        ← Continuer vos achats
+                        ← {t("cart.continue")}
                     </Link>
                 </div>
 
@@ -149,7 +159,7 @@ export default function Cart() {
                     <div className="space-y-0 divide-y divide-zinc-800 rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
                         {items.map((item) => {
                             const product = PRODUCTS.find((p) => p.id === item.id);
-                            const isAvailable = product?.status === "available";
+                            const isAvailable = cartLineIsAvailable(item);
                             const lineTotal = item.price * item.quantity;
 
                             return (
@@ -170,7 +180,7 @@ export default function Cart() {
                                         {!isAvailable && (
                                             <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
                                                 <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">
-                                                    Indisponible
+                                                    {t("common.unavailable")}
                                                 </span>
                                             </div>
                                         )}
@@ -186,22 +196,22 @@ export default function Cart() {
                                                     </h3>
                                                     {!isAvailable ? (
                                                         <span className="shrink-0 text-[10px] font-bold text-yellow-400 bg-yellow-950/50 border border-yellow-800/60 px-2 py-0.5 rounded-full uppercase tracking-wide">
-                                                            Indisponible
+                                                            {t("common.unavailable")}
                                                         </span>
                                                     ) : (
                                                         <span className="shrink-0 text-[10px] font-bold text-green-400 bg-green-950/50 border border-green-800/60 px-2 py-0.5 rounded-full uppercase tracking-wide">
-                                                            Disponible
+                                                            {t("common.available")}
                                                         </span>
                                                     )}
                                                 </div>
                                                 <p className="text-xs text-gray-500">
-                                                    Catégorie {item.category}
+                                                    {t("common.category")} {item.category}
                                                 </p>
                                             </div>
                                             <button
                                                 onClick={() => removeFromCart(item.id)}
                                                 className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-950/30 transition-colors"
-                                                aria-label="Retirer du panier"
+                                                aria-label={t("cart.removeLine")}
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -221,13 +231,13 @@ export default function Cart() {
                                                 disabled={!isAvailable}
                                                 className="bg-zinc-800 border border-zinc-700 text-gray-300 text-xs rounded-lg focus:ring-cyna-500 focus:border-cyna-500 px-2.5 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                                             >
-                                                <option value="monthly">Mensuel</option>
-                                                <option value="annual">Annuel (×10)</option>
+                                                <option value="monthly">{t("common.monthly")}</option>
+                                                <option value="annual">{t("common.yearly")}</option>
                                             </select>
 
                                             {/* Quantité */}
                                             <div className="flex items-center gap-2">
-                                                <span className="text-xs text-gray-500">Qté</span>
+                                                <span className="text-xs text-gray-500">{t("common.qty")}</span>
                                                 <QuantityStepper
                                                     value={item.quantity}
                                                     onChange={(v) => updateCartItem(item.id, { quantity: v })}
@@ -246,7 +256,8 @@ export default function Cart() {
                                                     </p>
                                                 )}
                                                 <p className="text-xs text-gray-600 mt-0.5">
-                                                    / {item.period === "monthly" ? "mois" : "an"} HT
+                                                    / {item.period === "monthly" ? t("common.perMonth") : t("common.perYear")}{" "}
+                                                    {t("common.ht")}
                                                 </p>
                                             </div>
                                         </div>
@@ -261,25 +272,25 @@ export default function Cart() {
 
                         {/* Résumé financier */}
                         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 space-y-4">
-                            <h2 className="text-lg font-semibold text-gray-100 mb-2">
-                                Récapitulatif
+                            <h2 className="cyna-heading text-gray-100 mb-2">
+                                {t("cart.summary")}
                             </h2>
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between text-gray-400">
-                                    <span>Sous-total HT</span>
+                                    <span>{t("cart.subtotal")}</span>
                                     <span className="text-gray-200 tabular-nums">
                                         {subtotalHT.toFixed(2)}€
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-gray-400">
-                                    <span>TVA (20%)</span>
+                                    <span>{t("cart.vat")}</span>
                                     <span className="text-gray-200 tabular-nums">
                                         {tva.toFixed(2)}€
                                     </span>
                                 </div>
                             </div>
                             <div className="border-t border-zinc-700 pt-4 flex justify-between">
-                                <span className="font-bold text-gray-100">Total TTC</span>
+                                <span className="font-bold text-gray-100">{t("cart.totalTtc")}</span>
                                 <span className="font-bold text-xl text-gray-100 tabular-nums">
                                     {totalTTC.toFixed(2)}€
                                 </span>
@@ -289,10 +300,7 @@ export default function Cart() {
                             {!isCartAvailable && (
                                 <div className="flex items-start gap-2 bg-yellow-950/40 border border-yellow-800/50 rounded-xl p-3 text-xs text-yellow-300">
                                     <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                                    <span>
-                                        Un ou plusieurs articles sont indisponibles.
-                                        Retirez-les pour continuer.
-                                    </span>
+                                    <span>{t("cart.unavailableBanner")}</span>
                                 </div>
                             )}
 
@@ -301,28 +309,26 @@ export default function Cart() {
                                 <Link
                                     href={isCartAvailable ? "/checkout" : "#"}
                                     className={cn(
-                                        "flex items-center justify-center gap-2 w-full py-3 rounded-full font-semibold text-sm transition-colors",
-                                        isCartAvailable
-                                            ? "bg-cyna-600 hover:bg-cyna-700 text-white"
-                                            : "bg-zinc-700 text-gray-500 cursor-not-allowed pointer-events-none"
+                                        buttonClassName("primary", "md"),
+                                        "w-full gap-2 text-sm font-semibold !py-3",
+                                        !isCartAvailable && "pointer-events-none opacity-50"
                                     )}
                                     aria-disabled={!isCartAvailable}
                                 >
-                                    Passer à la caisse
+                                    {t("cart.checkout")}
                                     <ArrowRight className="w-4 h-4" />
                                 </Link>
                             ) : (
                                 <Link
                                     href={isCartAvailable ? "/checkout?guest=true" : "#"}
                                     className={cn(
-                                        "flex items-center justify-center gap-2 w-full py-3 rounded-full font-semibold text-sm border transition-colors",
-                                        isCartAvailable
-                                            ? "border-zinc-600 text-gray-300 hover:border-cyna-500 hover:text-cyna-400"
-                                            : "border-zinc-700 text-gray-500 cursor-not-allowed pointer-events-none"
+                                        buttonClassName("outline", "md"),
+                                        "w-full gap-2 text-sm font-semibold !py-3",
+                                        !isCartAvailable && "pointer-events-none opacity-50"
                                     )}
                                     aria-disabled={!isCartAvailable}
                                 >
-                                    Continuer en tant qu'invité
+                                    {t("cart.guestCheckout")}
                                     <ArrowRight className="w-4 h-4" />
                                 </Link>
                             )}
@@ -334,24 +340,29 @@ export default function Cart() {
                                 <div className="flex items-start gap-2">
                                     <Info className="w-4 h-4 text-cyna-400 shrink-0 mt-0.5" />
                                     <p className="text-xs text-gray-400 leading-relaxed">
-                                        Connectez-vous pour sauvegarder votre panier, retrouver
-                                        vos commandes et gérer vos abonnements.
+                                        {t("cart.loginHint")}
                                     </p>
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <Link
                                         href="/auth/login"
-                                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full bg-cyna-600 hover:bg-cyna-700 text-white text-sm font-semibold transition-colors"
+                                        className={cn(
+                                            buttonClassName("primary", "sm"),
+                                            "w-full gap-2 text-sm font-semibold"
+                                        )}
                                     >
                                         <LogIn className="w-4 h-4" />
-                                        Se connecter
+                                        {t("header.login")}
                                     </Link>
                                     <Link
                                         href="/auth/register"
-                                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-full border border-zinc-700 text-gray-300 hover:border-zinc-500 hover:text-gray-100 text-sm font-medium transition-colors"
+                                        className={cn(
+                                            buttonClassName("outline", "sm"),
+                                            "w-full gap-2 text-sm font-semibold"
+                                        )}
                                     >
                                         <UserPlus className="w-4 h-4" />
-                                        Créer un compte
+                                        {t("auth.login.register")}
                                     </Link>
                                 </div>
                             </div>
@@ -361,15 +372,15 @@ export default function Cart() {
                         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 space-y-2 text-xs text-gray-500">
                             <p className="flex items-center gap-2">
                                 <span className="text-green-500">✓</span>
-                                Paiement sécurisé par Stripe
+                                {t("cart.secureStripe")}
                             </p>
                             <p className="flex items-center gap-2">
                                 <span className="text-green-500">✓</span>
-                                Résiliation à tout moment
+                                {t("cart.cancelAnytime")}
                             </p>
                             <p className="flex items-center gap-2">
                                 <span className="text-green-500">✓</span>
-                                Support France 24/7
+                                {t("cart.support247")}
                             </p>
                         </div>
                     </aside>

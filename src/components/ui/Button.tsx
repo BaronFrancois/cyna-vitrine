@@ -15,33 +15,38 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     isActive?: boolean;
 }
 
+/** Anneau focus homogène (fond page = variable thème) */
+const FOCUS_OFFSET = "focus:ring-offset-2 focus:ring-offset-[var(--background)]";
+
+/** CTA principal — violet CDC (.btn-sku-primary) */
+const VARIANT_PRIMARY = `bg-cyna-600 text-white hover:bg-cyna-700 focus:ring-cyna-600 ${FOCUS_OFFSET}`;
+
+/** Secondaire — même relief .btn-sku, bordure & survol violets CDC */
+const VARIANT_OUTLINE = `border-2 border-cyna-500/80 text-gray-100 bg-transparent hover:bg-cyna-600/14 hover:border-cyna-400 focus:ring-cyna-500 ${FOCUS_OFFSET}`;
+
+/** Sur bandeau dégradé marque (texte clair sur violet) */
+const VARIANT_INVERSE = `border-2 border-white/45 text-white bg-white/10 hover:bg-white/18 hover:border-white/70 focus:ring-white/55 focus:ring-offset-2 focus:ring-offset-transparent`;
+
 const SKU_CLASS: Record<NonNullable<ButtonProps["variant"]>, string> = {
     primary: "btn-sku-primary",
     secondary: "btn-sku",
     outline: "btn-sku",
-    ghost: "btn-sku-ghost",
+    ghost: "btn-sku",
     accent: "btn-sku-primary",
     surface: "btn-sku",
     ghostInverse: "btn-sku-inv",
-    dark: "btn-sku",
+    dark: "btn-sku-primary",
 };
 
 const VARIANT_CLASS: Record<NonNullable<ButtonProps["variant"]>, string> = {
-    primary:
-        "bg-cyna-600 text-white hover:bg-cyna-700 focus:ring-cyna-600",
-    secondary:
-        "bg-zinc-800 text-gray-200 hover:bg-zinc-700 focus:ring-zinc-600",
-    ghost:
-        "bg-transparent text-cyna-500 hover:text-cyna-400 focus:ring-cyna-600",
-    outline:
-        "border border-zinc-600 text-gray-300 hover:border-zinc-500 bg-transparent focus:ring-zinc-500",
-    accent:
-        "bg-cyna-600 text-white hover:bg-cyna-700 focus:ring-cyna-600",
-    surface:
-        "bg-zinc-700 text-gray-100 hover:bg-zinc-600 focus:ring-zinc-500",
-    ghostInverse:
-        "bg-transparent text-white hover:text-white focus:ring-white/60",
-    dark: "bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-600",
+    primary: VARIANT_PRIMARY,
+    accent: VARIANT_PRIMARY,
+    dark: VARIANT_PRIMARY,
+    secondary: VARIANT_OUTLINE,
+    outline: VARIANT_OUTLINE,
+    ghost: VARIANT_OUTLINE,
+    surface: VARIANT_OUTLINE,
+    ghostInverse: VARIANT_INVERSE,
 };
 
 const SIZE_CLASS: Record<NonNullable<ButtonProps["size"]>, string> = {

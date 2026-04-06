@@ -58,7 +58,7 @@ export default function NetSentryDetail() {
 
             {/* Traffic chart */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-100 mb-3">Analyse du trafic réseau</h2>
+                <h2 className="cyna-heading text-gray-100 mb-3">Analyse du trafic réseau</h2>
                 <p className="text-gray-500 mb-8">
                     Inspection approfondie des paquets (DPI) avec détection d'anomalies par apprentissage automatique.
                 </p>
@@ -101,7 +101,7 @@ export default function NetSentryDetail() {
 
             {/* IDS / IPS */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-100 mb-6">Prévention d'intrusion (IDS/IPS)</h2>
+                <h2 className="cyna-heading text-gray-100 mb-6">Prévention d'intrusion (IDS/IPS)</h2>
                 <div className="bg-gray-950 rounded-3xl overflow-hidden shadow-2xl">
                     <div className="flex items-center gap-2 px-5 py-4 bg-gray-900 border-b border-gray-800">
                         <span className="w-3 h-3 rounded-full bg-red-500" />

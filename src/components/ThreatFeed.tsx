@@ -57,7 +57,7 @@ export default function ThreatFeed() {
                         <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                         Flux en direct — Source CISA KEV
                     </div>
-                    <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
+                    <h2 className="cyna-heading text-gray-100 mb-6">
                         Pendant que vous lisez ces lignes,
                         <br />
                         <span className="text-red-500">des systèmes sont compromis.</span>

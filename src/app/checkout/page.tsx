@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -9,14 +9,23 @@ import { Button } from '@/components/ui/Button';
 import AppLayout from '@/layout/AppLayout';
 import useCart from '@/hooks/useCart';
 import api from '@/lib/api';
+import { getAuthToken } from '@/lib/authCookie';
 import { cn } from '@/lib/utils';
+import { cartHasUnavailableItem } from '@/lib/cartAvailability';
+import { useI18n } from '@/context/I18nContext';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY!);
 
-const COUNTRY_LABELS: Record<string, string> = {
+const COUNTRY_LABELS_FR: Record<string, string> = {
     FR: 'France',
     BE: 'Belgique',
     CH: 'Suisse',
+    LU: 'Luxembourg',
+};
+const COUNTRY_LABELS_EN: Record<string, string> = {
+    FR: 'France',
+    BE: 'Belgium',
+    CH: 'Switzerland',
     LU: 'Luxembourg',
 };
 
@@ -33,7 +42,7 @@ function decodeToken(token: string): { sub: number; email: string; role: string 
 
 function getToken(): string | null {
     if (typeof document === 'undefined') return null;
-    return document.cookie.split('; ').find(r => r.startsWith('auth_token='))?.split('=')[1] ?? null;
+    return getAuthToken() ?? null;
 }
 
 // ─── Indicateur d'étapes ─────────────────────────────────────────────────────
@@ -54,17 +63,20 @@ function StepIndicator({ num, title, current }: { num: number; title: string; cu
 // ─── Récapitulatif panier ────────────────────────────────────────────────────
 
 function CartSummary() {
+    const { t } = useI18n();
     const { items, total } = useCart();
     if (items.length === 0) return null;
     return (
         <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-700">
-            <h3 className="font-semibold text-gray-200 mb-4 text-sm">Récapitulatif</h3>
+            <h3 className="font-semibold text-gray-200 mb-4 text-sm">{t('checkout.summary.title')}</h3>
             <div className="space-y-3">
                 {items.map(item => (
                     <div key={item.id} className="flex justify-between items-center text-sm">
                         <div>
                             <p className="font-medium text-gray-200">{item.name}</p>
-                            <p className="text-xs text-gray-500">{item.period === 'monthly' ? 'Mensuel' : 'Annuel'} × {item.quantity}</p>
+                            <p className="text-xs text-gray-500">
+                                {item.period === 'monthly' ? t('checkout.summary.monthly') : t('checkout.summary.yearly')} × {item.quantity}
+                            </p>
                         </div>
                         <span className="font-semibold text-gray-200">{(item.price * item.quantity).toFixed(2)} €</span>
                     </div>
@@ -72,13 +84,13 @@ function CartSummary() {
             </div>
             <div className="mt-4 pt-4 border-t border-zinc-700 space-y-1">
                 <div className="flex justify-between text-sm text-gray-400">
-                    <span>Sous-total</span><span>{total.toFixed(2)} €</span>
+                    <span>{t('checkout.summary.subtotal')}</span><span>{total.toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-400">
-                    <span>TVA (20%)</span><span>{(total * 0.2).toFixed(2)} €</span>
+                    <span>{t('checkout.summary.vat')}</span><span>{(total * 0.2).toFixed(2)} €</span>
                 </div>
                 <div className="flex justify-between font-bold text-gray-100 text-base pt-2">
-                    <span>Total</span><span>{(total * 1.2).toFixed(2)} €</span>
+                    <span>{t('checkout.summary.total')}</span><span>{(total * 1.2).toFixed(2)} €</span>
                 </div>
             </div>
         </div>
@@ -98,6 +110,7 @@ function PaymentForm({
     addressId: number;
     onSuccess: (orderId: number) => void;
 }) {
+    const { t } = useI18n();
     const stripe = useStripe();
     const elements = useElements();
     const [loading, setLoading] = useState(false);
@@ -126,12 +139,11 @@ function PaymentForm({
                 return;
             }
 
-            // Mock backend payment instead of API call to /v1/payement/checkout
+            // TODO production : POST /v1/payement/checkout avec paymentMethodId Stripe
             setTimeout(() => {
                 onSuccess(Date.now());
                 clearCart();
-            }, 2000);
-            clearCart();
+            }, 1500);
         } catch (err: any) {
             setError(err.response?.data?.message ?? 'Une erreur est survenue');
         } finally {
@@ -143,7 +155,7 @@ function PaymentForm({
         <form onSubmit={handlePay} className="space-y-6">
             <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-700">
                 <div className="flex justify-between items-center mb-4">
-                    <span className="font-semibold text-gray-200 text-sm">Carte bancaire</span>
+                    <span className="font-semibold text-gray-200 text-sm">{t('checkout.pay.card')}</span>
                     <div className="flex gap-1.5">
                         {['VISA', 'MC'].map(b => (
                             <div key={b} className="w-9 h-6 bg-gray-800 rounded flex items-center justify-center">
@@ -163,7 +175,7 @@ function PaymentForm({
             <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" checked={saveCard} onChange={e => setSaveCard(e.target.checked)}
                     className="w-4 h-4 rounded border-gray-300 text-cyna-600" />
-                <span className="text-sm text-gray-400">Sauvegarder la carte pour mes prochains achats</span>
+                <span className="text-sm text-gray-400">{t('checkout.pay.saveCard')}</span>
             </label>
 
             {error && (
@@ -172,24 +184,33 @@ function PaymentForm({
 
             <Button
                 type="submit"
-                variant="dark"
+                variant="primary"
                 disabled={loading || !stripe}
                 className="w-full gap-2"
             >
                 <Lock size={16} />
-                {loading ? "Traitement en cours..." : "Payer maintenant"}
+                {loading ? t('checkout.pay.processing') : t('checkout.pay.now')}
             </Button>
 
             <p className="text-center text-xs text-gray-400 flex items-center justify-center gap-1.5">
-                <ShieldCheck size={13} /> Paiement sécurisé par Stripe — vos données ne nous sont jamais transmises
+                <ShieldCheck size={13} /> {t('checkout.pay.stripeNote')}
             </p>
+
+            <div className="rounded-2xl border border-dashed border-zinc-600 bg-zinc-900/30 p-4 text-center">
+                <p className="text-xs text-gray-500">
+                    <strong className="text-gray-400">PayPal</strong> — {t('checkout.paypal.note')}{' '}
+                    {t('checkout.pay.paypalFull')}
+                </p>
+            </div>
         </form>
     );
 }
 
 // ─── Page principale ──────────────────────────────────────────────────────────
 
-export default function Checkout() {
+function CheckoutInner() {
+    const { t, locale } = useI18n();
+    const countryLabels = locale === 'en' ? COUNTRY_LABELS_EN : COUNTRY_LABELS_FR;
     const router = useRouter();
     const searchParams = useSearchParams();
     const isGuest = searchParams.get('guest') === 'true';
@@ -214,8 +235,12 @@ export default function Checkout() {
         if (orderDone != null) return;
         if (items.length === 0) {
             router.replace('/cart');
+            return;
         }
-    }, [isLoaded, items.length, router, orderDone]);
+        if (cartHasUnavailableItem(items)) {
+            router.replace('/cart');
+        }
+    }, [isLoaded, items, router, orderDone]);
 
     // Détection token + sync panier — attendre que le localStorage soit chargé
     useEffect(() => {
@@ -247,7 +272,7 @@ export default function Checkout() {
 
         const required = ['firstName', 'lastName', 'addressLine1', 'city', 'postalCode'] as const;
         if (required.some(f => !billing[f])) {
-            setBillingError('Veuillez remplir tous les champs obligatoires.');
+            setBillingError(t('checkout.billing.required'));
             return;
         }
 
@@ -258,11 +283,16 @@ export default function Checkout() {
                 setStep(3);
             }, 500);
         } catch {
-            setBillingError('Impossible de sauvegarder l\'adresse. Réessayez.');
+            setBillingError(t('checkout.billing.saveError'));
         }
     };
 
-    const goToBillingStep = () => setStep(2);
+    const goToBillingStep = () => {
+        if (!userId) {
+            router.replace('/checkout?guest=true');
+        }
+        setStep(2);
+    };
     const goToAccountStep = () => setStep(1);
     const goToVerificationStep = () => setStep(3);
     const goToPaymentStep = () => setStep(4);
@@ -271,7 +301,7 @@ export default function Checkout() {
         return (
             <AppLayout>
                 <div className="mx-auto max-w-md px-4 py-24 text-center text-sm text-gray-500">
-                    Chargement du panier…
+                    {t('checkout.loadingCart')}
                 </div>
             </AppLayout>
         );
@@ -284,11 +314,13 @@ export default function Checkout() {
                     <div className="w-20 h-20 bg-green-950/40 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Check className="w-10 h-10 text-green-400" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-100 mb-3">Paiement confirmé !</h1>
-                    <p className="text-gray-400 mb-2">Commande n° <span className="font-semibold text-gray-200">#{orderDone}</span></p>
-                    <p className="text-gray-500 text-sm mb-10">Vous recevrez une confirmation par email. Vos abonnements sont maintenant actifs.</p>
-                    <Button onClick={() => router.push("/dashboard")} className="gap-1">
-                        Accéder à mon espace client <ChevronRight size={16} className="ml-1" />
+                    <h1 className="cyna-heading cyna-heading--center text-gray-100 mb-3">{t('checkout.success.title')}</h1>
+                    <p className="text-gray-400 mb-2">
+                        {t('checkout.success.order')} <span className="font-semibold text-gray-200">#{orderDone}</span>
+                    </p>
+                    <p className="text-gray-500 text-sm mb-10">{t('checkout.success.body')}</p>
+                    <Button variant="primary" onClick={() => router.push("/dashboard")} className="gap-1">
+                        {t('checkout.success.dashboard')} <ChevronRight size={16} className="ml-1" />
                     </Button>
                 </div>
             </AppLayout>
@@ -304,10 +336,10 @@ export default function Checkout() {
             <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 py-16">
                 {/* Étapes */}
                 <div className="mb-12 flex w-full flex-wrap justify-center gap-2 border-b border-zinc-800 pb-8 sm:gap-3">
-                    <StepIndicator num={1} title="Compte" current={step} />
-                    <StepIndicator num={2} title="Facturation" current={step} />
-                    <StepIndicator num={3} title="Vérification" current={step} />
-                    <StepIndicator num={4} title="Paiement" current={step} />
+                    <StepIndicator num={1} title={t('checkout.step.account')} current={step} />
+                    <StepIndicator num={2} title={t('checkout.step.billing')} current={step} />
+                    <StepIndicator num={3} title={t('checkout.step.review')} current={step} />
+                    <StepIndicator num={4} title={t('checkout.step.payment')} current={step} />
                 </div>
 
                 <div
@@ -327,36 +359,36 @@ export default function Checkout() {
                         {/* ── ÉTAPE 1 : Compte ── */}
                         {step === 1 && (
                             <div className="fade-in mx-auto w-full max-w-md space-y-6 text-center sm:text-left">
-                                <h2 className="text-2xl font-bold text-gray-100">
-                                    {userId ? 'Votre compte' : 'Connectez-vous pour continuer.'}
+                                <h2 className="cyna-heading text-gray-100">
+                                    {userId ? t('checkout.account.titleUser') : t('checkout.account.titleGuest')}
                                 </h2>
                                 {userId ? (
                                     <p className="text-sm text-gray-600">
-                                        Vous êtes connecté. Poursuivez vers la facturation ou revenez plus tard aux étapes précédentes avec les boutons ci-dessous.
+                                        {t('checkout.account.connectedHint')}
                                     </p>
                                 ) : null}
                                 <div className="space-y-3">
                                     {!userId && (
                                         <>
-                                            <input type="email" placeholder="Adresse email"
+                                            <input type="email" placeholder={t('auth.login.emailPh')}
                                                 className="w-full rounded-xl border border-zinc-700 bg-zinc-800 text-gray-200 placeholder-gray-500 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600" />
-                                            <input type="password" placeholder="Mot de passe"
+                                            <input type="password" placeholder={t('auth.login.passwordPh')}
                                                 className="w-full rounded-xl border border-zinc-700 bg-zinc-800 text-gray-200 placeholder-gray-500 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600" />
-                                            <Button className="w-full rounded-xl py-3" onClick={() => router.push('/auth/login?redirect=/checkout')}>
-                                                Se connecter
+                                            <Button variant="primary" className="w-full" onClick={() => router.push('/auth/login?redirect=/checkout')}>
+                                                {t('auth.login.submit')}
                                             </Button>
                                         </>
                                     )}
                                     <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-center">
                                         {userId && (
-                                            <Button type="button" className="w-full gap-2 sm:w-auto" onClick={goToBillingStep}>
-                                                Suivant <ChevronRight size={16} />
+                                            <Button type="button" variant="primary" className="w-full gap-2 sm:w-auto" onClick={goToBillingStep}>
+                                                {t('checkout.next')} <ChevronRight size={16} />
                                             </Button>
                                         )}
                                         {!userId && (
                                             <>
-                                                <Button type="button" variant="ghost" className="w-full gap-2 sm:w-auto" onClick={goToBillingStep}>
-                                                    Continuer en invité <ChevronRight size={16} />
+                                                <Button type="button" variant="outline" className="w-full gap-2 sm:w-auto" onClick={goToBillingStep}>
+                                                    {t('checkout.continueGuest')} <ChevronRight size={16} />
                                                 </Button>
                                             </>
                                         )}
@@ -368,16 +400,16 @@ export default function Checkout() {
                         {/* ── ÉTAPE 2 : Facturation ── */}
                         {step === 2 && (
                             <form onSubmit={handleBillingSubmit} className="fade-in w-full space-y-6">
-                                <h2 className="text-center text-2xl font-bold text-gray-100">Adresse de facturation.</h2>
+                                <h2 className="cyna-heading text-gray-100">{t('checkout.billing.title')}</h2>
                                 <div className="grid grid-cols-2 gap-3">
                                     {[
-                                        { field: 'firstName', placeholder: 'Prénom', col: 1 },
-                                        { field: 'lastName', placeholder: 'Nom', col: 1 },
-                                        { field: 'addressLine1', placeholder: 'Adresse (rue, numéro)', col: 2 },
-                                        { field: 'addressLine2', placeholder: 'Complément d\'adresse (optionnel)', col: 2 },
-                                        { field: 'city', placeholder: 'Ville', col: 1 },
-                                        { field: 'postalCode', placeholder: 'Code postal', col: 1 },
-                                        { field: 'region', placeholder: 'Région / Département', col: 2 },
+                                        { field: 'firstName' as const, placeholder: t('checkout.ph.firstName'), col: 1 as const },
+                                        { field: 'lastName' as const, placeholder: t('checkout.ph.lastName'), col: 1 as const },
+                                        { field: 'addressLine1' as const, placeholder: t('checkout.ph.address1'), col: 2 as const },
+                                        { field: 'addressLine2' as const, placeholder: t('checkout.ph.address2'), col: 2 as const },
+                                        { field: 'city' as const, placeholder: t('checkout.ph.city'), col: 1 as const },
+                                        { field: 'postalCode' as const, placeholder: t('checkout.ph.postal'), col: 1 as const },
+                                        { field: 'region' as const, placeholder: t('checkout.ph.region'), col: 2 as const },
                                     ].map(({ field, placeholder, col }) => (
                                         <input key={field}
                                             type="text"
@@ -396,7 +428,7 @@ export default function Checkout() {
                                     </select>
                                     <input
                                         type="tel"
-                                        placeholder="Numéro de téléphone mobile"
+                                        placeholder={t('checkout.ph.phone')}
                                         value={billing.phone}
                                         onChange={e => setBilling(prev => ({ ...prev, phone: e.target.value }))}
                                         className="col-span-2 rounded-xl border border-zinc-700 bg-zinc-800 text-gray-200 placeholder-gray-500 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600"
@@ -408,14 +440,14 @@ export default function Checkout() {
                                 <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-between sm:gap-4">
                                     <Button
                                         type="button"
-                                        variant="ghost"
+                                        variant="outline"
                                         className="w-full gap-2 sm:w-auto"
                                         onClick={goToAccountStep}
                                     >
-                                        <ChevronLeft size={16} /> Précédent
+                                        <ChevronLeft size={16} /> {t('common.prev')}
                                     </Button>
-                                    <Button type="submit" className="w-full gap-2 sm:w-auto">
-                                        Suivant <ChevronRight size={16} />
+                                    <Button type="submit" variant="primary" className="w-full gap-2 sm:w-auto">
+                                        {t('checkout.next')} <ChevronRight size={16} />
                                     </Button>
                                 </div>
                             </form>
@@ -424,14 +456,14 @@ export default function Checkout() {
                         {/* ── ÉTAPE 3 : Vérification (avant Stripe) ── */}
                         {step === 3 && (
                             <div className="fade-in w-full space-y-6">
-                                <h2 className="text-center text-2xl font-bold text-gray-100">
-                                    Vérifiez votre commande.
+                                <h2 className="cyna-heading text-gray-100">
+                                    {t('checkout.verify.title')}
                                 </h2>
                                 <p className="text-center text-sm text-gray-400">
-                                    Contrôlez l’adresse et le récapitulatif avant de saisir votre carte.
+                                    {t('checkout.verify.subtitle')}
                                 </p>
                                 <div className="space-y-4 rounded-2xl border border-zinc-700 bg-zinc-900 p-5 text-sm">
-                                    <h3 className="font-semibold text-gray-200">Adresse de facturation</h3>
+                                    <h3 className="font-semibold text-gray-200">{t('checkout.verify.billingBlock')}</h3>
                                     <p className="text-gray-300">
                                         {billing.firstName} {billing.lastName}
                                         <br />
@@ -441,32 +473,32 @@ export default function Checkout() {
                                         {billing.postalCode} {billing.city}
                                         {billing.region && <><br />{billing.region}</>}
                                         <br />
-                                        {COUNTRY_LABELS[billing.country] ?? billing.country}
-                                        {billing.phone && <><br />Tél. : {billing.phone}</>}
+                                        {countryLabels[billing.country] ?? billing.country}
+                                        {billing.phone && <><br />{t('checkout.telPrefix')} {billing.phone}</>}
                                     </p>
                                 </div>
                                 <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-between sm:gap-4">
                                     <Button
                                         type="button"
-                                        variant="ghost"
+                                        variant="outline"
                                         className="w-full gap-2 sm:w-auto"
                                         onClick={goToBillingStep}
                                     >
-                                        <ChevronLeft size={16} /> Précédent
+                                        <ChevronLeft size={16} /> {t('common.prev')}
                                     </Button>
                                     <Button
                                         type="button"
+                                        variant="primary"
                                         className="w-full gap-2 sm:w-auto"
                                         onClick={goToPaymentStep}
                                         disabled={!userId || !cartId || !addressId}
                                     >
-                                        Passer au paiement <ChevronRight size={16} />
+                                        {t('checkout.payProceed')} <ChevronRight size={16} />
                                     </Button>
                                 </div>
                                 {(!userId || !cartId || !addressId) && (
                                     <p className="text-center text-xs text-amber-700">
-                                        Connexion et synchronisation du panier en cours… Si cela persiste,
-                                        rechargez la page.
+                                        {t('checkout.syncWarning')}
                                     </p>
                                 )}
                             </div>
@@ -475,7 +507,7 @@ export default function Checkout() {
                         {/* ── ÉTAPE 4 : Paiement Stripe ── */}
                         {step === 4 && userId && cartId && addressId && (
                             <div className="fade-in w-full space-y-6">
-                                <h2 className="text-center text-2xl font-bold text-gray-100">Paiement sécurisé.</h2>
+                                <h2 className="cyna-heading text-gray-100">{t('checkout.payment.title')}</h2>
                                 <div className="mx-auto w-full max-w-md px-0 sm:px-0">
                                     <Elements stripe={stripePromise}>
                                         <PaymentForm
@@ -487,8 +519,8 @@ export default function Checkout() {
                                     </Elements>
                                 </div>
                                 <div className="flex justify-center pt-2">
-                                    <Button type="button" variant="ghost" className="gap-2" onClick={goToVerificationStep}>
-                                        <ChevronLeft size={16} /> Précédent (vérification)
+                                    <Button type="button" variant="outline" className="gap-2" onClick={goToVerificationStep}>
+                                        <ChevronLeft size={16} /> {t('checkout.payment.back')}
                                     </Button>
                                 </div>
                             </div>
@@ -496,7 +528,7 @@ export default function Checkout() {
 
                         {step === 4 && (!userId || !cartId || !addressId) && (
                             <div className="fade-in mx-auto max-w-md py-12 text-center">
-                                <p className="text-sm text-gray-500">Chargement en cours…</p>
+                                <p className="text-sm text-gray-500">{t('checkout.loading')}</p>
                             </div>
                         )}
                     </div>
@@ -519,5 +551,13 @@ export default function Checkout() {
                 </div>
             </div>
         </AppLayout>
+    );
+}
+
+export default function Checkout() {
+    return (
+        <Suspense fallback={<div className="min-h-[40vh] p-8 text-gray-400 text-center">Chargement…</div>}>
+            <CheckoutInner />
+        </Suspense>
     );
 }

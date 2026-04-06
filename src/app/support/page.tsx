@@ -2,12 +2,14 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { MessageSquare, Send, X, User as UserIcon, Bot } from "lucide-react";
+import { MessageSquare, Send, X, Bot } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import api from "@/lib/api";
 import { chatWithCyna } from "@/services/geminiService";
 import AppLayout from "@/layout/AppLayout";
-import { SUPPORT_FAQ, matchPredefinedAnswer } from "@/lib/supportFaq";
+import { matchPredefinedAnswer, supportFaqForLocale } from "@/lib/supportFaq";
+import { useI18n } from "@/context/I18nContext";
+import { supportPageUi } from "@/i18n/supportPageUi";
 
 interface ContactForm {
     email: string;
@@ -22,6 +24,9 @@ interface ContactErrors {
 }
 
 export default function SupportPage() {
+    const { locale } = useI18n();
+    const ui = supportPageUi(locale);
+    const faqItems = supportFaqForLocale(locale);
     const pathname = usePathname();
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [input, setInput] = useState("");
@@ -32,10 +37,15 @@ export default function SupportPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // ── Formulaire de contact ──
-    const [contact, setContact] = useState<ContactForm>({ email: "", subject: "Problème Technique", message: "" });
+    const [contact, setContact] = useState<ContactForm>({ email: "", subject: "", message: "" });
     const [contactErrors, setContactErrors] = useState<ContactErrors>({});
     const [contactSending, setContactSending] = useState(false);
     const [contactSent, setContactSent] = useState(false);
+
+    useEffect(() => {
+        const first = supportPageUi(locale).subjectOptions[0] ?? "";
+        setContact((c) => ({ ...c, subject: first }));
+    }, [locale]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -72,9 +82,9 @@ export default function SupportPage() {
     const handleContactSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const errs: ContactErrors = {};
-        if (!contact.email || !/\S+@\S+\.\S+/.test(contact.email)) errs.email = "Adresse email invalide";
-        if (!contact.subject) errs.subject = "Veuillez choisir un sujet";
-        if (!contact.message.trim() || contact.message.trim().length < 10) errs.message = "Le message doit contenir au moins 10 caractères";
+        if (!contact.email || !/\S+@\S+\.\S+/.test(contact.email)) errs.email = ui.emailInvalid;
+        if (!contact.subject) errs.subject = ui.subjectRequired;
+        if (!contact.message.trim() || contact.message.trim().length < 10) errs.message = ui.messageShort;
         setContactErrors(errs);
         if (Object.keys(errs).length > 0) return;
 
@@ -90,7 +100,11 @@ export default function SupportPage() {
         } finally {
             setContactSending(false);
             setContactSent(true);
-            setContact({ email: "", subject: "Problème Technique", message: "" });
+            setContact({
+                email: "",
+                subject: supportPageUi(locale).subjectOptions[0] ?? "",
+                message: "",
+            });
         }
     };
 
@@ -106,7 +120,7 @@ export default function SupportPage() {
         setHistory(newHistory);
         setIsLoading(true);
 
-        const predefined = matchPredefinedAnswer(userMsg);
+        const predefined = matchPredefinedAnswer(userMsg, locale);
         if (predefined) {
             setHistory([
                 ...newHistory,
@@ -129,24 +143,24 @@ export default function SupportPage() {
         <AppLayout> {/* className="min-h-screen bg-white" */}
             {/* Support Hero */}
             <div className="bg-zinc-950 py-20 text-center px-4">
-                <h1 className="text-4xl md:text-5xl font-bold text-gray-100 mb-6">
-                    Comment pouvons-nous vous aider ?
+                <h1 className="cyna-heading cyna-heading--center text-gray-100 mb-6">
+                    {ui.heroTitle}
                 </h1>
                 <div className="max-w-xl mx-auto">
                     <input
                         type="text"
-                        placeholder="Rechercher des sujets d'aide..."
+                        placeholder={ui.heroSearchPlaceholder}
                         className="w-full p-4 rounded-full border border-zinc-700 bg-zinc-900 text-gray-200 placeholder-gray-500 shadow-sm focus:ring-2 focus:ring-cyna-500 focus:outline-none"
                     />
                 </div>
             </div>
 
             <div className="max-w-4xl mx-auto px-4 py-12">
-                <h2 className="text-xl font-bold text-gray-100 mb-4 text-center md:text-left">
-                    Questions fréquentes
+                <h2 className="cyna-heading text-gray-100 mb-4">
+                    {ui.faqTitle}
                 </h2>
                 <div className="space-y-3 mb-16">
-                    {SUPPORT_FAQ.map((item) => (
+                    {faqItems.map((item) => (
                         <details
                             key={item.id}
                             className="group rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 open:shadow-sm"
@@ -172,66 +186,83 @@ export default function SupportPage() {
             >
                 {/* Contact Form */}
                 <div>
-                    <h2 id="contact-heading" className="text-2xl font-bold mb-6">
-                        Contactez-nous
+                    <h2 id="contact-heading" className="cyna-heading text-gray-100 mb-6">
+                        {ui.contactHeading}
                     </h2>
 
                     {contactSent ? (
                         <div className="bg-green-950/40 border border-green-800 rounded-2xl p-6 text-center space-y-2">
-                            <p className="text-green-400 font-semibold text-lg">Message envoyé !</p>
-                            <p className="text-gray-400 text-sm">Notre équipe vous répondra dans les plus brefs délais à l'adresse indiquée.</p>
+                            <p className="text-green-400 font-semibold text-lg">{ui.contactSentTitle}</p>
+                            <p className="text-gray-400 text-sm">{ui.contactSentBody}</p>
                             <button
                                 onClick={() => setContactSent(false)}
                                 className="mt-2 text-sm text-cyna-500 hover:underline"
                             >
-                                Envoyer un autre message
+                                {ui.contactSentAgain}
                             </button>
                         </div>
                     ) : (
                         <form className="space-y-4" onSubmit={handleContactSubmit} noValidate>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Email <span className="text-red-500">*</span>
+                                <label htmlFor="contact-email" className="block text-sm font-medium text-gray-300 mb-1">
+                                    {ui.emailLabel} <span className="text-red-500">*</span>
                                 </label>
                                 <input
+                                    id="contact-email"
                                     type="email"
+                                    autoComplete="email"
                                     value={contact.email}
                                     onChange={e => { setContact(p => ({ ...p, email: e.target.value })); setContactErrors(p => ({ ...p, email: undefined })); }}
                                     className={`w-full p-3 rounded-lg bg-zinc-800 border ${contactErrors.email ? "border-red-500" : "border-zinc-700"} text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyna-500`}
-                                    placeholder="votre@email.fr"
+                                    placeholder={ui.emailPh}
+                                    aria-invalid={!!contactErrors.email}
+                                    aria-describedby={contactErrors.email ? "contact-email-error" : undefined}
                                 />
-                                {contactErrors.email && <p className="mt-1 text-xs text-red-500">{contactErrors.email}</p>}
+                                {contactErrors.email && (
+                                    <p id="contact-email-error" className="mt-1 text-xs text-red-500" role="alert">
+                                        {contactErrors.email}
+                                    </p>
+                                )}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Sujet <span className="text-red-500">*</span>
+                                <label htmlFor="contact-subject" className="block text-sm font-medium text-gray-300 mb-1">
+                                    {ui.subjectLabel} <span className="text-red-500">*</span>
                                 </label>
                                 <select
+                                    id="contact-subject"
                                     value={contact.subject}
                                     onChange={e => setContact(p => ({ ...p, subject: e.target.value }))}
                                     className="w-full p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyna-500"
                                 >
-                                    <option>Problème Technique</option>
-                                    <option>Question Facturation</option>
-                                    <option>Demande Commerciale</option>
-                                    <option>Assistance générale</option>
+                                    {ui.subjectOptions.map((opt) => (
+                                        <option key={opt} value={opt}>
+                                            {opt}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">
-                                    Message <span className="text-red-500">*</span>
+                                <label htmlFor="contact-message" className="block text-sm font-medium text-gray-300 mb-1">
+                                    {ui.messageLabel} <span className="text-red-500">*</span>
                                 </label>
                                 <textarea
+                                    id="contact-message"
                                     rows={5}
                                     value={contact.message}
                                     onChange={e => { setContact(p => ({ ...p, message: e.target.value })); setContactErrors(p => ({ ...p, message: undefined })); }}
                                     className={`w-full p-3 rounded-lg bg-zinc-800 border ${contactErrors.message ? "border-red-500" : "border-zinc-700"} text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyna-500`}
-                                    placeholder="Décrivez votre demande…"
+                                    placeholder={ui.messagePh}
+                                    aria-invalid={!!contactErrors.message}
+                                    aria-describedby={contactErrors.message ? "contact-message-error" : undefined}
                                 />
-                                {contactErrors.message && <p className="mt-1 text-xs text-red-500">{contactErrors.message}</p>}
+                                {contactErrors.message && (
+                                    <p id="contact-message-error" className="mt-1 text-xs text-red-500" role="alert">
+                                        {contactErrors.message}
+                                    </p>
+                                )}
                             </div>
-                            <Button type="submit" className="w-full" disabled={contactSending}>
-                                {contactSending ? "Envoi en cours…" : "Envoyer le message"}
+                            <Button type="submit" variant="primary" className="w-full" disabled={contactSending}>
+                                {contactSending ? ui.sending : ui.sendBtn}
                             </Button>
                         </form>
                     )}
@@ -242,36 +273,45 @@ export default function SupportPage() {
                     <div className="w-16 h-16 bg-cyna-600 rounded-full flex items-center justify-center text-white mb-6 shadow-lg shadow-violet-900">
                         <MessageSquare size={32} />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-100 mb-2">
-                        Assistant IA Cyna
+                    <h2 className="cyna-heading cyna-heading--center text-gray-100 mb-2">
+                        {ui.assistantTitle}
                     </h2>
                     <p className="text-gray-400 mb-8">
-                        Obtenez des réponses instantanées sur nos produits et
-                        services grâce à notre IA avancée.
+                        {ui.assistantBody}
                     </p>
-                    <Button onClick={() => setIsChatOpen(true)}>
-                        Démarrer le Chat
+                    <Button variant="primary" onClick={() => setIsChatOpen(true)}>
+                        {ui.startChat}
                     </Button>
                 </div>
             </section>
 
             {/* Chat Modal */}
             {isChatOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
-                    <div className="bg-zinc-900 w-full max-w-md h-[600px] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300 border border-zinc-700">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4"
+                    role="presentation"
+                >
+                    <div
+                        className="bg-zinc-900 w-full max-w-md h-[600px] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300 border border-zinc-700"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="chat-dialog-title"
+                    >
                         {/* Chat Header */}
                         <div className="bg-zinc-800 p-4 flex justify-between items-center border-b border-zinc-700">
                             <div className="flex items-center space-x-2">
-                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                <span className="font-semibold text-gray-200">
-                                    IA Cyna
+                                <div className="w-2 h-2 rounded-full bg-green-500" aria-hidden />
+                                <span id="chat-dialog-title" className="font-semibold text-gray-200">
+                                    {ui.chatTitle}
                                 </span>
                             </div>
                             <button
+                                type="button"
                                 onClick={() => setIsChatOpen(false)}
-                                className="text-gray-400 hover:text-gray-200"
+                                className="text-gray-400 hover:text-gray-200 rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-cyna-500"
+                                aria-label={ui.closeChatAria}
                             >
-                                <X size={20} />
+                                <X size={20} aria-hidden />
                             </button>
                         </div>
 
@@ -283,10 +323,7 @@ export default function SupportPage() {
                                         size={48}
                                         className="mx-auto mb-4 opacity-20"
                                     />
-                                    <p>
-                                        Posez-moi des questions sur Cyna EDR,
-                                        XDR ou les tarifs.
-                                    </p>
+                                    <p>{ui.chatEmpty}</p>
                                 </div>
                             )}
                             {history.map((msg, i) => (
@@ -327,19 +364,22 @@ export default function SupportPage() {
                                 <input
                                     type="text"
                                     className="w-full pl-4 pr-12 py-3 bg-zinc-800 text-gray-200 placeholder-gray-500 rounded-full focus:outline-none focus:ring-2 focus:ring-cyna-500"
-                                    placeholder="Écrivez un message..."
+                                    placeholder={ui.chatInputPh}
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={(e) =>
                                         e.key === "Enter" && handleSendMessage()
                                     }
+                                    aria-label={ui.chatInputAria}
                                 />
                                 <button
+                                    type="button"
                                     onClick={handleSendMessage}
                                     disabled={isLoading || !input.trim()}
                                     className="absolute right-2 top-2 p-1.5 bg-cyna-600 text-white rounded-full hover:bg-cyna-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    aria-label={ui.sendMessageAria}
                                 >
-                                    <Send size={16} />
+                                    <Send size={16} aria-hidden />
                                 </button>
                             </div>
                         </div>

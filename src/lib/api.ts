@@ -1,15 +1,12 @@
 import axios from "axios";
+import { getAuthToken } from "@/lib/authCookie";
+import { getApiBase } from "@/lib/publicApi";
 
 export default function api() {
-    const token = typeof document !== "undefined"
-        ? document.cookie
-            .split("; ")
-            .find((row) => row.startsWith("auth_token="))
-            ?.split("=")[1]
-        : undefined;
+    const token = typeof document !== "undefined" ? getAuthToken() : undefined;
 
     return axios.create({
-        baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api",
+        baseURL: getApiBase(),
         timeout: 10000,
         headers: {
             "Content-Type": "application/json",

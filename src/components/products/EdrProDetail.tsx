@@ -30,7 +30,7 @@ export default function EdrProDetail() {
 
             {/* Stats */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-100 mb-8">Performances en temps réel</h2>
+                <h2 className="cyna-heading text-gray-100 mb-8">Performances en temps réel</h2>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                     {STATS.map((s) => (
                         <div key={s.label} className="bg-zinc-900 rounded-2xl border border-zinc-700 shadow-sm p-6">
@@ -45,7 +45,7 @@ export default function EdrProDetail() {
             {/* Threat Timeline */}
             <div>
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-100">Timeline des menaces (aujourd'hui)</h2>
+                    <h2 className="cyna-heading text-gray-100">Timeline des menaces (aujourd'hui)</h2>
                     <span className="flex items-center gap-2 text-sm text-green-600 font-medium bg-green-50 border border-green-200 px-3 py-1 rounded-full">
                         <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                         Live

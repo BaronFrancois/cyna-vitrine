@@ -57,6 +57,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         image: product.image,
         category: product.category,
         period: product.period === "monthly" ? "monthly" : "annual",
+        isAvailable: product.status === "available",
     });
 
     const handleAddToCart = () => {
@@ -125,7 +126,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                 )}
                             </div>
 
-                            <h1 className="text-5xl font-bold text-gray-100 mb-5 tracking-tight leading-tight">
+                            <h1 className="cyna-heading text-gray-100 mb-5">
                                 {product.name}
                             </h1>
 
@@ -165,7 +166,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                         S'ABONNER MAINTENANT
                                     </Button>
                                 ) : (
-                                    <Button size="lg" variant="secondary" disabled className="font-bold tracking-wide w-full sm:w-auto px-8 opacity-70">
+                                    <Button size="lg" variant="outline" disabled className="font-bold tracking-wide w-full sm:w-auto px-8 opacity-70">
                                         SERVICE INDISPONIBLE
                                     </Button>
                                 )}
@@ -195,18 +196,14 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
                     {/* Bottom CTA */}
                     <div className="mt-20 bg-gradient-to-br from-cyna-600 to-[#4c1d95] rounded-3xl p-12 text-center text-white">
-                        <h2 className="text-3xl font-bold mb-3">Prêt à sécuriser votre organisation ?</h2>
+                        <h2 className="cyna-heading cyna-heading--center text-white mb-3">Prêt à sécuriser votre organisation ?</h2>
                         <p className="text-violet-200 mb-8 text-lg">
                             Commencez dès aujourd'hui avec {product.name}.
                         </p>
                         <div className="flex justify-center gap-4">
                             {product.status === "available" ? (
                                 <>
-                                    <Button
-                                        size="lg"
-                                        variant="surface"
-                                        onClick={handleAddToCart}
-                                    >
+                                    <Button size="lg" variant="ghostInverse" onClick={handleAddToCart}>
                                         Démarrer maintenant
                                     </Button>
                                     <Link href="/support#contact">
@@ -217,7 +214,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                 </>
                             ) : (
                                 <Link href="/support#contact">
-                                    <Button size="lg" variant="surface">
+                                    <Button size="lg" variant="ghostInverse">
                                         Nous contacter
                                     </Button>
                                 </Link>

@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
+import { setAuthToken } from '@/lib/authCookie';
 import AppLayout from '@/layout/AppLayout';
 import Link from 'next/link';
+import { useI18n } from '@/context/I18nContext';
 
 interface FormData {
     email: string;
@@ -31,7 +33,8 @@ function classifyError(error: unknown): ErrorKind {
     return 'generic';
 }
 
-export default function Login() {
+function LoginInner() {
+    const { t } = useI18n();
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get('redirect') ?? '/dashboard';
@@ -45,12 +48,12 @@ export default function Login() {
     const validateForm = (): boolean => {
         const newErrors: FormErrors = {};
         if (!formData.email) {
-            newErrors.email = "L'email est requis";
+            newErrors.email = t('auth.login.err.emailRequired');
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = "Format d'email invalide";
+            newErrors.email = t('auth.login.err.emailInvalid');
         }
         if (!formData.password) {
-            newErrors.password = 'Le mot de passe est requis';
+            newErrors.password = t('auth.login.err.passwordRequired');
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -78,10 +81,13 @@ export default function Login() {
                 password: formData.password,
             });
 
-            const token: string = res.data?.access_token ?? res.data?.token ?? '';
+            const token: string =
+                res.data?.accessToken ?? res.data?.access_token ?? res.data?.token ?? '';
             const maxAge = rememberMe ? 30 * 24 * 3600 : 7 * 24 * 3600;
-            document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}`;
-            if (token) localStorage.setItem('token', token);
+            if (token) {
+                setAuthToken(token, maxAge);
+                localStorage.setItem('token', token);
+            }
 
             router.push(redirectTo);
         } catch (error) {
@@ -89,11 +95,11 @@ export default function Login() {
             setErrorKind(kind);
 
             if (kind === 'wrong_password') {
-                setErrors({ general: 'Mot de passe incorrect.' });
+                setErrors({ general: t('auth.login.err.wrong') });
             } else if (kind === 'unconfirmed') {
-                setErrors({ general: 'Votre compte n\'est pas encore confirmé. Vérifiez votre boîte email.' });
+                setErrors({ general: t('auth.login.err.unconfirmed') });
             } else {
-                setErrors({ general: 'Une erreur est survenue. Veuillez réessayer.' });
+                setErrors({ general: t('auth.login.err.generic') });
             }
         } finally {
             setIsLoading(false);
@@ -105,8 +111,8 @@ export default function Login() {
             <div className="flex min-h-[calc(100vh-10rem)] w-full flex-col items-center justify-center bg-gradient-to-br from-[#0a0a23] via-[#1a1a40] to-[#2a2a60] py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-md w-full space-y-8 bg-zinc-900 border border-zinc-700 p-8 rounded-lg shadow-md">
                     <div>
-                        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-100">
-                            Connectez-vous à votre compte
+                        <h2 className="cyna-heading cyna-heading--center mt-6 text-gray-100">
+                            {t('auth.login.heading')}
                         </h2>
                     </div>
 
@@ -117,17 +123,17 @@ export default function Login() {
                             {errorKind === 'wrong_password' && (
                                 <p className="mt-1 text-sm text-red-400">
                                     <Link href="/forgot-password" className="font-medium underline hover:text-red-300">
-                                        Mot de passe oublié ?
+                                        {t('auth.login.forgot')}
                                     </Link>
                                 </p>
                             )}
                             {errorKind === 'unconfirmed' && (
                                 <p className="mt-1 text-sm text-red-400">
-                                    Vérifiez vos spams ou{' '}
+                                    {t("auth.login.unconfirmedBefore")}
                                     <Link href="/support#contact" className="font-medium underline hover:text-red-300">
-                                        contactez le support
-                                    </Link>{' '}
-                                    si le problème persiste.
+                                        {t("auth.login.contactSupport")}
+                                    </Link>
+                                    {t("auth.login.unconfirmedAfter")}
                                 </p>
                             )}
                         </div>
@@ -137,7 +143,7 @@ export default function Login() {
                         <div className="rounded-md shadow-sm space-y-4">
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-gray-300">
-                                    Email
+                                    {t("auth.login.email")}
                                 </label>
                                 <input
                                     id="email"
@@ -148,14 +154,14 @@ export default function Login() {
                                     value={formData.email}
                                     onChange={handleChange}
                                     className={`mt-1 block w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-zinc-600'} bg-zinc-800 text-gray-100 placeholder-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-cyna-600 focus:border-cyna-600`}
-                                    placeholder="Entrez votre adresse mail"
+                                    placeholder={t("auth.login.emailPh")}
                                 />
                                 {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
                             </div>
 
                             <div>
                                 <label htmlFor="password" className="block text-sm font-medium text-gray-300">
-                                    Mot de passe
+                                    {t("auth.login.password")}
                                 </label>
                                 <input
                                     id="password"
@@ -166,7 +172,7 @@ export default function Login() {
                                     value={formData.password}
                                     onChange={handleChange}
                                     className={`mt-1 block w-full px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-zinc-600'} bg-zinc-800 text-gray-100 placeholder-gray-500 rounded-md shadow-sm focus:outline-none focus:ring-cyna-600 focus:border-cyna-600`}
-                                    placeholder="Entrez votre mot de passe"
+                                    placeholder={t("auth.login.passwordPh")}
                                 />
                                 {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
                             </div>
@@ -181,10 +187,10 @@ export default function Login() {
                                     onChange={e => setRememberMe(e.target.checked)}
                                     className="h-4 w-4 rounded border-gray-300 text-cyna-600 focus:ring-cyna-600"
                                 />
-                                <span className="text-sm text-gray-400">Se souvenir de moi</span>
+                                <span className="text-sm text-gray-400">{t("auth.login.remember")}</span>
                             </label>
                             <Link href="/forgot-password" className="text-sm font-medium text-cyna-600 hover:text-cyna-500">
-                                Mot de passe oublié ?
+                                {t("auth.login.forgot")}
                             </Link>
                         </div>
 
@@ -194,25 +200,33 @@ export default function Login() {
                                 disabled={isLoading}
                                 className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-cyna-600 hover:bg-cyna-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyna-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
-                                {isLoading ? 'Connexion en cours...' : 'Se connecter'}
+                                {isLoading ? t("auth.login.submitting") : t("auth.login.submit")}
                             </button>
                         </div>
                     </form>
 
                     <div className="relative flex items-center">
                         <div className="flex-grow border-t border-zinc-700"></div>
-                        <span className="mx-3 text-sm text-gray-500">Ou</span>
+                        <span className="mx-3 text-sm text-gray-500">{t("auth.login.or")}</span>
                         <div className="flex-grow border-t border-zinc-700"></div>
                     </div>
 
                     <div className="text-center text-sm text-gray-400">
-                        Pas encore de compte ?{' '}
+                        {t("auth.login.noAccount")}{" "}
                         <Link href="/auth/register" className="font-medium text-cyna-600 hover:text-cyna-500">
-                            Créer un compte
+                            {t("auth.login.register")}
                         </Link>
                     </div>
                 </div>
             </div>
         </AppLayout>
+    );
+}
+
+export default function Login() {
+    return (
+        <Suspense fallback={<div className="min-h-[40vh] p-8 text-gray-400 text-center">Chargement…</div>}>
+            <LoginInner />
+        </Suspense>
     );
 }

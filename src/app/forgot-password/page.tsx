@@ -90,7 +90,7 @@ export default function ForgotPassword() {
         {step === 'email' && (
           <>
             <div>
-              <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-100">
+              <h2 className="cyna-heading cyna-heading--center mt-6 text-gray-100">
                 Mot de passe oublié
               </h2>
               <p className="mt-2 text-center text-sm text-gray-400">
@@ -154,7 +154,7 @@ export default function ForgotPassword() {
         {step === 'code' && (
           <>
             <div>
-              <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              <h2 className="cyna-heading cyna-heading--center mt-6 text-gray-900">
                 Nouveau mot de passe
               </h2>
               <p className="mt-2 text-center text-sm text-gray-400">
@@ -284,7 +284,7 @@ export default function ForgotPassword() {
                 />
               </svg>
             </div>
-            <h2 className="text-3xl font-extrabold text-gray-100 mb-2">
+            <h2 className="cyna-heading text-gray-100 mb-2">
               Mot de passe réinitialisé
             </h2>
             <p className="text-sm text-gray-400 mb-6">

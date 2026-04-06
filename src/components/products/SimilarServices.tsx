@@ -2,7 +2,8 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 import { PRODUCTS } from "@/constant";
-import { Button } from "@/components/ui/Button";
+import { buttonClassName } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 
 interface SimilarServicesProps {
     currentProductId: string;
@@ -28,7 +29,7 @@ export default function SimilarServices({ currentProductId, currentCategory }: S
         <section className="py-20 bg-black border-t border-zinc-900 mt-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between mb-10">
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-100">
+                    <h2 className="cyna-heading text-gray-100">
                         Services Similaires
                     </h2>
                     <Link href="/catalog" className="text-sm font-medium text-cyna-500 hover:text-cyna-400 transition-colors flex items-center">
@@ -66,9 +67,15 @@ export default function SimilarServices({ currentProductId, currentCategory }: S
                                     <div>
                                         <p className="font-bold text-gray-100">{product.price}€<span className="text-xs text-gray-500 font-normal"> / {product.period === "monthly" ? "mois" : "an"}</span></p>
                                     </div>
-                                    <Button variant="surface" size="sm" className="rounded-full w-8 h-8 p-0 shrink-0">
+                                    <span
+                                        className={cn(
+                                            buttonClassName("outline", "sm"),
+                                            "inline-flex h-9 w-9 min-h-9 min-w-9 shrink-0 !p-0 pointer-events-none"
+                                        )}
+                                        aria-hidden
+                                    >
                                         <ShoppingBag className="w-3.5 h-3.5" />
-                                    </Button>
+                                    </span>
                                 </div>
                             </div>
                         </Link>

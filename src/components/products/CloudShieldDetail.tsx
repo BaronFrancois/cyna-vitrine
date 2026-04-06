@@ -68,7 +68,7 @@ export default function CloudShieldDetail() {
 
             {/* Multi-cloud providers */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-100 mb-3">Protection multi-cloud unifiée</h2>
+                <h2 className="cyna-heading text-gray-100 mb-3">Protection multi-cloud unifiée</h2>
                 <p className="text-gray-500 mb-8">
                     Score de conformité et visibilité en temps réel sur l'ensemble de vos clouds.
                 </p>
@@ -114,7 +114,7 @@ export default function CloudShieldDetail() {
 
             {/* CSPM Checks */}
             <div>
-                <h2 className="text-2xl font-bold text-gray-100 mb-3">CSPM — Contrôles de posture</h2>
+                <h2 className="cyna-heading text-gray-100 mb-3">CSPM — Contrôles de posture</h2>
                 <p className="text-gray-500 mb-6">Vérifications continues des bonnes pratiques de sécurité cloud.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {CSPM_CHECKS.map((check) => {
@@ -136,7 +136,7 @@ export default function CloudShieldDetail() {
 
             {/* Container security */}
             <div className="bg-gradient-to-br from-violet-950 to-[#1e0b3a] rounded-3xl p-8 lg:p-12 text-white">
-                <h2 className="text-2xl font-bold mb-2">Sécurité conteneurs & Kubernetes</h2>
+                <h2 className="cyna-heading text-gray-100 mb-2">Sécurité conteneurs & Kubernetes</h2>
                 <p className="text-violet-300 mb-8 text-sm">
                     Scan des images, protection runtime et network policies pour vos clusters.
                 </p>

@@ -1,125 +1,296 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { Pause, Play } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { publicFetch } from "@/lib/publicApi";
+import { useI18n } from "@/context/I18nContext";
 
-const SLIDES = [
-    {
-        id: 1,
-        image: "https://images.unsplash.com/photo-1544197150-b99a5802146f?auto=format&fit=crop&w=1200&q=80",
-        title: "Nouvelle Gamme Cyber 2026",
-        description: "Découvrez nos offres exclusives pour sécuriser votre entreprise contre les nouvelles menaces avec une approche XDR intégrée.",
-        cta: "Voir les offres",
-        link: "/catalog"
-    },
-    {
-        id: 2,
-        image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1200&q=80",
-        title: "SOC Managé 24/7",
-        description: "Dormez sur vos deux oreilles. Nos experts français veillent sur votre système d'information de jour comme de nuit.",
-        cta: "En savoir plus",
-        link: "/product/cyna-soc-managed"
-    },
-    {
-        id: 3,
-        image: "https://images.unsplash.com/photo-1563206767-5b18f218e8de?auto=format&fit=crop&w=1200&q=80",
-        title: "Audit et Pentest",
-        description: "Évaluez votre résilience technique avant qu'un acteur malveillant ne le fasse à votre place. Simulation d'attaques Black Box experte.",
-        cta: "Prendre RDV",
-        link: "/support#contact"
-    }
-];
+type CarouselApiItem = {
+    id: number;
+    imageUrl: string;
+    title?: string | null;
+    subtitle?: string | null;
+    linkUrl?: string | null;
+};
+
+function useLocalizedFallbackSlides(): CarouselApiItem[] {
+    const { t } = useI18n();
+    return useMemo(
+        () => [
+            {
+                id: 1,
+                imageUrl:
+                    "https://images.unsplash.com/photo-1544197150-b99a5802146f?auto=format&fit=crop&w=1920&q=85",
+                title: t("carousel.fb1.title"),
+                subtitle: t("carousel.fb1.subtitle"),
+                linkUrl: "/catalog",
+            },
+            {
+                id: 2,
+                imageUrl:
+                    "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1920&q=85",
+                title: t("carousel.fb2.title"),
+                subtitle: t("carousel.fb2.subtitle"),
+                linkUrl: "/product/cyna-soc-managed",
+            },
+            {
+                id: 3,
+                imageUrl:
+                    "https://images.unsplash.com/photo-1563206767-5b18f218e8de?auto=format&fit=crop&w=1920&q=85",
+                title: t("carousel.fb3.title"),
+                subtitle: t("carousel.fb3.subtitle"),
+                linkUrl: "/support#contact",
+            },
+        ],
+        [t]
+    );
+}
 
 export default function HomeCarousel() {
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const { t } = useI18n();
+    const fallbackSlides = useLocalizedFallbackSlides();
+    const [slides, setSlides] = useState<CarouselApiItem[] | null>(null);
+    const [index, setIndex] = useState(0);
+    const [paused, setPaused] = useState(false);
+    const [liveMsg, setLiveMsg] = useState("");
+    const scrollerRef = useRef<HTMLDivElement>(null);
+    const slideRefs = useRef<(HTMLElement | null)[]>([]);
+    const skipScrollSync = useRef(false);
 
-    // Auto-défilement
     useEffect(() => {
-        const timer = setInterval(() => {
-            setCurrentIndex((prev) => (prev + 1) % SLIDES.length);
-        }, 6000);
-        return () => clearInterval(timer);
+        let cancelled = false;
+        publicFetch<CarouselApiItem[]>("/carousel")
+            .then((data) => {
+                if (!cancelled && Array.isArray(data) && data.length > 0) {
+                    setSlides(data);
+                }
+            })
+            .catch(() => {
+                if (!cancelled) setSlides([]);
+            });
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
-    const goPrev = () => setCurrentIndex((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
-    const goNext = () => setCurrentIndex((prev) => (prev + 1) % SLIDES.length);
+    const effectiveSlides = useMemo(() => {
+        if (slides && slides.length > 0) return slides;
+        return fallbackSlides;
+    }, [slides, fallbackSlides]);
+
+    useEffect(() => {
+        if (index >= effectiveSlides.length) setIndex(0);
+    }, [effectiveSlides.length, index]);
+
+    const scrollToSlide = useCallback((i: number, behavior: ScrollBehavior = "smooth") => {
+        const root = scrollerRef.current;
+        const el = slideRefs.current[i];
+        if (!root || !el) return;
+        skipScrollSync.current = true;
+        const target = el.offsetLeft - (root.clientWidth - el.offsetWidth) / 2;
+        const max = Math.max(0, root.scrollWidth - root.clientWidth);
+        const left = Math.max(0, Math.min(target, max));
+        root.scrollTo({ left, behavior });
+        setIndex(i);
+        window.setTimeout(() => {
+            skipScrollSync.current = false;
+        }, 550);
+    }, []);
+
+    useEffect(() => {
+        if (paused || effectiveSlides.length <= 1) return;
+        const tmr = window.setInterval(() => {
+            setIndex((prev) => {
+                const next = (prev + 1) % effectiveSlides.length;
+                const root = scrollerRef.current;
+                const el = slideRefs.current[next];
+                if (root && el) {
+                    skipScrollSync.current = true;
+                    const target = el.offsetLeft - (root.clientWidth - el.offsetWidth) / 2;
+                    const max = Math.max(0, root.scrollWidth - root.clientWidth);
+                    const left = Math.max(0, Math.min(target, max));
+                    root.scrollTo({ left, behavior: "smooth" });
+                    window.setTimeout(() => {
+                        skipScrollSync.current = false;
+                    }, 550);
+                }
+                return next;
+            });
+        }, 6500);
+        return () => clearInterval(tmr);
+    }, [paused, effectiveSlides.length]);
+
+    const onScroll = useCallback(() => {
+        if (skipScrollSync.current) return;
+        const root = scrollerRef.current;
+        if (!root) return;
+        const mid = root.scrollLeft + root.clientWidth / 2;
+        let best = 0;
+        let bestDist = Infinity;
+        slideRefs.current.forEach((el, i) => {
+            if (!el) return;
+            const c = el.offsetLeft + el.offsetWidth / 2;
+            const d = Math.abs(c - mid);
+            if (d < bestDist) {
+                bestDist = d;
+                best = i;
+            }
+        });
+        setIndex((prev) => (prev === best ? prev : best));
+    }, []);
+
+    useEffect(() => {
+        const slide = effectiveSlides[index];
+        const title = slide?.title ?? "Cyna";
+        setLiveMsg(
+            t("carousel.live", {
+                current: index + 1,
+                total: effectiveSlides.length,
+                title,
+            })
+        );
+    }, [index, effectiveSlides, t]);
+
+    const slideKey = (s: CarouselApiItem, i: number) => (s.id != null ? s.id : i);
 
     return (
-        <div className="relative w-full h-[60vh] min-h-[400px] overflow-hidden bg-black">
-            {/* Slides container */}
-            <div 
-                className="flex w-full h-full transition-transform duration-700 ease-in-out"
-                style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-            >
-                {SLIDES.map((slide) => (
-                    <div key={slide.id} className="relative w-full h-full flex-shrink-0">
-                        {/* Background Image */}
-                        <div className="absolute inset-0">
-                            <img 
-                                src={slide.image} 
-                                alt={slide.title} 
-                                className="w-full h-full object-cover opacity-50"
-                            />
-                            {/* Overlay gradient for readability */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-                            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-                        </div>
+        <section
+            className="relative w-full overflow-hidden bg-[#050508] pb-14 pt-10 md:pb-20 md:pt-12"
+            role="region"
+            aria-roledescription="carousel"
+            aria-label={t("carousel.region")}
+        >
+            <p className="sr-only" aria-live="polite">
+                {liveMsg}
+            </p>
 
-                        {/* Content */}
-                        <div className="relative z-10 w-full h-full flex flex-col justify-center max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-                            <div className="max-w-2xl">
-                                <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 tracking-tight drop-shadow-md">
-                                    {slide.title}
-                                </h2>
-                                <p className="text-lg md:text-xl text-gray-300 mb-8 font-light drop-shadow-sm">
-                                    {slide.description}
-                                </p>
-                                <Link href={slide.link}>
-                                    <Button variant="primary" size="lg" className="shadow-lg shadow-cyna-600/20">
-                                        {slide.cta}
-                                    </Button>
-                                </Link>
+            <div className="relative z-10 mx-auto max-w-[1600px] px-5 md:px-10 lg:px-14">
+                <h2 className="cyna-heading text-white">
+                    {t("carousel.highlights")}
+                </h2>
+            </div>
+
+            <div
+                ref={scrollerRef}
+                onScroll={onScroll}
+                className={cn(
+                    "no-scrollbar relative z-10 mt-8 flex w-full snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 md:gap-6 md:px-10 lg:px-14",
+                    "scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                )}
+            >
+                {effectiveSlides.map((slide, i) => {
+                    const title = slide.title ?? "Cyna";
+                    const subtitle = slide.subtitle ?? "";
+                    const href =
+                        slide.linkUrl && slide.linkUrl.length > 0 ? slide.linkUrl : "/catalog";
+                    return (
+                        <article
+                            key={slideKey(slide, i)}
+                            ref={(el) => {
+                                slideRefs.current[i] = el;
+                            }}
+                            aria-hidden={i !== index}
+                            className={cn(
+                                "relative min-h-[min(78vh,720px)] w-[min(94vw,1120px)] flex-shrink-0 snap-center snap-always overflow-hidden rounded-[32px]",
+                                "shadow-[0_40px_120px_-30px_rgba(0,0,0,0.85)] ring-1 ring-white/10"
+                            )}
+                        >
+                            <div className="absolute inset-0">
+                                <img
+                                    src={slide.imageUrl}
+                                    alt=""
+                                    decoding="async"
+                                    className="h-full w-full scale-105 object-cover"
+                                />
+                                <div
+                                    className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/25"
+                                    aria-hidden
+                                />
+                                <div
+                                    className="absolute inset-0 bg-gradient-to-r from-black/55 via-transparent to-black/20"
+                                    aria-hidden
+                                />
+                                {i === 0 ? (
+                                    <div
+                                        className="pointer-events-none absolute inset-0 z-[1] flex items-start justify-end overflow-hidden pt-6 pr-2 md:pt-10 md:pr-8"
+                                        aria-hidden
+                                    >
+                                        <span
+                                            className="select-none bg-gradient-to-br from-white/[0.14] to-white/[0.02] bg-clip-text font-extralight leading-none tracking-[-0.07em] text-transparent [font-feature-settings:'tnum']"
+                                            style={{
+                                                fontFamily:
+                                                    'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+                                                fontSize: "clamp(4.5rem, 22vw, 16rem)",
+                                            }}
+                                        >
+                                            2026
+                                        </span>
+                                    </div>
+                                ) : null}
                             </div>
-                        </div>
+
+                            <div className="relative z-10 flex min-h-[min(78vh,720px)] flex-col justify-end px-8 pb-14 pt-28 md:px-14 md:pb-20 md:pt-32">
+                                <h3 className="cyna-heading max-w-3xl text-balance text-white">
+                                    {title}
+                                </h3>
+                                {subtitle ? (
+                                    <p className="mt-4 max-w-xl text-pretty text-base leading-relaxed text-white/88 md:text-xl">
+                                        {subtitle}
+                                    </p>
+                                ) : null}
+                                <div className="mt-10">
+                                    <Link
+                                        href={href}
+                                        className="inline-flex items-center text-sm font-semibold text-white underline decoration-white/40 underline-offset-4 transition-colors hover:decoration-white"
+                                    >
+                                        {t("carousel.learnMore")} →
+                                    </Link>
+                                </div>
+                            </div>
+                        </article>
+                    );
+                })}
+            </div>
+
+            {effectiveSlides.length > 1 ? (
+                <div className="relative z-10 mt-8 flex items-center justify-center gap-3 md:mt-10">
+                    <div
+                        className="flex items-center gap-2 rounded-full bg-zinc-900/95 px-3 py-2 ring-1 ring-white/10 backdrop-blur-md"
+                        role="group"
+                        aria-label={t("carousel.dots")}
+                    >
+                        {effectiveSlides.map((_, idx) => (
+                            <button
+                                key={idx}
+                                type="button"
+                                aria-current={index === idx ? "true" : undefined}
+                                onClick={() => scrollToSlide(idx)}
+                                className={cn(
+                                    "h-2 rounded-full transition-all duration-300 ease-out",
+                                    index === idx
+                                        ? "w-8 bg-zinc-100"
+                                        : "w-2 bg-zinc-500 hover:bg-zinc-400"
+                                )}
+                                aria-label={t("carousel.goTo", { n: idx + 1 })}
+                            />
+                        ))}
                     </div>
-                ))}
-            </div>
-
-            {/* Navigation Arrows */}
-            <button 
-                onClick={goPrev}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/60 text-white border border-white/10 backdrop-blur-sm transition-colors z-20"
-                aria-label="Diapositive précédente"
-            >
-                <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button 
-                onClick={goNext}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/60 text-white border border-white/10 backdrop-blur-sm transition-colors z-20"
-                aria-label="Diapositive suivante"
-            >
-                <ChevronRight className="w-6 h-6" />
-            </button>
-
-            {/* Dots */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 z-20">
-                {SLIDES.map((_, idx) => (
                     <button
-                        key={idx}
-                        onClick={() => setCurrentIndex(idx)}
+                        type="button"
+                        onClick={() => setPaused((p) => !p)}
                         className={cn(
-                            "w-2.5 h-2.5 rounded-full transition-all duration-300",
-                            currentIndex === idx 
-                                ? "bg-cyna-500 w-8" 
-                                : "bg-white/40 hover:bg-white/70"
+                            "flex h-10 w-10 items-center justify-center rounded-full",
+                            "bg-zinc-900/95 text-zinc-200 ring-1 ring-white/10 backdrop-blur-md transition-colors",
+                            "hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyna-500"
                         )}
-                        aria-label={`Aller à la diapositive ${idx + 1}`}
-                    />
-                ))}
-            </div>
-        </div>
+                        aria-label={paused ? t("carousel.play") : t("carousel.pause")}
+                    >
+                        {paused ? <Play className="h-4 w-4" aria-hidden /> : <Pause className="h-4 w-4" aria-hidden />}
+                    </button>
+                </div>
+            ) : null}
+        </section>
     );
 }

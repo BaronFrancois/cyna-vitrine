@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AppLayout from "@/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
-import { PRODUCTS } from "@/constant";
 import api from "@/lib/api";
+import { clearAuthToken } from "@/lib/authCookie";
 import Link from "next/link";
 import {
     Shield,
@@ -63,10 +63,111 @@ const MOCK_ACTIVITY = [
     { id: 5, label: "Mise à jour du profil", detail: "Adresse email modifiée", time: "Il y a 20 jours", type: "info" },
 ];
 
-// Pour la démo — sera remplacé par l'API abonnements
-const DEMO_SUBSCRIPTIONS = PRODUCTS.filter((_, i) => i < 2);
-
 type Tab = "overview" | "subscriptions" | "billing" | "addresses" | "settings";
+
+/** Ligne affichée dans l’historique commandes / facturation */
+export type BillingOrderRow = {
+    id: number;
+    service: string;
+    category: string;
+    period: string;
+    date: string;
+    amount: number;
+    status: string;
+    invoicePdfUrl?: string | null;
+};
+
+type ApiSubscriptionRow = {
+    id: number;
+    status: string;
+    /** ISO dates from API (Prisma) */
+    endDate?: string;
+    nextRenewalDate?: string | null;
+    autoRenew?: boolean;
+    product: {
+        name: string;
+        slug: string;
+        shortDescription?: string | null;
+        category?: { name: string } | null;
+    };
+    subscriptionPlan: { price: string | number; billingCycle: string; label?: string };
+};
+
+/** Plus proche échéance parmi les abonnements actifs (renewal ou fin de période). */
+function earliestRenewalTimestamp(subs: ApiSubscriptionRow[]): number | null {
+    const times: number[] = [];
+    for (const s of subs) {
+        const raw = s.nextRenewalDate ?? s.endDate;
+        if (!raw) continue;
+        const t = new Date(raw).getTime();
+        if (!Number.isNaN(t)) times.push(t);
+    }
+    if (times.length === 0) return null;
+    return Math.min(...times);
+}
+
+function formatRenewalDayMonth(ts: number): string {
+    return new Date(ts).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
+function sumActiveSubscriptionPrices(subs: ApiSubscriptionRow[]): number {
+    return subs.reduce((sum, s) => sum + Number(s.subscriptionPlan.price), 0);
+}
+
+function mapOrdersToBillingRows(data: unknown[]): BillingOrderRow[] {
+    const statusMap: Record<string, string> = {
+        PAID: "active",
+        ACTIVE: "active",
+        PENDING: "renewed",
+        CANCELLED: "cancelled",
+        REFUNDED: "cancelled",
+    };
+    return data.map((raw) => {
+        const order = raw as {
+            id: number;
+            status: string;
+            createdAt: string;
+            totalAmount: string | number;
+            orderNumber?: string;
+            items?: {
+                productName?: string;
+                planLabel?: string;
+                product?: { category?: { name?: string } | null };
+            }[];
+            invoice?: { pdfUrl?: string | null } | null;
+        };
+        const first = order.items?.[0];
+        return {
+            id: order.id,
+            service: first?.productName ?? order.orderNumber ?? `Commande #${order.id}`,
+            category: first?.product?.category?.name ?? "—",
+            period: first?.planLabel ?? "—",
+            date: String(order.createdAt).slice(0, 10),
+            amount: Number(order.totalAmount),
+            status: statusMap[order.status] ?? "active",
+            invoicePdfUrl: order.invoice?.pdfUrl,
+        };
+    });
+}
+
+function subscriptionToUi(s: ApiSubscriptionRow) {
+    const cat = s.product.category?.name ?? "EDR";
+    const period =
+        s.subscriptionPlan.billingCycle === "MONTHLY" || s.subscriptionPlan.billingCycle === "PER_USER"
+            ? ("monthly" as const)
+            : ("annual" as const);
+    return {
+        subscriptionId: s.id,
+        id: s.product.slug,
+        name: s.product.name,
+        shortDescription: s.product.shortDescription ?? "",
+        category: cat,
+        price: Number(s.subscriptionPlan.price),
+        period,
+        status: s.status,
+        planLabel: s.subscriptionPlan.label ?? "",
+    };
+}
 
 // ── Types adresses / paiements ─────────────────────────────────────────────────
 
@@ -93,29 +194,11 @@ interface PaymentMethod {
     isDefault: boolean;
 }
 
-const MOCK_ADDRESSES: Address[] = [
-    { id: 1, firstName: "Jean", lastName: "Dupont", addressLine1: "12 rue de la Paix", city: "Paris", postalCode: "75001", country: "France", phone: "+33 6 12 34 56 78", isDefault: true },
-];
-
-const MOCK_PAYMENTS: PaymentMethod[] = [
-    { id: 1, brand: "VISA", last4: "4242", expMonth: 12, expYear: 2027, isDefault: true },
-];
-
 const BLANK_ADDRESS: Omit<Address, "id" | "isDefault"> = {
     firstName: "", lastName: "", addressLine1: "", addressLine2: "", city: "", region: "", postalCode: "", country: "France", phone: "",
 };
 
 // ── Données historique commandes ───────────────────────────────────────────────
-
-const MOCK_ORDERS = [
-    { id: 101, service: "Détection étendue (XDR)", category: "XDR", period: "Mensuel", date: "2026-02-01", amount: 39.99, status: "active" },
-    { id: 102, service: "Protection avancée (EDR)", category: "EDR", period: "Mensuel", date: "2026-02-01", amount: 29.99, status: "active" },
-    { id: 103, service: "Détection étendue (XDR)", category: "XDR", period: "Mensuel", date: "2026-01-01", amount: 39.99, status: "active" },
-    { id: 104, service: "Protection avancée (EDR)", category: "EDR", period: "Mensuel", date: "2026-01-01", amount: 29.99, status: "active" },
-    { id: 105, service: "SOC managé", category: "SOC", period: "Annuel", date: "2025-12-01", amount: 299.99, status: "cancelled" },
-    { id: 106, service: "Détection étendue (XDR)", category: "XDR", period: "Mensuel", date: "2025-11-01", amount: 39.99, status: "active" },
-    { id: 107, service: "Protection avancée (EDR)", category: "EDR", period: "Mensuel", date: "2025-10-01", amount: 29.99, status: "active" },
-];
 
 const STATUS_LABEL: Record<string, string> = { active: "Active", cancelled: "Résiliée", renewed: "Renouvelée" };
 const STATUS_CLASS: Record<string, string> = {
@@ -124,21 +207,24 @@ const STATUS_CLASS: Record<string, string> = {
     renewed: "bg-violet-950/40 text-violet-400",
 };
 
-function BillingTab({ payments, setDefaultPayment, deletePayment, subsCount }: {
+function BillingTab({ orders, payments, setDefaultPayment, deletePayment, subsCount, nextRenewal }: {
+    orders: BillingOrderRow[];
     payments: PaymentMethod[];
     setDefaultPayment: (id: number) => void;
     deletePayment: (id: number) => void;
     subsCount: number;
+    /** null si aucun abonnement actif : pas de montant / date factice */
+    nextRenewal: { amountLine: string; dateLine: string } | null;
 }) {
     const [search, setSearch] = useState("");
     const [filterYear, setFilterYear] = useState<string>("all");
     const [filterCategory, setFilterCategory] = useState<string>("all");
     const [filterStatus, setFilterStatus] = useState<string>("all");
 
-    const years = [...new Set(MOCK_ORDERS.map(o => o.date.slice(0, 4)))].sort((a, b) => Number(b) - Number(a));
-    const categories = [...new Set(MOCK_ORDERS.map(o => o.category))];
+    const years = [...new Set(orders.map(o => o.date.slice(0, 4)))].sort((a, b) => Number(b) - Number(a));
+    const categories = [...new Set(orders.map(o => o.category))];
 
-    const filtered = MOCK_ORDERS.filter(o => {
+    const filtered = orders.filter(o => {
         const matchYear = filterYear === "all" || o.date.startsWith(filterYear);
         const matchCat = filterCategory === "all" || o.category === filterCategory;
         const matchStatus = filterStatus === "all" || o.status === filterStatus;
@@ -146,7 +232,7 @@ function BillingTab({ payments, setDefaultPayment, deletePayment, subsCount }: {
         return matchYear && matchCat && matchStatus && matchSearch;
     });
 
-    const byYear = years.reduce<Record<string, typeof MOCK_ORDERS>>((acc, y) => {
+    const byYear = years.reduce<Record<string, BillingOrderRow[]>>((acc, y) => {
         const rows = filtered.filter(o => o.date.startsWith(y));
         if (rows.length) acc[y] = rows;
         return acc;
@@ -158,7 +244,7 @@ function BillingTab({ payments, setDefaultPayment, deletePayment, subsCount }: {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-100 tracking-tight">Facturation & Commandes</h2>
+                    <h2 className="cyna-heading text-gray-100">Facturation & Commandes</h2>
                     <p className="text-gray-400 text-sm mt-1">Historique de toutes vos commandes</p>
                 </div>
             </div>
@@ -213,12 +299,21 @@ function BillingTab({ payments, setDefaultPayment, deletePayment, subsCount }: {
                                     </div>
                                     <div className="flex items-center gap-4 flex-shrink-0">
                                         <span className="text-sm font-semibold text-gray-200">{order.amount.toFixed(2)} €</span>
-                                        <span className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_CLASS[order.status]}`}>
-                                            {STATUS_LABEL[order.status]}
+                                        <span className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_CLASS[order.status] ?? STATUS_CLASS.active}`}>
+                                            {STATUS_LABEL[order.status] ?? order.status}
                                         </span>
-                                        <button className="text-xs text-cyna-600 hover:underline whitespace-nowrap">
-                                            Facture PDF
-                                        </button>
+                                        {order.invoicePdfUrl ? (
+                                            <a
+                                                href={order.invoicePdfUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs text-cyna-600 hover:underline whitespace-nowrap"
+                                            >
+                                                Facture PDF
+                                            </a>
+                                        ) : (
+                                            <span className="text-xs text-gray-600 whitespace-nowrap">Facture —</span>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -265,11 +360,23 @@ function BillingTab({ payments, setDefaultPayment, deletePayment, subsCount }: {
                 </div>
                 <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
                     <h3 className="font-bold text-gray-100 mb-3">Prochaine échéance</h3>
-                    <p className="text-3xl font-bold text-gray-100">69,98 €</p>
-                    <p className="text-sm text-gray-500 mt-1">Le 15 octobre</p>
-                    <div className="mt-4 pt-4 border-t border-zinc-700 text-xs text-gray-500">
-                        Inclut {subsCount} abonnements actifs
-                    </div>
+                    {nextRenewal ? (
+                        <>
+                            <p className="text-3xl font-bold text-gray-100">{nextRenewal.amountLine}</p>
+                            <p className="text-sm text-gray-500 mt-1">{nextRenewal.dateLine}</p>
+                            <div className="mt-4 pt-4 border-t border-zinc-700 text-xs text-gray-500">
+                                Inclut {subsCount} abonnement{subsCount > 1 ? "s" : ""} actif{subsCount > 1 ? "s" : ""}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-3xl font-bold text-gray-100">—</p>
+                            <p className="text-sm text-gray-500 mt-1">Aucun abonnement actif</p>
+                            <div className="mt-4 pt-4 border-t border-zinc-700 text-xs text-gray-500">
+                                Ajoutez une solution depuis le catalogue pour voir la prochaine facturation.
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
@@ -291,14 +398,18 @@ export default function AccountDashboard() {
     const [settingsSaving, setSettingsSaving] = useState(false);
     const [settingsMsg, setSettingsMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+    // ── Données API (commandes, abonnements, …) ──
+    const [billingOrders, setBillingOrders] = useState<BillingOrderRow[]>([]);
+    const [apiSubscriptions, setApiSubscriptions] = useState<ApiSubscriptionRow[]>([]);
+
     // ── Adresses ──
-    const [addresses, setAddresses] = useState<Address[]>(MOCK_ADDRESSES);
+    const [addresses, setAddresses] = useState<Address[]>([]);
     const [addrForm, setAddrForm] = useState<Omit<Address, "id" | "isDefault">>(BLANK_ADDRESS);
     const [editingAddrId, setEditingAddrId] = useState<number | null>(null);
     const [addrFormOpen, setAddrFormOpen] = useState(false);
 
     // ── Méthodes de paiement ──
-    const [payments, setPayments] = useState<PaymentMethod[]>(MOCK_PAYMENTS);
+    const [payments, setPayments] = useState<PaymentMethod[]>([]);
 
     // ── Formulaire changement de mot de passe ──
     const [pwOpen, setPwOpen] = useState(false);
@@ -321,15 +432,88 @@ export default function AccountDashboard() {
             })
             .catch(() => {
                 // Token expiré ou invalide → retour connexion
-                document.cookie = "auth_token=; path=/; max-age=0";
+                clearAuthToken();
                 router.push("/auth/login");
             })
             .finally(() => setIsLoadingUser(false));
     }, [router]);
 
+    useEffect(() => {
+        if (!user) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const [or, sub, addr, pm] = await Promise.all([
+                    api().get("/orders"),
+                    api().get("/subscriptions"),
+                    api().get("/addresses"),
+                    api().get("/payment-methods"),
+                ]);
+                if (cancelled) return;
+                setBillingOrders(mapOrdersToBillingRows(or.data ?? []));
+                setApiSubscriptions((sub.data ?? []) as ApiSubscriptionRow[]);
+                setAddresses(
+                    (addr.data ?? []).map((a: Address) => ({
+                        ...a,
+                        country: a.country,
+                    }))
+                );
+                setPayments(
+                    (pm.data ?? []).map(
+                        (x: {
+                            id: number;
+                            cardBrand: string;
+                            last4Digits: string;
+                            expMonth: number;
+                            expYear: number;
+                            isDefault: boolean;
+                        }) => ({
+                            id: x.id,
+                            brand: (x.cardBrand ?? "CARD").toUpperCase(),
+                            last4: x.last4Digits,
+                            expMonth: x.expMonth,
+                            expYear: x.expYear,
+                            isDefault: x.isDefault,
+                        })
+                    )
+                );
+            } catch {
+                /* données optionnelles */
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [user]);
+
+    const activeSubscriptions = apiSubscriptions.filter((s) => s.status === "ACTIVE");
+    const subsPreview = activeSubscriptions.slice(0, 2).map(subscriptionToUi);
+    const subsAllUi = apiSubscriptions.map(subscriptionToUi);
+
+    const renewalTs = earliestRenewalTimestamp(activeSubscriptions);
+    const billingNextRenewal =
+        activeSubscriptions.length === 0
+            ? null
+            : {
+                  amountLine: new Intl.NumberFormat("fr-FR", {
+                      style: "currency",
+                      currency: "EUR",
+                  }).format(sumActiveSubscriptionPrices(activeSubscriptions)),
+                  dateLine:
+                      renewalTs != null
+                          ? `Le ${formatRenewalDayMonth(renewalTs)}`
+                          : "Date de renouvellement à confirmer",
+              };
+
     // ── Déconnexion ──
     const handleLogout = () => {
-        document.cookie = "auth_token=; path=/; max-age=0";
+        clearAuthToken();
+        try {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+        } catch {
+            /* ignore */
+        }
         router.push("/auth/login");
     };
 
@@ -406,8 +590,40 @@ export default function AccountDashboard() {
     const setDefaultAddress = (id: number) => setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
 
     // ── Paiements : helpers ──
-    const deletePayment = (id: number) => setPayments(prev => prev.filter(p => p.id !== id));
-    const setDefaultPayment = (id: number) => setPayments(prev => prev.map(p => ({ ...p, isDefault: p.id === id })));
+    const deletePayment = async (id: number) => {
+        try {
+            await api().delete(`/payment-methods/${id}`);
+            setPayments((prev) => prev.filter((p) => p.id !== id));
+        } catch {
+            /* ignore */
+        }
+    };
+    const setDefaultPayment = async (id: number) => {
+        try {
+            await api().patch(`/payment-methods/${id}/default`);
+            setPayments((prev) => prev.map((p) => ({ ...p, isDefault: p.id === id })));
+        } catch {
+            /* ignore */
+        }
+    };
+
+    const refreshSubscriptions = async () => {
+        try {
+            const sub = await api().get("/subscriptions");
+            setApiSubscriptions((sub.data ?? []) as ApiSubscriptionRow[]);
+        } catch {
+            /* ignore */
+        }
+    };
+
+    const cancelSubscription = async (subscriptionId: number) => {
+        try {
+            await api().post(`/subscriptions/${subscriptionId}/cancel`, { reason: "Demande utilisateur" });
+            await refreshSubscriptions();
+        } catch {
+            /* ignore */
+        }
+    };
 
     // ── Dérivés ──
     const fullName = user ? `${user.firstName} ${user.lastName}` : "…";
@@ -443,7 +659,7 @@ export default function AccountDashboard() {
                             </div>
                             <div>
                                 <p className="text-gray-400 text-sm mb-0.5">Espace client</p>
-                                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                                <h1 className="cyna-heading text-gray-100">
                                     Bonjour, {user?.firstName ?? "…"} 👋
                                 </h1>
                                 <p className="text-gray-400 text-sm mt-0.5">
@@ -453,14 +669,15 @@ export default function AccountDashboard() {
                         </div>
                         <div className="flex items-center gap-3">
                             <Link href="/support">
-                                <Button variant="ghost" className="text-gray-300 hover:text-white text-sm">
+                                <Button variant="outline" size="sm" className="gap-0">
                                     <LifeBuoy size={15} className="mr-2" />
                                     Support
                                 </Button>
                             </Link>
                             <Button
-                                variant="ghost"
-                                className="text-gray-300 hover:text-white text-sm"
+                                variant="outline"
+                                size="sm"
+                                className="gap-0"
                                 onClick={handleLogout}
                             >
                                 <LogOut size={15} className="mr-2" />
@@ -505,7 +722,7 @@ export default function AccountDashboard() {
                                             <Shield size={18} className="text-cyna-600" />
                                         </div>
                                     </div>
-                                    <p className="text-4xl font-bold text-gray-100">{DEMO_SUBSCRIPTIONS.length}</p>
+                                    <p className="text-4xl font-bold text-gray-100">{activeSubscriptions.length}</p>
                                     <p className="text-xs text-gray-400 mt-1">sur 5 solutions disponibles</p>
                                 </div>
 
@@ -516,8 +733,28 @@ export default function AccountDashboard() {
                                             <CreditCard size={18} className="text-purple-600" />
                                         </div>
                                     </div>
-                                    <p className="text-4xl font-bold text-gray-100">15 Oct</p>
-                                    <p className="text-xs text-gray-400 mt-1">Renouvellement automatique</p>
+                                    {activeSubscriptions.length === 0 ? (
+                                        <>
+                                            <p className="text-4xl font-bold text-gray-100">—</p>
+                                            <p className="text-xs text-gray-400 mt-1">Pas de renouvellement prévu</p>
+                                        </>
+                                    ) : renewalTs != null ? (
+                                        <>
+                                            <p className="text-4xl font-bold text-gray-100">
+                                                {formatRenewalDayMonth(renewalTs)}
+                                            </p>
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                {activeSubscriptions.some((s) => s.autoRenew !== false)
+                                                    ? "Renouvellement automatique"
+                                                    : "Fin de période"}
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="text-4xl font-bold text-gray-100">—</p>
+                                            <p className="text-xs text-gray-400 mt-1">Date à confirmer</p>
+                                        </>
+                                    )}
                                 </div>
 
                                 <div className="bg-black rounded-3xl p-6 shadow-sm text-white">
@@ -542,7 +779,7 @@ export default function AccountDashboard() {
                                 <div className="lg:col-span-2 space-y-6">
                                     <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
                                         <div className="flex items-center justify-between mb-6">
-                                            <h2 className="text-lg font-bold text-gray-100">Mes abonnements</h2>
+                                            <h2 className="cyna-heading text-gray-100">Mes abonnements</h2>
                                             <button
                                                 onClick={() => setActiveTab("subscriptions")}
                                                 className="text-sm text-cyna-600 hover:underline flex items-center gap-1"
@@ -551,15 +788,15 @@ export default function AccountDashboard() {
                                             </button>
                                         </div>
                                         <div className="space-y-3">
-                                            {DEMO_SUBSCRIPTIONS.map((p) => (
-                                                <div key={p.id} className="flex items-center justify-between p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors">
+                                            {subsPreview.map((p) => (
+                                                <div key={p.subscriptionId} className="flex items-center justify-between p-4 rounded-2xl bg-zinc-800 hover:bg-zinc-700 transition-colors">
                                                     <div className="flex items-center gap-4">
-                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${CATEGORY_COLORS[p.category]}`}>
-                                                            {CATEGORY_ICONS[p.category]}
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${CATEGORY_COLORS[p.category] ?? "bg-zinc-700 text-gray-300"}`}>
+                                                            {CATEGORY_ICONS[p.category] ?? <Shield className="w-5 h-5" />}
                                                         </div>
                                                         <div>
                                                             <p className="font-semibold text-gray-100 text-sm">{p.name}</p>
-                                                            <p className="text-xs text-gray-400">{p.shortDescription}</p>
+                                                            <p className="text-xs text-gray-400 line-clamp-1">{p.shortDescription}</p>
                                                         </div>
                                                     </div>
                                                     <div className="text-right flex-shrink-0">
@@ -572,6 +809,9 @@ export default function AccountDashboard() {
                                                     </div>
                                                 </div>
                                             ))}
+                                            {subsPreview.length === 0 && (
+                                                <p className="text-sm text-gray-500 text-center py-6">Aucun abonnement actif pour le moment.</p>
+                                            )}
                                         </div>
                                         <div className="mt-4 pt-4 border-t border-zinc-700">
                                             <Link href="/catalog">
@@ -582,7 +822,7 @@ export default function AccountDashboard() {
 
                                     {/* Activity feed */}
                                     <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
-                                        <h2 className="text-lg font-bold text-gray-100 mb-6">Activité récente</h2>
+                                        <h2 className="cyna-heading text-gray-100 mb-6">Activité récente</h2>
                                         <div className="space-y-4">
                                             {MOCK_ACTIVITY.map((event) => (
                                                 <div key={event.id} className="flex items-start gap-4">
@@ -613,7 +853,7 @@ export default function AccountDashboard() {
                                 {/* Right: account info + quick actions */}
                                 <div className="space-y-6">
                                     <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
-                                        <h2 className="text-lg font-bold text-gray-100 mb-5">Mon compte</h2>
+                                        <h2 className="cyna-heading text-gray-100 mb-5">Mon compte</h2>
                                         <div className="space-y-4">
                                             <div>
                                                 <p className="text-xs text-gray-500 mb-0.5">Prénom</p>
@@ -644,7 +884,7 @@ export default function AccountDashboard() {
                                     </div>
 
                                     <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
-                                        <h2 className="text-lg font-bold text-gray-100 mb-5">Actions rapides</h2>
+                                        <h2 className="cyna-heading text-gray-100 mb-5">Actions rapides</h2>
                                         <div className="space-y-2">
                                             {[
                                                 { icon: <Shield size={16} className="text-cyna-500" />, label: "Gérer mes abonnements", action: () => setActiveTab("subscriptions") },
@@ -678,53 +918,62 @@ export default function AccountDashboard() {
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-100 tracking-tight">Mes abonnements</h2>
-                                    <p className="text-gray-400 text-sm mt-1">{DEMO_SUBSCRIPTIONS.length} abonnement(s) actif(s)</p>
+                                    <h2 className="cyna-heading text-gray-100">Mes abonnements</h2>
+                                    <p className="text-gray-400 text-sm mt-1">{activeSubscriptions.length} abonnement(s) actif(s)</p>
                                 </div>
                                 <Link href="/catalog">
-                                    <Button variant="accent">Ajouter une solution</Button>
+                                    <Button variant="primary">Ajouter une solution</Button>
                                 </Link>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {DEMO_SUBSCRIPTIONS.map((p) => (
-                                    <div key={p.id} className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700 hover:shadow-lg transition-all duration-300">
+                                {subsAllUi.map((p) => (
+                                    <div key={p.subscriptionId} className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700 hover:shadow-lg transition-all duration-300">
                                         <div className="flex items-start justify-between mb-5">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${CATEGORY_COLORS[p.category]}`}>
-                                                    {CATEGORY_ICONS[p.category]}
+                                                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${CATEGORY_COLORS[p.category] ?? "bg-zinc-700 text-gray-300"}`}>
+                                                    {CATEGORY_ICONS[p.category] ?? <Shield className="w-5 h-5" />}
                                                 </div>
                                                 <div>
                                                     <h3 className="font-bold text-gray-100">{p.name}</h3>
-                                                    <span className="text-xs font-medium text-gray-400">{p.category}</span>
+                                                    <span className="text-xs font-medium text-gray-400">{p.category} · {p.planLabel}</span>
                                                 </div>
                                             </div>
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-950/40 text-green-400 text-xs font-semibold">
-                                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />Actif
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                p.status === "ACTIVE" ? "bg-green-950/40 text-green-400" : "bg-zinc-800 text-gray-400"
+                                            }`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${p.status === "ACTIVE" ? "bg-green-500" : "bg-gray-500"}`} />
+                                                {p.status === "ACTIVE" ? "Actif" : p.status}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-gray-500 mb-5 leading-relaxed">{p.shortDescription}</p>
-                                        <ul className="space-y-2 mb-6">
-                                            {p.features.map((f) => (
-                                                <li key={f} className="flex items-center gap-2 text-sm text-gray-400">
-                                                    <CheckCircle size={14} className="text-green-500 flex-shrink-0" />{f}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                        <div className="pt-5 border-t border-zinc-700 flex items-center justify-between">
+                                        <p className="text-sm text-gray-500 mb-5 leading-relaxed">{p.shortDescription || "—"}</p>
+                                        <div className="pt-5 border-t border-zinc-700 flex items-center justify-between gap-3 flex-wrap">
                                             <div>
                                                 <span className="text-xl font-bold text-gray-100">{p.price}€</span>
                                                 <span className="text-gray-500 text-sm"> / {p.period === "monthly" ? "mois" : "an"}</span>
                                             </div>
-                                            <Button variant="outline" size="sm" className="rounded-full text-xs">Gérer</Button>
+                                            {p.status === "ACTIVE" && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="text-xs"
+                                                    type="button"
+                                                    onClick={() => cancelSubscription(p.subscriptionId)}
+                                                >
+                                                    Résilier fin de période
+                                                </Button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
+                                {subsAllUi.length === 0 && (
+                                    <p className="text-gray-500 text-sm col-span-2 text-center py-12">Aucun abonnement.</p>
+                                )}
                             </div>
                             <div className="bg-gradient-to-br from-violet-950/20 to-purple-950/20 rounded-3xl p-6 border border-violet-900/40">
                                 <h3 className="font-bold text-gray-100 mb-1">Complétez votre protection</h3>
                                 <p className="text-sm text-gray-400 mb-4">3 solutions supplémentaires sont disponibles pour renforcer votre sécurité.</p>
                                 <Link href="/catalog">
-                                    <Button variant="accent" size="sm">Explorer le catalogue</Button>
+                                    <Button variant="primary" size="sm">Explorer le catalogue</Button>
                                 </Link>
                             </div>
                         </div>
@@ -732,7 +981,14 @@ export default function AccountDashboard() {
 
                     {/* ── TAB: FACTURATION ── */}
                     {activeTab === "billing" && (
-                        <BillingTab payments={payments} setDefaultPayment={setDefaultPayment} deletePayment={deletePayment} subsCount={DEMO_SUBSCRIPTIONS.length} />
+                        <BillingTab
+                            orders={billingOrders}
+                            payments={payments}
+                            setDefaultPayment={setDefaultPayment}
+                            deletePayment={deletePayment}
+                            subsCount={activeSubscriptions.length}
+                            nextRenewal={billingNextRenewal}
+                        />
                     )}
 
                     {/* ── TAB: ADRESSES ── */}
@@ -740,10 +996,10 @@ export default function AccountDashboard() {
                         <div className="max-w-2xl space-y-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-100 tracking-tight">Carnet d'adresses</h2>
+                                    <h2 className="cyna-heading text-gray-100">Carnet d'adresses</h2>
                                     <p className="text-gray-400 text-sm mt-1">Adresses de facturation enregistrées</p>
                                 </div>
-                                <Button onClick={openNewAddress} className="gap-2 rounded-full">
+                                <Button variant="primary" onClick={openNewAddress} className="gap-2">
                                     <Plus size={15} /> Ajouter
                                 </Button>
                             </div>
@@ -829,10 +1085,10 @@ export default function AccountDashboard() {
                                         ))}
                                     </div>
                                     <div className="flex gap-3 mt-5">
-                                        <Button onClick={saveAddress} className="rounded-full gap-1">
+                                        <Button variant="primary" onClick={saveAddress} className="gap-1">
                                             {editingAddrId ? "Enregistrer" : "Ajouter l'adresse"}
                                         </Button>
-                                        <Button variant="ghost" onClick={() => setAddrFormOpen(false)} className="rounded-full">
+                                        <Button variant="outline" onClick={() => setAddrFormOpen(false)}>
                                             Annuler
                                         </Button>
                                     </div>
@@ -887,7 +1143,7 @@ export default function AccountDashboard() {
                     {activeTab === "settings" && (
                         <div className="max-w-2xl space-y-6">
                             <div>
-                                <h2 className="text-2xl font-bold text-gray-100 tracking-tight">Paramètres du compte</h2>
+                                <h2 className="cyna-heading text-gray-100">Paramètres du compte</h2>
                                 <p className="text-gray-400 text-sm mt-1">Gérez vos informations personnelles et préférences</p>
                             </div>
 
@@ -938,7 +1194,7 @@ export default function AccountDashboard() {
 
                                 <div className="mt-5">
                                     <Button
-                                        className="bg-cyna-600 hover:bg-cyna-700 text-white rounded-full"
+                                        variant="primary"
                                         onClick={handleSaveProfile}
                                         disabled={settingsSaving}
                                     >
@@ -1011,8 +1267,8 @@ export default function AccountDashboard() {
                                                     </div>
                                                 )}
                                                 <Button
+                                                    variant="primary"
                                                     size="sm"
-                                                    className="bg-cyna-600 hover:bg-cyna-700 text-white rounded-full"
                                                     onClick={handleChangePassword}
                                                     disabled={pwSaving}
                                                 >

@@ -18,6 +18,8 @@ export interface CartItem {
     image: string;
     category: string;
     period: "monthly" | "annual";
+    /** Si false, le service est indisponible (SaaS en maintenance, etc.) */
+    isAvailable?: boolean;
 }
 
 type CartContextValue = {

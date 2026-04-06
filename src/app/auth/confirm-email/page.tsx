@@ -4,8 +4,9 @@ import AppLayout from "@/layout/AppLayout";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Mail } from "lucide-react";
+import { Suspense } from "react";
 
-export default function ConfirmEmail() {
+function ConfirmEmailInner() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "votre adresse email";
 
@@ -21,7 +22,7 @@ export default function ConfirmEmail() {
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-gray-100">Vérifiez votre email</h2>
+            <h2 className="cyna-heading text-gray-100">Vérifiez votre email</h2>
             <p className="text-gray-400 text-sm">
               Un lien de confirmation a été envoyé à{" "}
               <span className="font-semibold text-gray-200">{email}</span>.
@@ -60,5 +61,13 @@ export default function ConfirmEmail() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function ConfirmEmail() {
+  return (
+    <Suspense fallback={<div className="min-h-[40vh] p-8 text-gray-400 text-center">Chargement…</div>}>
+      <ConfirmEmailInner />
+    </Suspense>
   );
 }

@@ -146,7 +146,7 @@ export default function Register() {
     <AppLayout>
       <div className="flex min-h-[calc(100vh-10rem)] w-full flex-col items-center justify-center bg-gradient-to-br from-[#0a0a23] via-[#1a1a40] to-[#2a2a60] py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md bg-zinc-900 border border-zinc-700 rounded-lg shadow-md p-8">
-        <h2 className="text-2xl font-bold text-gray-100 mb-6 text-center">
+        <h2 className="cyna-heading cyna-heading--center text-gray-100 mb-6">
           Créez votre compte
         </h2>
 
