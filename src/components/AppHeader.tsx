@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import {
-    Home,
     ShoppingBag,
     Menu,
     X,
@@ -72,14 +71,6 @@ export default function AppHeader() {
                                     alt="Cyna" 
                                     className="h-7 min-[400px]:h-8 w-auto mt-0.5" 
                                 />
-                            </Link>
-                            <Link
-                                href="/"
-                                className={cn(navClass("/"), "hidden md:inline-flex")}
-                                aria-label={t("header.home")}
-                                title={t("header.home")}
-                            >
-                                <Home className="h-[1.125rem] w-[1.125rem] shrink-0" aria-hidden />
                             </Link>
                         </div>
                         <div className="hidden md:flex items-center space-x-1 overflow-visible py-0.5">
@@ -194,18 +185,6 @@ export default function AppHeader() {
                                         className="flex flex-col gap-1.5 p-3 rounded-none rounded-b-2xl border border-black/60 shadow-2xl relative z-[70] border-t-0"
                                         style={{ background: 'linear-gradient(rgb(2, 0, 8) 0%, rgb(22, 11, 48) 100%)', boxShadow: 'rgba(0, 0, 0, 0.6) 0px 5px 11px 6px, rgba(131, 109, 203, 0.42) 0px -1px 0px 0px inset' }}
                                     >
-                                        <Link
-                                            href="/"
-                                            onClick={() => setMobileMenuOpen(false)}
-                                            className={cn(
-                                                "flex w-full min-h-9 items-center justify-center gap-2 nav-sku-raised nav-sku-header-login text-sm font-medium leading-none",
-                                                pathname === "/" && "nav-sku-header-active"
-                                            )}
-                                            aria-label={t("header.home")}
-                                        >
-                                            <Home className="h-4 w-4 shrink-0" aria-hidden />
-                                            <span className="sr-only">{t("header.home")}</span>
-                                        </Link>
                                         <Link
                                             href="/catalog"
                                             onClick={() => setMobileMenuOpen(false)}
