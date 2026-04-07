@@ -15,6 +15,7 @@
     "@stripe/react-stripe-js": "^5.6.1",
     "@stripe/stripe-js": "^8.11.0",
     "axios": "^1.13.2",
+    "clsx": "^2.1.1",
     "framer-motion": "^12.23.25",
     "heroicons": "^2.2.0",
     "js-cookie": "^3.0.5",
