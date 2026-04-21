@@ -78,15 +78,14 @@ export default function TopProducts() {
     }, []);
 
     const topProducts = useMemo(() => {
-        const defaultImg =
-            "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80";
+        const defaultImg = "/product-placeholder.svg";
         if (apiProducts && apiProducts.length > 0) {
             return apiProducts.map((p) => {
                 const plan = monthlyPlan(p.subscriptionPlans);
                 const img = [...(p.images ?? [])].sort(
                     (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
-                )[0]?.imageUrl;
-                const imageUrl = img ?? defaultImg;
+                )[0]?.imageUrl?.trim();
+                const imageUrl = img && img.length > 0 ? img : defaultImg;
                 const priceNum =
                     plan != null
                         ? typeof plan.price === "string"
@@ -175,6 +174,11 @@ export default function TopProducts() {
                                     src={product.image}
                                     alt=""
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                    onError={(e) => {
+                                        const img = e.currentTarget;
+                                        if (img.src.endsWith("/product-placeholder.svg")) return;
+                                        img.src = "/product-placeholder.svg";
+                                    }}
                                 />
                                 <div className="absolute top-4 left-4">
                                     <span className="bg-[#600bd1] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-[0_4px_12px_rgba(96,11,209,0.55)] border border-white/20">

@@ -14,6 +14,9 @@ import XdrMaxDetail from "@/components/products/XdrMaxDetail";
 import SocManagedDetail from "@/components/products/SocManagedDetail";
 import ProductCarousel from "@/components/products/ProductCarousel";
 import SimilarServices from "@/components/products/SimilarServices";
+import { useI18n } from "@/context/I18nContext";
+import { interpolate } from "@/i18n/messages";
+import { localizeProduct } from "@/i18n/productLabels";
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
     EDR: { bg: "bg-violet-950/50", text: "text-violet-300", border: "border-violet-800" },
     XDR: { bg: "bg-fuchsia-950/50", text: "text-fuchsia-300", border: "border-fuchsia-800" },
@@ -28,12 +31,14 @@ const PRODUCT_DETAIL_COMPONENTS: Record<string, React.FC> = {
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
-    const product = PRODUCTS.find((p) => p.id === slug);
+    const baseProduct = PRODUCTS.find((p) => p.id === slug);
 
-    if (!product) notFound();
+    if (!baseProduct) notFound();
 
     const router = useRouter();
     const { addToCart } = useCart();
+    const { locale, t } = useI18n();
+    const product = localizeProduct(baseProduct, locale);
     const [justAdded, setJustAdded] = useState(false);
 
     useEffect(() => {
@@ -80,14 +85,18 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                             role="status"
                             className="flex flex-col gap-3 rounded-2xl border border-green-800 bg-green-950/40 px-4 py-3 text-sm text-green-300 sm:flex-row sm:items-center sm:justify-between"
                         >
-                            <span>
-                                <strong>{product.name}</strong> a été ajouté à votre panier.
-                            </span>
+                            <span
+                                dangerouslySetInnerHTML={{
+                                    __html: interpolate(t("product.added.text"), {
+                                        name: `<strong>${product.name}</strong>`,
+                                    }),
+                                }}
+                            />
                             <Link
                                 href="/cart"
                                 className="font-semibold text-cyna-700 underline underline-offset-2 hover:text-cyna-900 shrink-0"
                             >
-                                Voir le panier
+                                {t("product.added.viewCart")}
                             </Link>
                         </div>
                     </div>
@@ -96,9 +105,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                 {/* Breadcrumb */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
                     <nav className="flex items-center gap-2 text-sm text-gray-500">
-                        <Link href="/" className="hover:text-gray-300 transition-colors">Accueil</Link>
+                        <Link href="/" className="hover:text-gray-300 transition-colors">{t("product.breadcrumb.home")}</Link>
                         <span>/</span>
-                        <Link href="/catalog" className="hover:text-gray-300 transition-colors">Catalogue</Link>
+                        <Link href="/catalog" className="hover:text-gray-300 transition-colors">{t("product.breadcrumb.catalog")}</Link>
                         <span>/</span>
                         <span className="text-gray-200 font-medium">{product.name}</span>
                     </nav>
@@ -116,12 +125,12 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                 </span>
                                 {product.status === "available" && (
                                     <span className="text-xs font-semibold text-green-400 bg-green-950/40 border border-green-800 px-3 py-1 rounded-full">
-                                        ● Disponible immédiatement
+                                        {t("product.status.availableNow")}
                                     </span>
                                 )}
                                 {(product.status === "maintenance" || product.status === "coming_soon") && (
                                     <span className="text-xs font-semibold text-yellow-400 bg-yellow-950/40 border border-yellow-800 px-3 py-1 rounded-full">
-                                        ● Service momentanément indisponible
+                                        {t("product.status.unavailable")}
                                     </span>
                                 )}
                             </div>
@@ -151,11 +160,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-4xl font-bold text-gray-100">{product.price}€</span>
                                     <span className="text-gray-500 text-sm ml-1">
-                                        / {product.period === "monthly" ? "mois" : "an"}
+                                        / {product.period === "monthly" ? t("common.perMonth") : t("common.perYear")}
                                     </span>
                                 </div>
                                 {product.period === "monthly" && (
-                                    <p className="text-xs text-gray-500 mt-1">Facturation mensuelle · Résiliation à tout moment.</p>
+                                    <p className="text-xs text-gray-500 mt-1">{t("product.pricing.monthlyBilling")}</p>
                                 )}
                             </div>
 
@@ -163,11 +172,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                             <div className="flex gap-3">
                                 {product.status === "available" ? (
                                     <Button size="lg" variant="primary" onClick={handleBuyNow} className="font-bold tracking-wide w-full sm:w-auto px-8">
-                                        S'ABONNER MAINTENANT
+                                        {t("product.cta.subscribe")}
                                     </Button>
                                 ) : (
                                     <Button size="lg" variant="outline" disabled className="font-bold tracking-wide w-full sm:w-auto px-8 opacity-70">
-                                        SERVICE INDISPONIBLE
+                                        {t("product.cta.unavailable")}
                                     </Button>
                                 )}
                             </div>
@@ -177,11 +186,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                         <div className="relative">
                             <ProductCarousel mainImage={product.image} productName={product.name} />
                             <div className="absolute -bottom-4 left-3 sm:-bottom-5 sm:-left-5 bg-zinc-900 rounded-2xl shadow-xl p-3 sm:p-4 border border-zinc-700 max-w-[70%]">
-                                <p className="text-[0.65rem] sm:text-xs text-gray-500 font-medium">À partir de</p>
+                                <p className="text-[0.65rem] sm:text-xs text-gray-500 font-medium">{t("product.pricing.from")}</p>
                                 <p className="text-base sm:text-xl font-bold text-gray-100 leading-tight">
                                     {product.price}€
                                     <span className="text-xs sm:text-sm font-normal text-gray-500">
-                                        /{product.period === "monthly" ? "mois" : "an"}
+                                        /{product.period === "monthly" ? t("common.perMonth") : t("common.perYear")}
                                     </span>
                                 </p>
                             </div>
@@ -196,26 +205,26 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
                     {/* Bottom CTA */}
                     <div className="mt-20 bg-gradient-to-br from-cyna-600 to-[#4c1d95] rounded-3xl p-6 sm:p-10 lg:p-12 text-center text-white">
-                        <h2 className="cyna-heading cyna-heading--center text-white mb-3">Prêt à sécuriser votre organisation ?</h2>
+                        <h2 className="cyna-heading cyna-heading--center text-white mb-3">{t("product.bottom.title")}</h2>
                         <p className="text-violet-200 mb-8 text-base sm:text-lg">
-                            Commencez dès aujourd'hui avec {product.name}.
+                            {interpolate(t("product.bottom.subtitle"), { name: product.name })}
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-3 sm:gap-4">
                             {product.status === "available" ? (
                                 <>
                                     <Button size="lg" variant="ghostInverse" onClick={handleAddToCart} className="w-full sm:w-auto whitespace-nowrap">
-                                        Démarrer maintenant
+                                        {t("product.cta.start")}
                                     </Button>
                                     <Link href="/support#contact" className="w-full sm:w-auto">
                                         <Button size="lg" variant="ghostInverse" className="w-full sm:w-auto whitespace-nowrap">
-                                            Parler à un expert
+                                            {t("product.cta.talkExpert")}
                                         </Button>
                                     </Link>
                                 </>
                             ) : (
                                 <Link href="/support#contact" className="w-full sm:w-auto">
                                     <Button size="lg" variant="ghostInverse" className="w-full sm:w-auto whitespace-nowrap">
-                                        Nous contacter
+                                        {t("product.cta.contactUs")}
                                     </Button>
                                 </Link>
                             )}

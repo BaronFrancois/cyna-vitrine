@@ -10,6 +10,7 @@ import {
     fetchProductSearch,
     pickMonthlyPrice,
     productCardImage,
+    PRODUCT_PLACEHOLDER_IMAGE,
     type ProductSearchResponse,
     type ApiProductCard,
 } from "@/lib/vitrineCatalog";
@@ -341,6 +342,11 @@ function SearchPageInner() {
                                                         src={productCardImage(product)}
                                                         alt=""
                                                         className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                        onError={(e) => {
+                                                            const img = e.currentTarget;
+                                                            if (img.src.endsWith(PRODUCT_PLACEHOLDER_IMAGE)) return;
+                                                            img.src = PRODUCT_PLACEHOLDER_IMAGE;
+                                                        }}
                                                     />
                                                 </Link>
                                                 {/* Bloc info — effet "creusé + highlight outset" pour séparer de l'image */}

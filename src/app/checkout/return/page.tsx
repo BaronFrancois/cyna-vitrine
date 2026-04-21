@@ -14,7 +14,11 @@ import useCart from '@/hooks/useCart';
 // à la return_url qu'on lui a passée. On récupère le PaymentIntent pour confirmer
 // le statut et afficher le bon écran à l'utilisateur.
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY!);
+const STRIPE_PUBLISHABLE_KEY =
+    process.env.NEXT_PUBLIC_STRIPE_KEY ??
+    'pk_test_51TEqsf6NG07rbbnhYwsILXh0ifO76MK7gULNhoeM5kQ3f0S03XvypIiSIHKGkmG6vwtPEhA3eF1RYtMUqZOzoa8O00KQUYsy7P';
+
+const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
 type Status = 'loading' | 'succeeded' | 'processing' | 'requires_payment_method' | 'failed';
 

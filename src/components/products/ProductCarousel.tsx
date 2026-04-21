@@ -6,14 +6,17 @@ interface ProductCarouselProps {
     productName: string;
 }
 
+const PLACEHOLDER = "/product-placeholder.svg";
+
 export default function ProductCarousel({ mainImage, productName }: ProductCarouselProps) {
-    // Construction d'un tableau d'illustrations simulé pour l'interface SaaS
-    // L'image principale, suivie de deux images génériques de Dashboard / UI
-    const images = [
-        mainImage,
-        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=800&q=80"
-    ];
+    const hasMainImage = Boolean(mainImage && mainImage.trim().length > 0);
+    const images = hasMainImage
+        ? [
+              mainImage,
+              "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+              "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&w=800&q=80",
+          ]
+        : [PLACEHOLDER];
 
     const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -30,10 +33,15 @@ export default function ProductCarousel({ mainImage, productName }: ProductCarou
                 >
                     {images.map((src, i) => (
                         <div key={i} className="flex-shrink-0 w-full h-full relative">
-                            <img 
-                                src={src} 
-                                alt={`${productName} - Vue ${i + 1}`} 
+                            <img
+                                src={src}
+                                alt={`${productName} - Vue ${i + 1}`}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    const img = e.currentTarget;
+                                    if (img.src.endsWith(PLACEHOLDER)) return;
+                                    img.src = PLACEHOLDER;
+                                }}
                             />
                             {/* Inner shadow overlay for depth */}
                             <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.6)] pointer-events-none" />

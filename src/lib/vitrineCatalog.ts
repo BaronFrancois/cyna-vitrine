@@ -91,12 +91,13 @@ export function pickMonthlyPrice(
     };
 }
 
+export const PRODUCT_PLACEHOLDER_IMAGE = "/product-placeholder.svg";
+
 export function productCardImage(product: ApiProductCard): string {
     const sorted = [...(product.images ?? [])].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
-    return (
-        sorted[0]?.imageUrl ??
-        "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80"
-    );
+    const first = sorted[0]?.imageUrl?.trim();
+    if (first && first.length > 0) return first;
+    return PRODUCT_PLACEHOLDER_IMAGE;
 }
 
 function productMatchesCategoryFilter(p: Product, categoryLabel: string): boolean {

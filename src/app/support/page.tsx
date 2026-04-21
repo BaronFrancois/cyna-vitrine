@@ -130,7 +130,7 @@ export default function SupportPage() {
             return;
         }
 
-        const responseText = await chatWithCyna(userMsg, history);
+        const responseText = await chatWithCyna(userMsg, history, locale);
 
         setHistory([
             ...newHistory,
@@ -292,7 +292,7 @@ export default function SupportPage() {
                     role="presentation"
                 >
                     <div
-                        className="bg-zinc-900 w-full max-w-md h-[600px] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300 border border-zinc-700"
+                        className="bg-zinc-900 w-full max-w-md h-[min(560px,calc(100dvh-2rem))] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in duration-300 border border-zinc-700"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="chat-dialog-title"

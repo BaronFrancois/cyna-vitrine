@@ -12,6 +12,7 @@ import {
     fetchProductSearch,
     pickMonthlyPrice,
     productCardImage,
+    PRODUCT_PLACEHOLDER_IMAGE,
     type ApiProductCard,
     type ProductSearchResponse,
 } from "@/lib/vitrineCatalog";
@@ -206,6 +207,11 @@ function CatalogContent() {
                                                     src={productCardImage(product)}
                                                     alt=""
                                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                    onError={(e) => {
+                                                        const img = e.currentTarget;
+                                                        if (img.src.endsWith(PRODUCT_PLACEHOLDER_IMAGE)) return;
+                                                        img.src = PRODUCT_PLACEHOLDER_IMAGE;
+                                                    }}
                                                 />
                                                 {product.isAvailable ? (
                                                     <span className="absolute top-4 right-4 bg-green-500/90 text-white text-[10px] font-bold px-2 py-1 rounded-full backdrop-blur-sm uppercase tracking-wide">

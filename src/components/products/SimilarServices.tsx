@@ -1,9 +1,13 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 import { PRODUCTS } from "@/constant";
 import { buttonClassName } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/context/I18nContext";
+import { localizeProduct } from "@/i18n/productLabels";
 
 interface SimilarServicesProps {
     currentProductId: string;
@@ -11,29 +15,30 @@ interface SimilarServicesProps {
 }
 
 export default function SimilarServices({ currentProductId, currentCategory }: SimilarServicesProps) {
-    // Filtrage: exclure le produit actuel, prioritiser la même catégorie, sinon prendre d'autres produits aléatoirement (ou simplement par l'ordre défini)
+    const { locale, t } = useI18n();
     const otherProducts = PRODUCTS.filter((p) => p.id !== currentProductId && p.status === "available");
-    
-    // On trie grossièrement pour mettre ceux de la même catégorie en premier
+
     const sortedProducts = [...otherProducts].sort((a, b) => {
         if (a.category === currentCategory && b.category !== currentCategory) return -1;
         if (a.category !== currentCategory && b.category === currentCategory) return 1;
         return 0;
     });
 
-    const similarSelected = sortedProducts.slice(0, 6);
+    const similarSelected = sortedProducts.slice(0, 6).map((p) => localizeProduct(p, locale));
 
     if (similarSelected.length === 0) return null;
+
+    const priceLocale = locale === "en" ? "en-US" : "fr-FR";
 
     return (
         <section className="py-20 bg-black border-t border-zinc-900 mt-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between mb-10">
                     <h2 className="cyna-heading text-gray-100">
-                        Services Similaires
+                        {t("similar.title")}
                     </h2>
                     <Link href="/catalog" className="text-sm font-medium text-cyna-500 hover:text-cyna-400 transition-colors flex items-center">
-                        Voir tout <ArrowRight className="w-4 h-4 ml-1" />
+                        {t("similar.viewAll")} <ArrowRight className="w-4 h-4 ml-1" />
                     </Link>
                 </div>
 
@@ -49,10 +54,15 @@ export default function SimilarServices({ currentProductId, currentCategory }: S
                             )}
                         >
                             <div className="relative h-40 overflow-hidden bg-zinc-900">
-                                <img 
-                                    src={product.image} 
-                                    alt={product.name} 
+                                <img
+                                    src={product.image}
+                                    alt={product.name}
                                     className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
+                                    onError={(e) => {
+                                        const img = e.currentTarget;
+                                        if (img.src.endsWith("/product-placeholder.svg")) return;
+                                        img.src = "/product-placeholder.svg";
+                                    }}
                                 />
                                 <div className="absolute top-3 left-3 flex gap-2">
                                     <span className="bg-black/80 backdrop-blur-sm text-gray-300 text-[10px] font-bold uppercase px-2 py-1 rounded-full border border-zinc-700">
@@ -75,7 +85,12 @@ export default function SimilarServices({ currentProductId, currentCategory }: S
                                 />
                                 <div className="flex items-end justify-between">
                                     <div>
-                                        <p className="font-bold text-gray-100">{product.price}€<span className="text-xs text-gray-500 font-normal"> / {product.period === "monthly" ? "mois" : "an"}</span></p>
+                                        <p className="font-bold text-gray-100">
+                                            {new Intl.NumberFormat(priceLocale, { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(product.price)}€
+                                            <span className="text-xs text-gray-500 font-normal">
+                                                {" "}/ {product.period === "monthly" ? t("common.perMonth") : t("common.perYear")}
+                                            </span>
+                                        </p>
                                     </div>
                                     <span
                                         className={cn(

@@ -14,7 +14,11 @@ import { cn } from '@/lib/utils';
 import { cartHasUnavailableItem } from '@/lib/cartAvailability';
 import { useI18n } from '@/context/I18nContext';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY!);
+const STRIPE_PUBLISHABLE_KEY =
+    process.env.NEXT_PUBLIC_STRIPE_KEY ??
+    'pk_test_51TEqsf6NG07rbbnhYwsILXh0ifO76MK7gULNhoeM5kQ3f0S03XvypIiSIHKGkmG6vwtPEhA3eF1RYtMUqZOzoa8O00KQUYsy7P';
+
+const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
 
 const COUNTRY_LABELS_FR: Record<string, string> = {
     FR: 'France',
