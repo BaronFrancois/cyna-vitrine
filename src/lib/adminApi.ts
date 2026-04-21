@@ -136,6 +136,8 @@ export interface AdminCarouselItem {
     imageUrl: string;
     title?: string | null;
     subtitle?: string | null;
+    titleEn?: string | null;
+    subtitleEn?: string | null;
     linkUrl?: string | null;
     displayOrder: number;
     isActive: boolean;

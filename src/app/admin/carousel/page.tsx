@@ -75,6 +75,8 @@ export default function AdminCarouselPage() {
                 imageUrl: creating.imageUrl,
                 title: creating.title ?? null,
                 subtitle: creating.subtitle ?? null,
+                titleEn: creating.titleEn ?? null,
+                subtitleEn: creating.subtitleEn ?? null,
                 linkUrl: creating.linkUrl ?? null,
                 displayOrder: Number(creating.displayOrder ?? items.length),
                 isActive: creating.isActive ?? true,
@@ -101,6 +103,8 @@ export default function AdminCarouselPage() {
                             imageUrl: "",
                             title: "",
                             subtitle: "",
+                            titleEn: "",
+                            subtitleEn: "",
                             linkUrl: "",
                             displayOrder: items.length,
                             isActive: true,
@@ -126,7 +130,7 @@ export default function AdminCarouselPage() {
                             />
                         </div>
                         <div>
-                            <label className={labelClass}>Titre</label>
+                            <label className={labelClass}>Titre (FR)</label>
                             <input
                                 className={inputClass}
                                 value={creating.title ?? ""}
@@ -134,11 +138,27 @@ export default function AdminCarouselPage() {
                             />
                         </div>
                         <div>
-                            <label className={labelClass}>Sous-titre</label>
+                            <label className={labelClass}>Sous-titre (FR)</label>
                             <input
                                 className={inputClass}
                                 value={creating.subtitle ?? ""}
                                 onChange={(e) => setCreating({ ...creating, subtitle: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className={labelClass}>Title (EN) <span className="text-white/40">— optionnel, repli sur FR</span></label>
+                            <input
+                                className={inputClass}
+                                value={creating.titleEn ?? ""}
+                                onChange={(e) => setCreating({ ...creating, titleEn: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className={labelClass}>Subtitle (EN) <span className="text-white/40">— optionnel, repli sur FR</span></label>
+                            <input
+                                className={inputClass}
+                                value={creating.subtitleEn ?? ""}
+                                onChange={(e) => setCreating({ ...creating, subtitleEn: e.target.value })}
                             />
                         </div>
                         <div>
@@ -192,14 +212,26 @@ export default function AdminCarouselPage() {
                             <input
                                 className={inputClass}
                                 value={item.title ?? ""}
-                                placeholder="Titre"
+                                placeholder="Titre (FR)"
                                 onChange={(e) => handleUpdate(item.id, { title: e.target.value })}
                             />
                             <input
                                 className={inputClass}
                                 value={item.subtitle ?? ""}
-                                placeholder="Sous-titre"
+                                placeholder="Sous-titre (FR)"
                                 onChange={(e) => handleUpdate(item.id, { subtitle: e.target.value })}
+                            />
+                            <input
+                                className={inputClass}
+                                value={item.titleEn ?? ""}
+                                placeholder="Title (EN) — repli sur FR si vide"
+                                onChange={(e) => handleUpdate(item.id, { titleEn: e.target.value })}
+                            />
+                            <input
+                                className={inputClass}
+                                value={item.subtitleEn ?? ""}
+                                placeholder="Subtitle (EN) — repli sur FR si vide"
+                                onChange={(e) => handleUpdate(item.id, { subtitleEn: e.target.value })}
                             />
                             <input
                                 className={inputClass}

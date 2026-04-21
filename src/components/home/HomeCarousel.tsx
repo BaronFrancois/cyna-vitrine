@@ -12,8 +12,25 @@ type CarouselApiItem = {
     imageUrl: string;
     title?: string | null;
     subtitle?: string | null;
+    titleEn?: string | null;
+    subtitleEn?: string | null;
     linkUrl?: string | null;
 };
+
+function pickLocalized(
+    slide: CarouselApiItem,
+    locale: "fr" | "en"
+): { title: string | null; subtitle: string | null } {
+    if (locale === "en") {
+        const enTitle = slide.titleEn?.trim();
+        const enSubtitle = slide.subtitleEn?.trim();
+        return {
+            title: enTitle && enTitle.length > 0 ? enTitle : slide.title ?? null,
+            subtitle: enSubtitle && enSubtitle.length > 0 ? enSubtitle : slide.subtitle ?? null,
+        };
+    }
+    return { title: slide.title ?? null, subtitle: slide.subtitle ?? null };
+}
 
 function useLocalizedFallbackSlides(): CarouselApiItem[] {
     const { t } = useI18n();
@@ -49,7 +66,7 @@ function useLocalizedFallbackSlides(): CarouselApiItem[] {
 }
 
 export default function HomeCarousel() {
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
     const fallbackSlides = useLocalizedFallbackSlides();
     const [slides, setSlides] = useState<CarouselApiItem[] | null>(null);
     const [index, setIndex] = useState(0);
@@ -143,7 +160,7 @@ export default function HomeCarousel() {
 
     useEffect(() => {
         const slide = effectiveSlides[index];
-        const title = slide?.title ?? "Cyna";
+        const title = slide ? pickLocalized(slide, locale).title ?? "Cyna" : "Cyna";
         setLiveMsg(
             t("carousel.live", {
                 current: index + 1,
@@ -151,7 +168,7 @@ export default function HomeCarousel() {
                 title,
             })
         );
-    }, [index, effectiveSlides, t]);
+    }, [index, effectiveSlides, t, locale]);
 
     const slideKey = (s: CarouselApiItem, i: number) => (s.id != null ? s.id : i);
 
@@ -181,8 +198,9 @@ export default function HomeCarousel() {
                 )}
             >
                 {effectiveSlides.map((slide, i) => {
-                    const title = slide.title ?? "Cyna";
-                    const subtitle = slide.subtitle ?? "";
+                    const localized = pickLocalized(slide, locale);
+                    const title = localized.title ?? "Cyna";
+                    const subtitle = localized.subtitle ?? "";
                     const href =
                         slide.linkUrl && slide.linkUrl.length > 0 ? slide.linkUrl : "/catalog";
                     return (
