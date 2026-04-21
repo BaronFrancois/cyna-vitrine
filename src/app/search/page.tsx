@@ -330,18 +330,21 @@ function SearchPageInner() {
                                             <li
                                                 key={product.id}
                                                 className={cn(
-                                                    "rounded-2xl border border-zinc-800 bg-zinc-900/40 overflow-hidden flex flex-col",
+                                                    "group flex flex-col bg-[var(--cyna-card-surface)] border border-zinc-800/80 rounded-3xl overflow-hidden hover:border-cyna-600/50 transition-all duration-300",
+                                                    "shadow-[5px_4px_20px_rgba(0,0,0,0.85),0_25px_70px_-20px_rgba(96,11,209,0.45),inset_0_1px_0_0_rgba(255,255,255,0.08)]",
+                                                    "hover:shadow-[5px_4px_24px_rgba(0,0,0,0.9),0_30px_80px_-15px_rgba(96,11,209,0.55),inset_0_1px_0_0_rgba(255,255,255,0.1)]",
                                                     !product.isAvailable && "opacity-70"
                                                 )}
                                             >
-                                                <Link href={`/product/${product.slug}`} className="block h-44 overflow-hidden">
+                                                <Link href={`/product/${product.slug}`} className="block h-44 overflow-hidden bg-zinc-900">
                                                     <img
                                                         src={productCardImage(product)}
                                                         alt=""
-                                                        className="h-full w-full object-cover"
+                                                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                                                     />
                                                 </Link>
-                                                <div className="p-5 flex flex-col flex-1">
+                                                {/* Bloc info — effet "creusé + highlight outset" pour séparer de l'image */}
+                                                <div className="relative p-5 flex flex-col flex-1 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),inset_0_2px_0_-1px_rgba(0,0,0,0.55)]">
                                                     <span className="text-xs font-semibold uppercase text-cyna-500">
                                                         {product.category?.name ?? "—"}
                                                     </span>
@@ -354,7 +357,12 @@ function SearchPageInner() {
                                                     <p className="mt-2 text-sm text-gray-400 line-clamp-2 flex-1">
                                                         {product.shortDescription}
                                                     </p>
-                                                    <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-4">
+                                                    {/* Séparateur creusé (trait noir + highlight blanc dessous) */}
+                                                    <div
+                                                        aria-hidden
+                                                        className="mt-4 mb-4 h-px bg-black/70 shadow-[0_1px_0_0_rgba(255,255,255,0.07)]"
+                                                    />
+                                                    <div className="flex items-center justify-between">
                                                         <span className="text-gray-200 font-semibold">
                                                             {display}€{" "}
                                                             <span className="text-xs text-gray-500">/ {periodLabel}</span>

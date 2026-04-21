@@ -176,11 +176,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                         {/* Right: Image */}
                         <div className="relative">
                             <ProductCarousel mainImage={product.image} productName={product.name} />
-                            <div className="absolute -bottom-5 -left-5 bg-zinc-900 rounded-2xl shadow-xl p-4 border border-zinc-700">
-                                <p className="text-xs text-gray-500 font-medium">À partir de</p>
-                                <p className="text-xl font-bold text-gray-100">
+                            <div className="absolute -bottom-4 left-3 sm:-bottom-5 sm:-left-5 bg-zinc-900 rounded-2xl shadow-xl p-3 sm:p-4 border border-zinc-700 max-w-[70%]">
+                                <p className="text-[0.65rem] sm:text-xs text-gray-500 font-medium">À partir de</p>
+                                <p className="text-base sm:text-xl font-bold text-gray-100 leading-tight">
                                     {product.price}€
-                                    <span className="text-sm font-normal text-gray-500">
+                                    <span className="text-xs sm:text-sm font-normal text-gray-500">
                                         /{product.period === "monthly" ? "mois" : "an"}
                                     </span>
                                 </p>
@@ -195,26 +195,26 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     {DetailComponent && <DetailComponent />}
 
                     {/* Bottom CTA */}
-                    <div className="mt-20 bg-gradient-to-br from-cyna-600 to-[#4c1d95] rounded-3xl p-12 text-center text-white">
+                    <div className="mt-20 bg-gradient-to-br from-cyna-600 to-[#4c1d95] rounded-3xl p-6 sm:p-10 lg:p-12 text-center text-white">
                         <h2 className="cyna-heading cyna-heading--center text-white mb-3">Prêt à sécuriser votre organisation ?</h2>
-                        <p className="text-violet-200 mb-8 text-lg">
+                        <p className="text-violet-200 mb-8 text-base sm:text-lg">
                             Commencez dès aujourd'hui avec {product.name}.
                         </p>
-                        <div className="flex justify-center gap-4">
+                        <div className="flex flex-col sm:flex-row justify-center items-stretch sm:items-center gap-3 sm:gap-4">
                             {product.status === "available" ? (
                                 <>
-                                    <Button size="lg" variant="ghostInverse" onClick={handleAddToCart}>
+                                    <Button size="lg" variant="ghostInverse" onClick={handleAddToCart} className="w-full sm:w-auto whitespace-nowrap">
                                         Démarrer maintenant
                                     </Button>
-                                    <Link href="/support#contact">
-                                        <Button size="lg" variant="ghostInverse">
+                                    <Link href="/support#contact" className="w-full sm:w-auto">
+                                        <Button size="lg" variant="ghostInverse" className="w-full sm:w-auto whitespace-nowrap">
                                             Parler à un expert
                                         </Button>
                                     </Link>
                                 </>
                             ) : (
-                                <Link href="/support#contact">
-                                    <Button size="lg" variant="ghostInverse">
+                                <Link href="/support#contact" className="w-full sm:w-auto">
+                                    <Button size="lg" variant="ghostInverse" className="w-full sm:w-auto whitespace-nowrap">
                                         Nous contacter
                                     </Button>
                                 </Link>

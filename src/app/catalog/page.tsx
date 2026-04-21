@@ -192,11 +192,16 @@ function CatalogContent() {
                                         <div
                                             key={product.id}
                                             className={cn(
-                                                "bg-zinc-900 rounded-3xl shadow-lg border border-zinc-800 overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col group",
+                                                "group flex flex-col bg-[var(--cyna-card-surface)] border border-zinc-800/80 rounded-3xl overflow-hidden hover:border-cyna-600/50 transition-all duration-300",
+                                                "shadow-[5px_4px_20px_rgba(0,0,0,0.85),0_25px_70px_-20px_rgba(96,11,209,0.45),inset_0_1px_0_0_rgba(255,255,255,0.08)]",
+                                                "hover:shadow-[5px_4px_24px_rgba(0,0,0,0.9),0_30px_80px_-15px_rgba(96,11,209,0.55),inset_0_1px_0_0_rgba(255,255,255,0.1)]",
                                                 !product.isAvailable && "opacity-75"
                                             )}
                                         >
-                                            <div className="h-64 overflow-hidden relative">
+                                            <Link
+                                                href={`/product/${product.slug}`}
+                                                className="block h-64 overflow-hidden relative bg-zinc-900"
+                                            >
                                                 <img
                                                     src={productCardImage(product)}
                                                     alt=""
@@ -211,9 +216,10 @@ function CatalogContent() {
                                                         {t("common.unavailable")}
                                                     </span>
                                                 )}
-                                            </div>
+                                            </Link>
 
-                                            <div className="p-8 flex-grow flex flex-col">
+                                            {/* Bloc info — effet "creusé + highlight outset" pour séparer de l'image */}
+                                            <div className="relative p-8 flex-grow flex flex-col shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),inset_0_2px_0_-1px_rgba(0,0,0,0.55)]">
                                                 <div className="text-xs font-bold text-cyna-600 mb-2 uppercase tracking-wide">
                                                     {product.category?.name ?? "—"}
                                                 </div>
@@ -224,7 +230,13 @@ function CatalogContent() {
                                                     {product.shortDescription}
                                                 </p>
 
-                                                <div className="mt-auto pt-6 border-t border-zinc-700 flex items-center justify-between">
+                                                {/* Séparateur creusé (trait noir + highlight blanc dessous) */}
+                                                <div
+                                                    aria-hidden
+                                                    className="mt-auto mb-6 h-px bg-black/70 shadow-[0_1px_0_0_rgba(255,255,255,0.07)]"
+                                                />
+
+                                                <div className="flex items-center justify-between">
                                                     <div>
                                                         <span className="text-lg font-semibold text-gray-100">
                                                             {display}€

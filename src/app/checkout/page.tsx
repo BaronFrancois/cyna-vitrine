@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Check, Lock, ShieldCheck, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import AppLayout from '@/layout/AppLayout';
@@ -97,17 +97,13 @@ function CartSummary() {
     );
 }
 
-// ─── Formulaire Stripe ───────────────────────────────────────────────────────
+// ─── Formulaire Stripe (PaymentElement : Carte + PayPal + autres) ────────────
 
 function PaymentForm({
-    userId,
-    cartId,
-    addressId,
+    orderId,
     onSuccess,
 }: {
-    userId: number;
-    cartId: number;
-    addressId: number;
+    orderId: number;
     onSuccess: (orderId: number) => void;
 }) {
     const { t } = useI18n();
@@ -115,7 +111,6 @@ function PaymentForm({
     const elements = useElements();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [saveCard, setSaveCard] = useState(true);
     const { clearCart } = useCart();
 
     const handlePay = async (e: React.FormEvent) => {
@@ -126,26 +121,36 @@ function PaymentForm({
         setError('');
 
         try {
-            // 1. Créer le PaymentMethod côté Stripe
-            const card = elements.getElement(CardElement);
-            const { paymentMethod, error: stripeError } = await stripe.createPaymentMethod({
-                type: 'card',
-                card: card!,
+            // Confirme le PaymentIntent directement depuis le front — Stripe gère ici
+            // CB, PayPal (redirection), 3D Secure, etc. de manière unifiée.
+            const returnUrl = `${window.location.origin}/checkout/return?orderId=${orderId}`;
+            const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
+                elements,
+                confirmParams: {
+                    return_url: returnUrl,
+                },
+                redirect: 'if_required',
             });
 
             if (stripeError) {
-                setError(stripeError.message ?? 'Erreur carte');
+                setError(stripeError.message ?? 'Erreur lors du paiement');
                 setLoading(false);
                 return;
             }
 
-            // TODO production : POST /v1/payement/checkout avec paymentMethodId Stripe
-            setTimeout(() => {
-                onSuccess(Date.now());
+            // Pas de redirection nécessaire (CB sans 3DS) → succès immédiat
+            if (paymentIntent?.status === 'succeeded') {
+                onSuccess(orderId);
+                await api().delete('/cart').catch(() => {});
                 clearCart();
-            }, 1500);
+                return;
+            }
+
+            // Autres statuts (processing, requires_action résolu, etc.) → on laisse
+            // le webhook finaliser et on redirige l'utilisateur vers la page de retour
+            window.location.href = returnUrl;
         } catch (err: any) {
-            setError(err.response?.data?.message ?? 'Une erreur est survenue');
+            setError(err.message ?? 'Une erreur est survenue');
         } finally {
             setLoading(false);
         }
@@ -154,29 +159,13 @@ function PaymentForm({
     return (
         <form onSubmit={handlePay} className="space-y-6">
             <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-700">
-                <div className="flex justify-between items-center mb-4">
-                    <span className="font-semibold text-gray-200 text-sm">{t('checkout.pay.card')}</span>
-                    <div className="flex gap-1.5">
-                        {['VISA', 'MC'].map(b => (
-                            <div key={b} className="w-9 h-6 bg-gray-800 rounded flex items-center justify-center">
-                                <span className="text-white text-[9px] font-bold">{b}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-                <CardElement options={{
-                    style: {
-                        base: { fontSize: '15px', color: '#f0f0f8', fontFamily: 'inherit', '::placeholder': { color: '#6b7280' } },
-                        invalid: { color: '#ef4444' },
-                    },
-                }} />
+                <PaymentElement
+                    options={{
+                        layout: 'tabs',
+                        wallets: { googlePay: 'never', applePay: 'never' },
+                    }}
+                />
             </div>
-
-            <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" checked={saveCard} onChange={e => setSaveCard(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-cyna-600" />
-                <span className="text-sm text-gray-400">{t('checkout.pay.saveCard')}</span>
-            </label>
 
             {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm">{error}</div>
@@ -185,7 +174,7 @@ function PaymentForm({
             <Button
                 type="submit"
                 variant="primary"
-                disabled={loading || !stripe}
+                disabled={loading || !stripe || !elements}
                 className="w-full gap-2"
             >
                 <Lock size={16} />
@@ -195,14 +184,46 @@ function PaymentForm({
             <p className="text-center text-xs text-gray-400 flex items-center justify-center gap-1.5">
                 <ShieldCheck size={13} /> {t('checkout.pay.stripeNote')}
             </p>
-
-            <div className="rounded-2xl border border-dashed border-zinc-600 bg-zinc-900/30 p-4 text-center">
-                <p className="text-xs text-gray-500">
-                    <strong className="text-gray-400">PayPal</strong> — {t('checkout.paypal.note')}{' '}
-                    {t('checkout.pay.paypalFull')}
-                </p>
-            </div>
         </form>
+    );
+}
+
+// Wrapper : monte <Elements> avec le clientSecret reçu du backend
+function PaymentFormWithElements({
+    clientSecret,
+    orderId,
+    onSuccess,
+}: {
+    clientSecret: string;
+    orderId: number;
+    onSuccess: (orderId: number) => void;
+}) {
+    return (
+        <Elements
+            stripe={stripePromise}
+            options={{
+                clientSecret,
+                appearance: {
+                    theme: 'night',
+                    variables: {
+                        colorPrimary: '#7c3aed',
+                        colorBackground: '#18181b',
+                        colorText: '#f0f0f8',
+                        colorTextPlaceholder: '#6b7280',
+                        colorDanger: '#ef4444',
+                        fontFamily: 'inherit',
+                        borderRadius: '12px',
+                    },
+                    rules: {
+                        '.Tab': { backgroundColor: '#27272a', borderColor: '#3f3f46' },
+                        '.Tab--selected': { borderColor: '#7c3aed' },
+                        '.Input': { backgroundColor: '#27272a', borderColor: '#3f3f46' },
+                    },
+                },
+            }}
+        >
+            <PaymentForm orderId={orderId} onSuccess={onSuccess} />
+        </Elements>
     );
 }
 
@@ -224,10 +245,32 @@ function CheckoutInner() {
     const [addressId, setAddressId] = useState<number | null>(null);
     const [orderDone, setOrderDone] = useState<number | null>(null);
 
+    // Flow PaymentElement : clientSecret + orderId créés à l'étape 3
+    const [saveCard, setSaveCard] = useState(true);
+    const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const [serverOrderId, setServerOrderId] = useState<number | null>(null);
+    const [paymentIntentLoading, setPaymentIntentLoading] = useState(false);
+    const [paymentIntentError, setPaymentIntentError] = useState('');
+
     const [billing, setBilling] = useState({
         firstName: '', lastName: '', addressLine1: '', addressLine2: '', city: '', region: '', postalCode: '', country: 'FR', phone: '',
     });
     const [billingError, setBillingError] = useState('');
+
+    // Adresse par défaut du compte (pour la case à cocher "Utiliser mon adresse")
+    const [savedAddress, setSavedAddress] = useState<{
+        id: number;
+        firstName: string;
+        lastName: string;
+        addressLine1: string;
+        addressLine2?: string;
+        city: string;
+        region?: string;
+        postalCode: string;
+        country: string;
+        phone?: string;
+    } | null>(null);
+    const [useSavedAddress, setUseSavedAddress] = useState(false);
 
     /** Panier vide : pas de tunnel de commande (sauf écran de confirmation déjà affiché) */
     useEffect(() => {
@@ -242,7 +285,7 @@ function CheckoutInner() {
         }
     }, [isLoaded, items, router, orderDone]);
 
-    // Détection token + sync panier — attendre que le localStorage soit chargé
+    // ─── Initialisation : token + pré-remplissage + sync panier ─────────────
     useEffect(() => {
         if (!isLoaded) return;
 
@@ -255,20 +298,75 @@ function CheckoutInner() {
         setUserId(payload.sub);
         setStep(2);
 
-        const syncCart = async () => {
-            // Mock server synchronization to bypass 404 responses
-            setTimeout(() => {
-                setCartId(1);
-            }, 500);
-        };
+        (async () => {
+            try {
+                // 1. Récupérer l'adresse par défaut (sans pré-remplir : on la stocke juste pour
+                //    proposer à l'utilisateur de la réutiliser via une case à cocher)
+                const addrRes = await api().get('/addresses').catch(() => ({ data: [] }));
+                const addrList = Array.isArray(addrRes.data) ? addrRes.data : [];
+                const defaultAddr = addrList.find((a: any) => a.isDefault) ?? addrList[0];
 
-        syncCart();
+                if (defaultAddr?.id) {
+                    setSavedAddress({
+                        id: defaultAddr.id,
+                        firstName: defaultAddr.firstName ?? '',
+                        lastName: defaultAddr.lastName ?? '',
+                        addressLine1: defaultAddr.addressLine1 ?? '',
+                        addressLine2: defaultAddr.addressLine2 ?? '',
+                        city: defaultAddr.city ?? '',
+                        region: defaultAddr.region ?? '',
+                        postalCode: defaultAddr.postalCode ?? '',
+                        country: defaultAddr.country ?? 'FR',
+                        phone: defaultAddr.phone ?? '',
+                    });
+                }
+
+                // 2. Synchroniser le panier localStorage → serveur
+                //    (2a) vider le cart serveur pour éviter les doublons
+                await api().delete('/cart').catch(() => {});
+
+                //    (2b) récupérer le mapping slug → productId + plans
+                const prodRes = await api().get('/products').catch(() => ({ data: [] }));
+                const products = Array.isArray(prodRes.data) ? prodRes.data : [];
+                const bySlug: Record<string, { id: number; plans: any[] }> = Object.fromEntries(
+                    products.map((p: any) => [p.slug, { id: p.id, plans: p.subscriptionPlans ?? [] }])
+                );
+
+                //    (2c) poster chaque item local vers le serveur
+                for (const item of items) {
+                    const entry = bySlug[item.id];
+                    if (!entry) continue; // slug inconnu côté serveur
+                    const cycle = item.period === 'monthly' ? 'MONTHLY' : 'YEARLY';
+                    const plan = entry.plans.find((p: any) => p.billingCycle === cycle);
+                    if (!plan) continue;
+                    await api().post('/cart/items', {
+                        productId: entry.id,
+                        subscriptionPlanId: plan.id,
+                        quantity: item.quantity,
+                    }).catch(() => {});
+                }
+
+                //    (2d) lire le cart synchronisé pour récupérer le cartId réel
+                const syncedRes = await api().get('/cart').catch(() => ({ data: null }));
+                if (syncedRes.data?.id) setCartId(syncedRes.data.id);
+            } catch (err) {
+                console.warn('[checkout] synchronisation initiale incomplète', err);
+            }
+        })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoaded]);
 
     const handleBillingSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setBillingError('');
+
+        // Cas 1 : l'utilisateur a coché "Utiliser mon adresse enregistrée"
+        // → on réutilise l'addressId existant sans créer de nouvelle entité.
+        if (useSavedAddress && savedAddress) {
+            setAddressId(savedAddress.id);
+            setStep(3);
+            return;
+        }
 
         const required = ['firstName', 'lastName', 'addressLine1', 'city', 'postalCode'] as const;
         if (required.some(f => !billing[f])) {
@@ -277,13 +375,26 @@ function CheckoutInner() {
         }
 
         try {
-            // Mock backend save address
-            setTimeout(() => {
-                setAddressId(Date.now());
+            // Cas 2 : saisie manuelle → on crée une nouvelle adresse côté API.
+            const res = await api().post('/addresses', {
+                firstName: billing.firstName,
+                lastName: billing.lastName,
+                addressLine1: billing.addressLine1,
+                addressLine2: billing.addressLine2 || undefined,
+                city: billing.city,
+                region: billing.region || undefined,
+                postalCode: billing.postalCode,
+                country: billing.country,
+                phone: billing.phone || undefined,
+            });
+            if (res.data?.id) {
+                setAddressId(res.data.id);
                 setStep(3);
-            }, 500);
-        } catch {
-            setBillingError(t('checkout.billing.saveError'));
+            } else {
+                setBillingError(t('checkout.billing.saveError'));
+            }
+        } catch (err: any) {
+            setBillingError(err.response?.data?.message ?? t('checkout.billing.saveError'));
         }
     };
 
@@ -295,7 +406,33 @@ function CheckoutInner() {
     };
     const goToAccountStep = () => setStep(1);
     const goToVerificationStep = () => setStep(3);
-    const goToPaymentStep = () => setStep(4);
+
+    // Clic sur "Passer au paiement" à l'étape 3 → créer le PaymentIntent côté backend,
+    // stocker le clientSecret pour monter <Elements> à l'étape 4.
+    const goToPaymentStep = async () => {
+        if (!userId || !cartId || !addressId) return;
+        setPaymentIntentError('');
+        setPaymentIntentLoading(true);
+        try {
+            const res = await api().post('/v1/payement/create-intent', {
+                userId,
+                cartId,
+                billingAddressId: addressId,
+                saveCard,
+            });
+            if (res.data?.clientSecret && res.data?.orderId) {
+                setClientSecret(res.data.clientSecret);
+                setServerOrderId(res.data.orderId);
+                setStep(4);
+            } else {
+                setPaymentIntentError('Impossible d\'initier le paiement. Réessayez.');
+            }
+        } catch (err: any) {
+            setPaymentIntentError(err.response?.data?.message ?? err.message ?? 'Erreur lors de l\'initialisation du paiement');
+        } finally {
+            setPaymentIntentLoading(false);
+        }
+    };
 
     if (!isLoaded) {
         return (
@@ -401,39 +538,95 @@ function CheckoutInner() {
                         {step === 2 && (
                             <form onSubmit={handleBillingSubmit} className="fade-in w-full space-y-6">
                                 <h2 className="cyna-heading text-gray-100">{t('checkout.billing.title')}</h2>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {[
-                                        { field: 'firstName' as const, placeholder: t('checkout.ph.firstName'), col: 1 as const },
-                                        { field: 'lastName' as const, placeholder: t('checkout.ph.lastName'), col: 1 as const },
-                                        { field: 'addressLine1' as const, placeholder: t('checkout.ph.address1'), col: 2 as const },
-                                        { field: 'addressLine2' as const, placeholder: t('checkout.ph.address2'), col: 2 as const },
-                                        { field: 'city' as const, placeholder: t('checkout.ph.city'), col: 1 as const },
-                                        { field: 'postalCode' as const, placeholder: t('checkout.ph.postal'), col: 1 as const },
-                                        { field: 'region' as const, placeholder: t('checkout.ph.region'), col: 2 as const },
-                                    ].map(({ field, placeholder, col }) => (
-                                        <input key={field}
-                                            type="text"
-                                            placeholder={placeholder}
-                                            value={billing[field as keyof typeof billing]}
-                                            onChange={e => setBilling(prev => ({ ...prev, [field]: e.target.value }))}
-                                            className={`${col === 2 ? 'col-span-2' : ''} rounded-xl border border-zinc-700 bg-zinc-800 text-gray-200 placeholder-gray-500 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600`}
+
+                                {/* Case à cocher : réutiliser l'adresse du compte (seulement si l'utilisateur en a une) */}
+                                {savedAddress && (
+                                    <div className="rounded-2xl border border-zinc-700 bg-zinc-900/60 p-4">
+                                        <label className="flex items-start gap-3 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={useSavedAddress}
+                                                onChange={(e) => {
+                                                    const checked = e.target.checked;
+                                                    setUseSavedAddress(checked);
+                                                    if (checked) {
+                                                        // Miroir des champs pour que l'étape 3 (récap) affiche les valeurs
+                                                        setBilling({
+                                                            firstName: savedAddress.firstName,
+                                                            lastName: savedAddress.lastName,
+                                                            addressLine1: savedAddress.addressLine1,
+                                                            addressLine2: savedAddress.addressLine2 ?? '',
+                                                            city: savedAddress.city,
+                                                            region: savedAddress.region ?? '',
+                                                            postalCode: savedAddress.postalCode,
+                                                            country: savedAddress.country || 'FR',
+                                                            phone: savedAddress.phone ?? '',
+                                                        });
+                                                    } else {
+                                                        setBilling({
+                                                            firstName: '', lastName: '', addressLine1: '', addressLine2: '',
+                                                            city: '', region: '', postalCode: '', country: 'FR', phone: '',
+                                                        });
+                                                    }
+                                                }}
+                                                className="mt-0.5 h-4 w-4 rounded border-gray-500 text-cyna-600 focus:ring-cyna-600"
+                                            />
+                                            <div className="flex-1">
+                                                <span className="text-sm font-medium text-gray-100">
+                                                    Utiliser l'adresse enregistrée dans mon compte
+                                                </span>
+                                                <p className="mt-2 text-xs text-gray-400 leading-relaxed">
+                                                    {savedAddress.firstName} {savedAddress.lastName}
+                                                    <br />
+                                                    {savedAddress.addressLine1}
+                                                    {savedAddress.addressLine2 && <><br />{savedAddress.addressLine2}</>}
+                                                    <br />
+                                                    {savedAddress.postalCode} {savedAddress.city}
+                                                    {savedAddress.region && <>, {savedAddress.region}</>}
+                                                    <br />
+                                                    {countryLabels[savedAddress.country] ?? savedAddress.country}
+                                                </p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                )}
+
+                                {/* Formulaire manuel — masqué si l'utilisateur a coché la case */}
+                                {!useSavedAddress && (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {[
+                                            { field: 'firstName' as const, placeholder: t('checkout.ph.firstName'), col: 1 as const },
+                                            { field: 'lastName' as const, placeholder: t('checkout.ph.lastName'), col: 1 as const },
+                                            { field: 'addressLine1' as const, placeholder: t('checkout.ph.address1'), col: 2 as const },
+                                            { field: 'addressLine2' as const, placeholder: t('checkout.ph.address2'), col: 2 as const },
+                                            { field: 'city' as const, placeholder: t('checkout.ph.city'), col: 1 as const },
+                                            { field: 'postalCode' as const, placeholder: t('checkout.ph.postal'), col: 1 as const },
+                                            { field: 'region' as const, placeholder: t('checkout.ph.region'), col: 2 as const },
+                                        ].map(({ field, placeholder, col }) => (
+                                            <input key={field}
+                                                type="text"
+                                                placeholder={placeholder}
+                                                value={billing[field as keyof typeof billing]}
+                                                onChange={e => setBilling(prev => ({ ...prev, [field]: e.target.value }))}
+                                                className={`${col === 2 ? 'col-span-2' : ''} rounded-xl border border-zinc-700 bg-zinc-800 text-gray-200 placeholder-gray-500 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600`}
+                                            />
+                                        ))}
+                                        <select value={billing.country} onChange={e => setBilling(prev => ({ ...prev, country: e.target.value }))}
+                                            className="col-span-2 rounded-xl border border-zinc-700 bg-zinc-800 text-gray-200 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600">
+                                            <option value="FR">France</option>
+                                            <option value="BE">Belgique</option>
+                                            <option value="CH">Suisse</option>
+                                            <option value="LU">Luxembourg</option>
+                                        </select>
+                                        <input
+                                            type="tel"
+                                            placeholder={t('checkout.ph.phone')}
+                                            value={billing.phone}
+                                            onChange={e => setBilling(prev => ({ ...prev, phone: e.target.value }))}
+                                            className="col-span-2 rounded-xl border border-zinc-700 bg-zinc-800 text-gray-200 placeholder-gray-500 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600"
                                         />
-                                    ))}
-                                    <select value={billing.country} onChange={e => setBilling(prev => ({ ...prev, country: e.target.value }))}
-                                        className="col-span-2 rounded-xl border border-zinc-700 bg-zinc-800 text-gray-200 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600">
-                                        <option value="FR">France</option>
-                                        <option value="BE">Belgique</option>
-                                        <option value="CH">Suisse</option>
-                                        <option value="LU">Luxembourg</option>
-                                    </select>
-                                    <input
-                                        type="tel"
-                                        placeholder={t('checkout.ph.phone')}
-                                        value={billing.phone}
-                                        onChange={e => setBilling(prev => ({ ...prev, phone: e.target.value }))}
-                                        className="col-span-2 rounded-xl border border-zinc-700 bg-zinc-800 text-gray-200 placeholder-gray-500 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyna-600"
-                                    />
-                                </div>
+                                    </div>
+                                )}
                                 {billingError && (
                                     <p className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{billingError}</p>
                                 )}
@@ -477,12 +670,29 @@ function CheckoutInner() {
                                         {billing.phone && <><br />{t('checkout.telPrefix')} {billing.phone}</>}
                                     </p>
                                 </div>
+
+                                {/* Option : sauvegarder la carte (appliquée uniquement aux paiements par carte) */}
+                                <label className="flex items-center gap-3 cursor-pointer rounded-2xl border border-zinc-700 bg-zinc-900/60 p-4">
+                                    <input
+                                        type="checkbox"
+                                        checked={saveCard}
+                                        onChange={(e) => setSaveCard(e.target.checked)}
+                                        className="w-4 h-4 rounded border-gray-500 text-cyna-600"
+                                    />
+                                    <span className="text-sm text-gray-300">{t('checkout.pay.saveCard')}</span>
+                                </label>
+
+                                {paymentIntentError && (
+                                    <p className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{paymentIntentError}</p>
+                                )}
+
                                 <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-between sm:gap-4">
                                     <Button
                                         type="button"
                                         variant="outline"
                                         className="w-full gap-2 sm:w-auto"
                                         onClick={goToBillingStep}
+                                        disabled={paymentIntentLoading}
                                     >
                                         <ChevronLeft size={16} /> {t('common.prev')}
                                     </Button>
@@ -491,9 +701,9 @@ function CheckoutInner() {
                                         variant="primary"
                                         className="w-full gap-2 sm:w-auto"
                                         onClick={goToPaymentStep}
-                                        disabled={!userId || !cartId || !addressId}
+                                        disabled={!userId || !cartId || !addressId || paymentIntentLoading}
                                     >
-                                        {t('checkout.payProceed')} <ChevronRight size={16} />
+                                        {paymentIntentLoading ? t('checkout.pay.processing') : t('checkout.payProceed')} <ChevronRight size={16} />
                                     </Button>
                                 </div>
                                 {(!userId || !cartId || !addressId) && (
@@ -504,19 +714,16 @@ function CheckoutInner() {
                             </div>
                         )}
 
-                        {/* ── ÉTAPE 4 : Paiement Stripe ── */}
-                        {step === 4 && userId && cartId && addressId && (
+                        {/* ── ÉTAPE 4 : Paiement Stripe (PaymentElement — CB + PayPal) ── */}
+                        {step === 4 && clientSecret && serverOrderId && (
                             <div className="fade-in w-full space-y-6">
                                 <h2 className="cyna-heading text-gray-100">{t('checkout.payment.title')}</h2>
                                 <div className="mx-auto w-full max-w-md px-0 sm:px-0">
-                                    <Elements stripe={stripePromise}>
-                                        <PaymentForm
-                                            userId={userId}
-                                            cartId={cartId}
-                                            addressId={addressId}
-                                            onSuccess={setOrderDone}
-                                        />
-                                    </Elements>
+                                    <PaymentFormWithElements
+                                        clientSecret={clientSecret}
+                                        orderId={serverOrderId}
+                                        onSuccess={setOrderDone}
+                                    />
                                 </div>
                                 <div className="flex justify-center pt-2">
                                     <Button type="button" variant="outline" className="gap-2" onClick={goToVerificationStep}>
@@ -526,7 +733,7 @@ function CheckoutInner() {
                             </div>
                         )}
 
-                        {step === 4 && (!userId || !cartId || !addressId) && (
+                        {step === 4 && (!clientSecret || !serverOrderId) && (
                             <div className="fade-in mx-auto max-w-md py-12 text-center">
                                 <p className="text-sm text-gray-500">{t('checkout.loading')}</p>
                             </div>

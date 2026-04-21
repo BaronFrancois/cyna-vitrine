@@ -157,7 +157,7 @@ export default function HomeCarousel() {
 
     return (
         <section
-            className="relative w-full overflow-hidden bg-[#050508] pb-14 pt-10 md:pb-20 md:pt-12"
+            className="relative w-full overflow-hidden bg-[#050508] py-14 md:py-20"
             role="region"
             aria-roledescription="carousel"
             aria-label={t("carousel.region")}
@@ -166,17 +166,13 @@ export default function HomeCarousel() {
                 {liveMsg}
             </p>
 
-            <div className="relative z-10 mx-auto max-w-[1600px] px-5 md:px-10 lg:px-14">
-                <h2 className="cyna-heading text-white">
-                    {t("carousel.highlights")}
-                </h2>
-            </div>
+            <h2 className="sr-only">{t("carousel.highlights")}</h2>
 
             <div
                 ref={scrollerRef}
                 onScroll={onScroll}
                 className={cn(
-                    "no-scrollbar relative z-10 mt-8 flex w-full snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 md:gap-6 md:px-10 lg:px-14",
+                    "no-scrollbar relative z-10 flex w-full snap-x snap-mandatory gap-4 overflow-x-auto px-5 pt-4 pb-2 md:gap-6 md:px-10 lg:px-14",
                     "scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 )}
             >
@@ -194,7 +190,8 @@ export default function HomeCarousel() {
                             aria-hidden={i !== index}
                             className={cn(
                                 "relative min-h-[min(78vh,720px)] w-[min(94vw,1120px)] flex-shrink-0 snap-center snap-always overflow-hidden rounded-[32px]",
-                                "shadow-[0_40px_120px_-30px_rgba(0,0,0,0.85)] ring-1 ring-white/10"
+                                // Halo violet diffus + léger halo noir dense, pour adoucir la transition avec le fond #15012b de la page
+                                "shadow-[0_40px_120px_-20px_rgba(96,11,209,0.35),0_20px_60px_-10px_rgba(21,1,43,0.9)] ring-1 ring-white/10"
                             )}
                         >
                             <div className="absolute inset-0">
@@ -205,7 +202,7 @@ export default function HomeCarousel() {
                                     className="h-full w-full scale-105 object-cover"
                                 />
                                 <div
-                                    className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/25"
+                                    className="absolute inset-0 bg-gradient-to-t from-[#15012b] via-[#15012b]/75 to-[#15012b]/20"
                                     aria-hidden
                                 />
                                 <div
@@ -231,7 +228,7 @@ export default function HomeCarousel() {
                                 ) : null}
                             </div>
 
-                            <div className="relative z-10 flex min-h-[min(78vh,720px)] flex-col justify-end px-8 pb-14 pt-28 md:px-14 md:pb-20 md:pt-32">
+                            <div className="relative z-10 flex min-h-[min(78vh,720px)] flex-col justify-center px-8 py-20 md:px-14 md:py-24">
                                 <h3 className="cyna-heading max-w-3xl text-balance text-white">
                                     {title}
                                 </h3>
@@ -255,9 +252,9 @@ export default function HomeCarousel() {
             </div>
 
             {effectiveSlides.length > 1 ? (
-                <div className="relative z-10 mt-8 flex items-center justify-center gap-3 md:mt-10">
+                <div className="pointer-events-none absolute inset-x-0 bottom-2 z-20 flex items-center justify-center gap-3 md:bottom-4">
                     <div
-                        className="flex items-center gap-2 rounded-full bg-zinc-900/95 px-3 py-2 ring-1 ring-white/10 backdrop-blur-md"
+                        className="pointer-events-auto flex items-center gap-2 rounded-full bg-zinc-900/95 px-3 py-2 ring-1 ring-white/10 backdrop-blur-md"
                         role="group"
                         aria-label={t("carousel.dots")}
                     >
@@ -281,7 +278,7 @@ export default function HomeCarousel() {
                         type="button"
                         onClick={() => setPaused((p) => !p)}
                         className={cn(
-                            "flex h-10 w-10 items-center justify-center rounded-full",
+                            "pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full",
                             "bg-zinc-900/95 text-zinc-200 ring-1 ring-white/10 backdrop-blur-md transition-colors",
                             "hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyna-500"
                         )}

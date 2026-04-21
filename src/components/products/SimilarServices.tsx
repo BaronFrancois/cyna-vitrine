@@ -39,10 +39,14 @@ export default function SimilarServices({ currentProductId, currentCategory }: S
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {similarSelected.map((product) => (
-                        <Link 
-                            key={product.id} 
+                        <Link
+                            key={product.id}
                             href={`/product/${product.id}`}
-                            className="group flex flex-col bg-[var(--cyna-card-surface)] border border-zinc-800/60 rounded-2xl overflow-hidden hover:border-cyna-600/40 transition-all duration-300"
+                            className={cn(
+                                "group flex flex-col bg-[var(--cyna-card-surface)] border border-zinc-800/80 rounded-3xl overflow-hidden hover:border-cyna-600/50 transition-all duration-300",
+                                "shadow-[5px_4px_20px_rgba(0,0,0,0.85),0_25px_70px_-20px_rgba(96,11,209,0.45),inset_0_1px_0_0_rgba(255,255,255,0.08)]",
+                                "hover:shadow-[5px_4px_24px_rgba(0,0,0,0.9),0_30px_80px_-15px_rgba(96,11,209,0.55),inset_0_1px_0_0_rgba(255,255,255,0.1)]"
+                            )}
                         >
                             <div className="relative h-40 overflow-hidden bg-zinc-900">
                                 <img 
@@ -56,14 +60,20 @@ export default function SimilarServices({ currentProductId, currentCategory }: S
                                     </span>
                                 </div>
                             </div>
-                            <div className="p-5 flex flex-col flex-1">
+                            {/* Bloc info — effet "creusé + highlight outset" pour séparer de l'image */}
+                            <div className="relative p-5 flex flex-col flex-1 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),inset_0_2px_0_-1px_rgba(0,0,0,0.55)]">
                                 <h3 className="text-lg font-bold text-gray-100 mb-2 group-hover:text-cyna-400 transition-colors">
                                     {product.name}
                                 </h3>
                                 <p className="text-sm text-gray-400 line-clamp-2 mb-4 flex-1">
                                     {product.shortDescription}
                                 </p>
-                                <div className="flex items-end justify-between border-t border-zinc-800/80 pt-4 mt-auto">
+                                {/* Séparateur creusé (trait noir + highlight blanc dessous) */}
+                                <div
+                                    aria-hidden
+                                    className="mt-auto mb-4 h-px bg-black/70 shadow-[0_1px_0_0_rgba(255,255,255,0.07)]"
+                                />
+                                <div className="flex items-end justify-between">
                                     <div>
                                         <p className="font-bold text-gray-100">{product.price}€<span className="text-xs text-gray-500 font-normal"> / {product.period === "monthly" ? "mois" : "an"}</span></p>
                                     </div>

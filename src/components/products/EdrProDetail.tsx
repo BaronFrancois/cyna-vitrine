@@ -61,19 +61,27 @@ export default function EdrProDetail() {
                         <span className="ml-4 text-xs text-gray-400 font-mono">cyna-edr-pro · threat-monitor</span>
                     </div>
 
-                    <div className="p-6 space-y-3 font-mono text-sm">
+                    <div className="p-4 sm:p-6 space-y-3 font-mono text-sm">
                         {THREATS.map((t, i) => (
                             <div
                                 key={i}
-                                className="flex items-center gap-4 bg-gray-900/60 rounded-xl px-4 py-3 border border-gray-800 hover:border-gray-700 transition-colors"
+                                className="rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-900/60 border border-gray-800 hover:border-gray-700 transition-colors"
                             >
-                                <span className="text-gray-500 text-xs w-10 flex-shrink-0">{t.time}</span>
-                                <span className={`text-xs px-2 py-0.5 rounded-full border font-semibold flex-shrink-0 ${SEVERITY_STYLES[t.severity]}`}>
-                                    {t.severity.toUpperCase()}
-                                </span>
-                                <span className="text-white flex-1 truncate">{t.type}</span>
-                                <span className="text-gray-400 text-xs flex-shrink-0">{t.host}</span>
-                                <span className="text-cyna-500 text-xs font-semibold flex-shrink-0">{t.action}</span>
+                                {/* Ligne principale : toujours visible */}
+                                <div className="flex items-center gap-2 sm:gap-4">
+                                    <span className="text-gray-500 text-[0.7rem] sm:text-xs w-10 flex-shrink-0">{t.time}</span>
+                                    <span className={`text-[0.65rem] sm:text-xs px-2 py-0.5 rounded-full border font-semibold flex-shrink-0 ${SEVERITY_STYLES[t.severity]}`}>
+                                        {t.severity.toUpperCase()}
+                                    </span>
+                                    <span className="text-white flex-1 truncate">{t.type}</span>
+                                    <span className="hidden md:inline text-gray-400 text-xs flex-shrink-0">{t.host}</span>
+                                    <span className="hidden md:inline text-cyna-500 text-xs font-semibold flex-shrink-0">{t.action}</span>
+                                </div>
+                                {/* Ligne secondaire : uniquement en mobile/tablette */}
+                                <div className="flex items-center justify-between gap-3 mt-1.5 pl-[3.25rem] text-[0.7rem] md:hidden">
+                                    <span className="text-gray-400 truncate">{t.host}</span>
+                                    <span className="text-cyna-500 font-semibold flex-shrink-0">{t.action}</span>
+                                </div>
                             </div>
                         ))}
                     </div>

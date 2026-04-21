@@ -27,6 +27,7 @@ import {
     Pencil,
     Star,
     X,
+    ChevronDown,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -667,32 +668,68 @@ export default function AccountDashboard() {
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                            {user?.role === "ADMIN" && (
+                                <Link href="/admin">
+                                    <Button variant="primary" size="sm" className="gap-0 whitespace-nowrap">
+                                        <Shield size={15} className="mr-2 shrink-0" />
+                                        Espace admin
+                                    </Button>
+                                </Link>
+                            )}
                             <Link href="/support">
-                                <Button variant="outline" size="sm" className="gap-0">
-                                    <LifeBuoy size={15} className="mr-2" />
+                                <Button variant="outline" size="sm" className="gap-0 whitespace-nowrap">
+                                    <LifeBuoy size={15} className="mr-2 shrink-0" />
                                     Support
                                 </Button>
                             </Link>
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="gap-0"
+                                className="gap-0 whitespace-nowrap"
                                 onClick={handleLogout}
                             >
-                                <LogOut size={15} className="mr-2" />
+                                <LogOut size={15} className="mr-2 shrink-0" />
                                 Déconnexion
                             </Button>
                         </div>
                     </div>
 
-                    {/* Tabs */}
-                    <div className="flex space-x-1 mt-8 border-b border-gray-700">
+                    {/* Tabs — dropdown sur mobile, onglets classiques à partir de sm */}
+                    {/* Mobile : menu déroulant stylisé (natif pour garder l'accessibilité) */}
+                    <div className="sm:hidden mt-8">
+                        <label htmlFor="account-tab-select" className="sr-only">
+                            Section de l'espace client
+                        </label>
+                        <div className="relative">
+                            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                {tabs.find((t) => t.id === activeTab)?.icon}
+                            </div>
+                            <select
+                                id="account-tab-select"
+                                value={activeTab}
+                                onChange={(e) => setActiveTab(e.target.value as Tab)}
+                                className="w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-800 pl-10 pr-10 py-3 text-sm font-medium text-gray-100 focus:border-cyna-500 focus:outline-none focus:ring-2 focus:ring-cyna-600/40"
+                            >
+                                {tabs.map((tab) => (
+                                    <option key={tab.id} value={tab.id} className="bg-zinc-900">
+                                        {tab.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown
+                                size={18}
+                                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            />
+                        </div>
+                    </div>
+                    {/* Desktop / tablette : barre d'onglets */}
+                    <div className="hidden sm:flex space-x-1 mt-8 border-b border-gray-700 overflow-x-auto">
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors -mb-px ${
+                                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors -mb-px whitespace-nowrap ${
                                     activeTab === tab.id
                                         ? "bg-zinc-800 text-gray-100"
                                         : "text-gray-400 hover:text-gray-200"

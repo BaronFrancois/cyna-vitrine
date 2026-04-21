@@ -167,7 +167,8 @@ export default function TopProducts() {
                     {topProducts.map((product) => (
                         <div
                             key={product.key}
-                            className="group flex flex-col bg-[var(--cyna-card-surface)] border border-zinc-800/80 rounded-3xl overflow-hidden hover:border-cyna-600/50 transition-all duration-300 shadow-lg"
+                            /* "outset" moderne : halo violet + halo noir dense + ombre directionnelle + highlight interne */
+                            className="group flex flex-col bg-[var(--cyna-card-surface)] border border-zinc-800/80 rounded-3xl overflow-hidden hover:border-cyna-600/50 transition-all duration-300 shadow-[5px_4px_20px_rgba(0,0,0,0.85),0_25px_70px_-20px_rgba(96,11,209,0.45),inset_0_1px_0_0_rgba(255,255,255,0.08)] hover:shadow-[5px_4px_24px_rgba(0,0,0,0.9),0_30px_80px_-15px_rgba(96,11,209,0.55),inset_0_1px_0_0_rgba(255,255,255,0.1)]"
                         >
                             <Link href={`/product/${product.slug}`} className="block relative aspect-video overflow-hidden bg-zinc-900">
                                 <img
@@ -182,7 +183,8 @@ export default function TopProducts() {
                                 </div>
                             </Link>
 
-                            <div className="flex flex-col flex-1 p-6">
+                            {/* Bloc info — effet "creusé + highlight outset" pour séparer de l'image */}
+                            <div className="relative flex flex-col flex-1 p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),inset_0_2px_0_-1px_rgba(0,0,0,0.55)]">
                                 <Link
                                     href={`/product/${product.slug}`}
                                     className="block mb-2 group-hover:text-cyna-400 text-gray-100 transition-colors"
@@ -191,7 +193,13 @@ export default function TopProducts() {
                                 </Link>
                                 <p className="text-sm text-gray-400 line-clamp-2 mb-6 flex-1">{product.shortDescription}</p>
 
-                                <div className="flex flex-col gap-3 border-t border-zinc-800 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                                {/* Séparateur creusé (trait noir + highlight blanc dessous) */}
+                                <div
+                                    aria-hidden
+                                    className="mb-6 h-px bg-black/70 shadow-[0_1px_0_0_rgba(255,255,255,0.07)]"
+                                />
+
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
                                         <p className="text-2xl font-bold text-gray-100">{product.price}€</p>
                                         <p className="text-xs text-gray-500">/ {product.period}</p>
