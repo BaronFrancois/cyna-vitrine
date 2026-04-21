@@ -1,8 +1,10 @@
+const DEFAULT_API_URL =
+  typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "http://localhost:3001/api"
+    : "https://cyna-api.onrender.com/api";
+
 const getChatUrl = () => {
-  const base = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api").replace(
-    /\/$/,
-    ""
-  );
+  const base = (process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_API_URL).replace(/\/$/, "");
   return `${base}/chatbot/vitrine`;
 };
 

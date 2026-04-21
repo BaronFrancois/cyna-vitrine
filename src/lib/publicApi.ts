@@ -3,8 +3,13 @@
  * Accepte `http://localhost:3001` ou `http://localhost:3001/api`.
  * Défaut `3001` : port courant du backend dans ce dépôt (Next vitrine = 3000).
  */
+const DEFAULT_API_URL =
+  typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "http://localhost:3001/api"
+    : "https://cyna-api.onrender.com/api";
+
 export function getApiBase(): string {
-  const raw = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api").trim();
+  const raw = (process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_API_URL).trim();
   let base = raw.replace(/\/$/, "");
   if (!/\/api$/i.test(base)) {
     base = `${base}/api`;
