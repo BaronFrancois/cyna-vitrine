@@ -177,7 +177,7 @@ export default function TopProducts() {
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                 />
                                 <div className="absolute top-4 left-4">
-                                    <span className="bg-black/70 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border border-white/10">
+                                    <span className="bg-[#600bd1] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-[0_4px_12px_rgba(96,11,209,0.55)] border border-white/20">
                                         {t("home.top.badge")}
                                     </span>
                                 </div>
