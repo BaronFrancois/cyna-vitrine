@@ -166,7 +166,11 @@ export default function HomeCarousel() {
                 {liveMsg}
             </p>
 
-            <h2 className="sr-only">{t("carousel.highlights")}</h2>
+            <div className="max-w-7xl mx-auto px-5 md:px-10 lg:px-14 mb-8 md:mb-10">
+                <h2 className="cyna-heading text-gray-100">
+                    {t("carousel.highlights")}
+                </h2>
+            </div>
 
             <div
                 ref={scrollerRef}
