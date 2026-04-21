@@ -118,15 +118,22 @@ export default function Register() {
 
     setIsSubmitting(true);
     try {
+      const email = formData.email.trim().toLowerCase();
       // On n'envoie que ce que l'API attend : firstName, lastName, email, password
-      await api().post("/auth/register", {
+      const res = await api().post<{ autoVerified?: boolean }>("/auth/register", {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
-        email: formData.email.trim().toLowerCase(),
+        email,
         password: formData.password,
       });
 
-      router.push(`/auth/confirm-email?email=${encodeURIComponent(formData.email.trim().toLowerCase())}`);
+      // Si l'API indique autoVerified (aucun SMTP configuré côté serveur),
+      // on court-circuite la page de confirmation et on envoie direct au login.
+      if (res?.data?.autoVerified) {
+        router.push(`/auth/login?email=${encodeURIComponent(email)}&registered=1`);
+      } else {
+        router.push(`/auth/confirm-email?email=${encodeURIComponent(email)}`);
+      }
     } catch (error: unknown) {
       const msg =
         (error as { response?: { data?: { message?: string } } })?.response?.data?.message

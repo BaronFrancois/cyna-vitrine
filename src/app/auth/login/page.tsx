@@ -38,8 +38,10 @@ function LoginInner() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get('redirect') ?? '/dashboard';
+    const prefilledEmail = searchParams.get('email') ?? '';
+    const justRegistered = searchParams.get('registered') === '1';
 
-    const [formData, setFormData] = useState<FormData>({ email: '', password: '' });
+    const [formData, setFormData] = useState<FormData>({ email: prefilledEmail, password: '' });
     const [errors, setErrors] = useState<FormErrors>({});
     const [errorKind, setErrorKind] = useState<ErrorKind | null>(null);
     const [rememberMe, setRememberMe] = useState(false);
@@ -115,6 +117,15 @@ function LoginInner() {
                             {t('auth.login.heading')}
                         </h2>
                     </div>
+
+                    {/* Inscription réussie (compte auto-activé, pas d'email requis) */}
+                    {justRegistered && !errors.general && (
+                        <div className="bg-green-950/40 border-l-4 border-green-500 p-4 rounded-r-lg">
+                            <p className="text-sm text-green-300">
+                                Votre compte a été créé avec succès. Connectez-vous pour accéder à votre espace.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Erreur générale */}
                     {errors.general && (
