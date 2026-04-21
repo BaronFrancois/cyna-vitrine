@@ -250,7 +250,9 @@ function CheckoutInner() {
     const [orderDone, setOrderDone] = useState<number | null>(null);
 
     // Flow PaymentElement : clientSecret + orderId créés à l'étape 3
-    const [saveCard, setSaveCard] = useState(true);
+    // Cette case sert aux deux usages : marquer l'adresse comme adresse par défaut
+    // du compte ET autoriser Stripe à mémoriser le moyen de paiement.
+    const [saveForNextTime, setSaveForNextTime] = useState(true);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [serverOrderId, setServerOrderId] = useState<number | null>(null);
     const [paymentIntentLoading, setPaymentIntentLoading] = useState(false);
@@ -418,11 +420,16 @@ function CheckoutInner() {
         setPaymentIntentError('');
         setPaymentIntentLoading(true);
         try {
+            if (saveForNextTime) {
+                await api()
+                    .patch(`/addresses/${addressId}/default`)
+                    .catch(() => null);
+            }
             const res = await api().post('/v1/payement/create-intent', {
                 userId,
                 cartId,
                 billingAddressId: addressId,
-                saveCard,
+                saveCard: saveForNextTime,
             });
             if (res.data?.clientSecret && res.data?.orderId) {
                 setClientSecret(res.data.clientSecret);
@@ -675,15 +682,15 @@ function CheckoutInner() {
                                     </p>
                                 </div>
 
-                                {/* Option : sauvegarder la carte (appliquée uniquement aux paiements par carte) */}
+                                {/* Option : mémoriser l'adresse (par défaut) + autoriser Stripe à sauvegarder la carte */}
                                 <label className="flex items-center gap-3 cursor-pointer rounded-2xl border border-zinc-700 bg-zinc-900/60 p-4">
                                     <input
                                         type="checkbox"
-                                        checked={saveCard}
-                                        onChange={(e) => setSaveCard(e.target.checked)}
+                                        checked={saveForNextTime}
+                                        onChange={(e) => setSaveForNextTime(e.target.checked)}
                                         className="w-4 h-4 rounded border-gray-500 text-cyna-600"
                                     />
-                                    <span className="text-sm text-gray-300">{t('checkout.pay.saveCard')}</span>
+                                    <span className="text-sm text-gray-300">{t('checkout.pay.saveForNextTime')}</span>
                                 </label>
 
                                 {paymentIntentError && (
