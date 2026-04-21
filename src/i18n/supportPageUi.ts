@@ -29,6 +29,7 @@ export type SupportPageUi = {
     sendMessageAria: string;
     fabOpenAria: string;
     fabCloseAria: string;
+    fabNotificationSr: string;
     subjectOptions: readonly string[];
 };
 
@@ -63,6 +64,7 @@ const fr: SupportPageUi = {
     sendMessageAria: "Envoyer le message",
     fabOpenAria: "Ouvrir l'assistant Cyna",
     fabCloseAria: "Fermer l'assistant Cyna",
+    fabNotificationSr: "Assistant disponible — cliquez pour ouvrir le chat",
     subjectOptions: [
         "Problème Technique",
         "Question Facturation",
@@ -100,6 +102,7 @@ const en: SupportPageUi = {
     sendMessageAria: "Send message",
     fabOpenAria: "Open Cyna assistant",
     fabCloseAria: "Close Cyna assistant",
+    fabNotificationSr: "Assistant available — click to open chat",
     subjectOptions: [
         "Technical issue",
         "Billing question",

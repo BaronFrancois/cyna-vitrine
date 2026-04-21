@@ -13,6 +13,7 @@ import { matchPredefinedAnswer } from "@/lib/supportFaq";
 type ChatMessage = { role: "user" | "model"; parts: { text: string }[] };
 
 const STORAGE_KEY = "cyna-fab-chat-history";
+const NOTIFICATION_DISMISSED_KEY = "cyna-fab-notification-dismissed";
 const MAX_STORED_MESSAGES = 50;
 
 // Routes où le FAB ne s'affiche pas
@@ -35,8 +36,20 @@ export default function FloatingChatBot() {
     const [input, setInput] = useState("");
     const [history, setHistory] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    /** Pastille « nouveau » sur le FAB : disparaît au premier clic, mémorisée en localStorage */
+    const [showFabNotification, setShowFabNotification] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        try {
+            if (localStorage.getItem(NOTIFICATION_DISMISSED_KEY) !== "1") {
+                setShowFabNotification(true);
+            }
+        } catch {
+            setShowFabNotification(true);
+        }
+    }, []);
 
     // Restauration de l'historique depuis localStorage
     useEffect(() => {
@@ -80,6 +93,18 @@ export default function FloatingChatBot() {
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
     }, [open]);
+
+    const handleFabClick = () => {
+        if (showFabNotification) {
+            try {
+                localStorage.setItem(NOTIFICATION_DISMISSED_KEY, "1");
+            } catch {
+                // ignore
+            }
+            setShowFabNotification(false);
+        }
+        setOpen((v) => !v);
+    };
 
     const handleSendMessage = useCallback(async () => {
         const userMsg = input.trim();
@@ -219,10 +244,10 @@ export default function FloatingChatBot() {
                 </div>
             </div>
 
-            {/* Bouton flottant : C stylisé, design skeumorphique violet */}
+            {/* Bouton flottant : C blanc, design skeumorphique violet */}
             <button
                 type="button"
-                onClick={() => setOpen((v) => !v)}
+                onClick={handleFabClick}
                 aria-label={open ? ui.fabCloseAria : ui.fabOpenAria}
                 aria-expanded={open}
                 aria-controls="fab-chat-title"
@@ -240,7 +265,23 @@ export default function FloatingChatBot() {
                         "ring-2 ring-offset-2 ring-offset-[#15012b] ring-cyna-300/70"
                 )}
             >
-                <CynaLogo size={30} className="drop-shadow-[0_2px_3px_rgba(0,0,0,0.6)]" />
+                {showFabNotification ? (
+                    <>
+                        <span className="sr-only">{ui.fabNotificationSr}</span>
+                        <span
+                            className="pointer-events-none absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center"
+                            aria-hidden
+                        >
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-fuchsia-400 opacity-60" />
+                            <span className="relative h-2.5 w-2.5 rounded-full bg-fuchsia-400 shadow-sm ring-2 ring-cyna-600" />
+                        </span>
+                    </>
+                ) : null}
+                <CynaLogo
+                    variant="white"
+                    size={30}
+                    className="drop-shadow-[0_2px_3px_rgba(0,0,0,0.45)]"
+                />
             </button>
         </>
     );
