@@ -28,7 +28,11 @@ import {
     Star,
     X,
     ChevronDown,
+    Download,
+    Loader2,
 } from "lucide-react";
+import { getApiBase } from "@/lib/publicApi";
+import { getAuthToken } from "@/lib/authCookie";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -75,6 +79,7 @@ export type BillingOrderRow = {
     date: string;
     amount: number;
     status: string;
+    invoiceId?: number | null;
     invoicePdfUrl?: string | null;
 };
 
@@ -135,7 +140,7 @@ function mapOrdersToBillingRows(data: unknown[]): BillingOrderRow[] {
                 planLabel?: string;
                 product?: { category?: { name?: string } | null };
             }[];
-            invoice?: { pdfUrl?: string | null } | null;
+            invoice?: { id?: number | null; pdfUrl?: string | null } | null;
         };
         const first = order.items?.[0];
         return {
@@ -146,6 +151,7 @@ function mapOrdersToBillingRows(data: unknown[]): BillingOrderRow[] {
             date: String(order.createdAt).slice(0, 10),
             amount: Number(order.totalAmount),
             status: statusMap[order.status] ?? "active",
+            invoiceId: order.invoice?.id,
             invoicePdfUrl: order.invoice?.pdfUrl,
         };
     });
@@ -218,6 +224,27 @@ function BillingTab({ orders, payments, setDefaultPayment, deletePayment, subsCo
     nextRenewal: { amountLine: string; dateLine: string } | null;
 }) {
     const [search, setSearch] = useState("");
+    const [downloadingId, setDownloadingId] = useState<number | null>(null);
+
+    async function handleDownloadPdf(invoiceId: number, orderService: string) {
+        setDownloadingId(invoiceId);
+        try {
+            const token = getAuthToken();
+            const res = await fetch(`${getApiBase()}/invoices/${invoiceId}/pdf`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (!res.ok) throw new Error("Erreur téléchargement");
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `facture-${orderService.replace(/\s+/g, "-")}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } finally {
+            setDownloadingId(null);
+        }
+    }
     const [filterYear, setFilterYear] = useState<string>("all");
     const [filterCategory, setFilterCategory] = useState<string>("all");
     const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -303,15 +330,19 @@ function BillingTab({ orders, payments, setDefaultPayment, deletePayment, subsCo
                                         <span className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_CLASS[order.status] ?? STATUS_CLASS.active}`}>
                                             {STATUS_LABEL[order.status] ?? order.status}
                                         </span>
-                                        {order.invoicePdfUrl ? (
-                                            <a
-                                                href={order.invoicePdfUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-xs text-cyna-600 hover:underline whitespace-nowrap"
+                                        {order.invoiceId ? (
+                                            <button
+                                                onClick={() => handleDownloadPdf(order.invoiceId!, order.service)}
+                                                disabled={downloadingId === order.invoiceId}
+                                                className="flex items-center gap-1 text-xs text-cyna-500 hover:text-cyna-400 transition-colors whitespace-nowrap disabled:opacity-50"
                                             >
-                                                Facture PDF
-                                            </a>
+                                                {downloadingId === order.invoiceId ? (
+                                                    <Loader2 size={12} className="animate-spin" />
+                                                ) : (
+                                                    <Download size={12} />
+                                                )}
+                                                Facture
+                                            </button>
                                         ) : (
                                             <span className="text-xs text-gray-600 whitespace-nowrap">Facture —</span>
                                         )}
@@ -323,62 +354,26 @@ function BillingTab({ orders, payments, setDefaultPayment, deletePayment, subsCo
                 ))
             )}
 
-            {/* Méthodes de paiement + prochaine échéance */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
-                    <div className="flex items-center justify-between mb-5">
-                        <h3 className="font-bold text-gray-100">Méthodes de paiement</h3>
-                        <button className="text-sm text-cyna-600 hover:underline flex items-center gap-1">
-                            <Plus size={13} /> Ajouter
-                        </button>
-                    </div>
-                    {payments.length === 0 && <p className="text-sm text-gray-500">Aucune carte enregistrée.</p>}
-                    <div className="space-y-3">
-                        {payments.map(pm => (
-                            <div key={pm.id} className={`flex items-center justify-between p-3 rounded-2xl bg-zinc-800 ${pm.isDefault ? "ring-1 ring-cyna-600/50" : ""}`}>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-11 h-7 bg-zinc-700 rounded-md flex items-center justify-center">
-                                        <span className="text-white text-[10px] font-bold">{pm.brand}</span>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-200">•••• •••• •••• {pm.last4}</p>
-                                        <p className="text-xs text-gray-500">Expire {String(pm.expMonth).padStart(2, "0")}/{pm.expYear}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {pm.isDefault ? (
-                                        <span className="text-xs text-cyna-500 font-medium flex items-center gap-1"><Star size={10} /> Défaut</span>
-                                    ) : (
-                                        <button onClick={() => setDefaultPayment(pm.id)} className="text-xs text-gray-400 hover:text-gray-200 transition-colors">Définir par défaut</button>
-                                    )}
-                                    <button onClick={() => deletePayment(pm.id)} className="p-1.5 rounded-lg hover:bg-red-950/40 text-gray-400 hover:text-red-400 transition-colors">
-                                        <Trash2 size={13} />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-                <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
-                    <h3 className="font-bold text-gray-100 mb-3">Prochaine échéance</h3>
-                    {nextRenewal ? (
-                        <>
-                            <p className="text-3xl font-bold text-gray-100">{nextRenewal.amountLine}</p>
-                            <p className="text-sm text-gray-500 mt-1">{nextRenewal.dateLine}</p>
-                            <div className="mt-4 pt-4 border-t border-zinc-700 text-xs text-gray-500">
-                                Inclut {subsCount} abonnement{subsCount > 1 ? "s" : ""} actif{subsCount > 1 ? "s" : ""}
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <p className="text-3xl font-bold text-gray-100">—</p>
-                            <p className="text-sm text-gray-500 mt-1">Aucun abonnement actif</p>
-                            <div className="mt-4 pt-4 border-t border-zinc-700 text-xs text-gray-500">
-                                Ajoutez une solution depuis le catalogue pour voir la prochaine facturation.
-                            </div>
-                        </>
-                    )}
-                </div>
+            {/* Prochaine échéance */}
+            <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm border border-zinc-700">
+                <h3 className="font-bold text-gray-100 mb-3">Prochaine échéance</h3>
+                {nextRenewal ? (
+                    <>
+                        <p className="text-3xl font-bold text-gray-100">{nextRenewal.amountLine}</p>
+                        <p className="text-sm text-gray-500 mt-1">{nextRenewal.dateLine}</p>
+                        <div className="mt-4 pt-4 border-t border-zinc-700 text-xs text-gray-500">
+                            Inclut {subsCount} abonnement{subsCount > 1 ? "s" : ""} actif{subsCount > 1 ? "s" : ""}
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <p className="text-3xl font-bold text-gray-100">—</p>
+                        <p className="text-sm text-gray-500 mt-1">Aucun abonnement actif</p>
+                        <div className="mt-4 pt-4 border-t border-zinc-700 text-xs text-gray-500">
+                            Ajoutez une solution depuis le catalogue pour voir la prochaine facturation.
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );
