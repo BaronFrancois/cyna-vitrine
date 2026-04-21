@@ -90,8 +90,8 @@ function Inner() {
 
     if (status === 'loading') {
         return (
-            <div className="mx-auto max-w-lg px-4 py-24 text-center">
-                <div className="mx-auto mb-6 h-10 w-10 animate-spin rounded-full border-2 border-zinc-700 border-t-cyna-500" />
+            <div className="mx-auto flex max-w-lg flex-col items-center px-4 py-24 text-center">
+                <div className="mb-6 h-10 w-10 animate-spin rounded-full border-2 border-zinc-700 border-t-cyna-500" />
                 <p className="text-sm text-gray-400">Vérification du paiement…</p>
             </div>
         );
@@ -99,20 +99,26 @@ function Inner() {
 
     if (status === 'succeeded') {
         return (
-            <div className="mx-auto max-w-lg px-4 py-24 text-center">
-                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-950/40">
+            <div className="mx-auto flex max-w-lg flex-col items-center px-4 py-24">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-950/40">
                     <Check className="h-10 w-10 text-green-400" />
                 </div>
-                <h1 className="cyna-heading cyna-heading--center mb-3 text-gray-100">Paiement confirmé !</h1>
+                <h1 className="cyna-heading cyna-heading--center mb-3 w-full text-center text-gray-100">
+                    Paiement confirmé !
+                </h1>
                 {orderId && (
-                    <p className="mb-2 text-gray-400">
+                    <p className="mb-2 w-full text-center text-gray-400">
                         Commande n° <span className="font-semibold text-gray-200">#{orderId}</span>
                     </p>
                 )}
-                <p className="mb-10 text-sm text-gray-500">
+                <p className="mb-10 w-full max-w-md text-center text-sm text-gray-500">
                     Vous recevrez une confirmation par email. Vos abonnements sont maintenant actifs.
                 </p>
-                <Button variant="primary" onClick={() => router.push('/account')} className="gap-1">
+                <Button
+                    variant="primary"
+                    onClick={() => router.push('/account')}
+                    className="gap-1 shrink-0"
+                >
                     Accéder à mon espace client <ChevronRight size={16} className="ml-1" />
                 </Button>
             </div>
@@ -121,13 +127,19 @@ function Inner() {
 
     if (status === 'processing') {
         return (
-            <div className="mx-auto max-w-lg px-4 py-24 text-center">
-                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-amber-950/40">
+            <div className="mx-auto flex max-w-lg flex-col items-center px-4 py-24">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-amber-950/40">
                     <div className="h-10 w-10 animate-spin rounded-full border-2 border-amber-700 border-t-amber-400" />
                 </div>
-                <h1 className="cyna-heading cyna-heading--center mb-3 text-gray-100">Paiement en cours</h1>
-                <p className="mb-10 text-sm text-gray-400">{message}</p>
-                <Button variant="primary" onClick={() => router.push('/account')} className="gap-1">
+                <h1 className="cyna-heading cyna-heading--center mb-3 w-full text-center text-gray-100">
+                    Paiement en cours
+                </h1>
+                <p className="mb-10 w-full max-w-md text-center text-sm text-gray-400">{message}</p>
+                <Button
+                    variant="primary"
+                    onClick={() => router.push('/account')}
+                    className="gap-1 shrink-0"
+                >
                     Accéder à mon espace client <ChevronRight size={16} className="ml-1" />
                 </Button>
             </div>
@@ -135,17 +147,29 @@ function Inner() {
     }
 
     return (
-        <div className="mx-auto max-w-lg px-4 py-24 text-center">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-950/40">
+        <div className="mx-auto flex max-w-lg flex-col items-center px-4 py-24">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-950/40">
                 <AlertTriangle className="h-10 w-10 text-red-400" />
             </div>
-            <h1 className="cyna-heading cyna-heading--center mb-3 text-gray-100">Paiement non finalisé</h1>
-            <p className="mb-10 text-sm text-gray-400">{message || 'Une erreur est survenue pendant le paiement.'}</p>
-            <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                <Button variant="primary" onClick={() => router.push('/checkout')}>
+            <h1 className="cyna-heading cyna-heading--center mb-3 w-full text-center text-gray-100">
+                Paiement non finalisé
+            </h1>
+            <p className="mb-10 w-full max-w-md text-center text-sm text-gray-400">
+                {message || 'Une erreur est survenue pendant le paiement.'}
+            </p>
+            <div className="flex w-full max-w-md flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center">
+                <Button
+                    variant="primary"
+                    onClick={() => router.push('/checkout')}
+                    className="w-full sm:w-auto"
+                >
                     Reprendre la commande
                 </Button>
-                <Button variant="outline" onClick={() => router.push('/cart')}>
+                <Button
+                    variant="outline"
+                    onClick={() => router.push('/cart')}
+                    className="w-full sm:w-auto"
+                >
                     Retour au panier
                 </Button>
             </div>
@@ -157,7 +181,7 @@ export default function CheckoutReturnPage() {
     return (
         <AppLayout>
             <Suspense fallback={
-                <div className="mx-auto max-w-lg px-4 py-24 text-center text-sm text-gray-500">
+                <div className="mx-auto flex max-w-lg flex-col items-center px-4 py-24 text-sm text-gray-500">
                     Chargement…
                 </div>
             }>
