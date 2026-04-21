@@ -22,7 +22,7 @@ export const SUPPORT_FAQ: SupportFaqItem[] = [
         id: "edr",
         question: "En quoi l’EDR Cyna Pro protège-t-il mes postes ?",
         answer:
-            "L’offre EDR & Digital Workplace (comme sur cyna-it.fr) couvre la protection managée des postes, serveurs et utilisateurs, avec déploiement simplifié et intégration à votre EDR existant.",
+            "L’offre EDR & Digital Workplace couvre la protection managée des postes, serveurs et utilisateurs, avec déploiement simplifié et intégration à votre EDR existant.",
         keywords: ["edr", "endpoint", "poste", "terminal", "malware"],
     },
     {
@@ -43,7 +43,7 @@ export const SUPPORT_FAQ: SupportFaqItem[] = [
         id: "contact",
         question: "Comment contacter le support ?",
         answer:
-            "Utilisez le formulaire sur cette page, ou écrivez à l’adresse indiquée sur cyna-it.fr. Pour l’urgence incident, précisez-le dans le sujet du message.",
+            "Utilisez le formulaire sur cette page. Pour l’urgence incident, précisez-le dans le sujet du message.",
         keywords: ["contact", "support", "aide", "email", "téléphone"],
     },
 ];
@@ -81,7 +81,7 @@ export const SUPPORT_FAQ_EN: SupportFaqItem[] = [
         id: "contact",
         question: "How do I contact support?",
         answer:
-            "Use the form on this page or the contact details on cyna-it.fr. For an incident emergency, state it clearly in the subject line.",
+            "Use the form on this page. For an incident emergency, state it clearly in the subject line.",
         keywords: ["contact", "support", "help", "email", "phone"],
     },
 ];
