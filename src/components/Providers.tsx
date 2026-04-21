@@ -3,6 +3,7 @@
 import { CartProvider } from "@/context/CartContext";
 import { I18nProvider } from "@/context/I18nContext";
 import { ThemeProvider } from "next-themes";
+import FloatingChatBot from "@/components/support/FloatingChatBot";
 
 export function Providers({ children }: { children: React.ReactNode }) {
     return (
@@ -14,7 +15,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
             disableTransitionOnChange
         >
             <I18nProvider>
-                <CartProvider>{children}</CartProvider>
+                <CartProvider>
+                    {children}
+                    <FloatingChatBot />
+                </CartProvider>
             </I18nProvider>
         </ThemeProvider>
     );
