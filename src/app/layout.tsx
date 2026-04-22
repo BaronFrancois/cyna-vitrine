@@ -16,9 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Cyna — Cybersecurity Solutions",
   description: "Cyna vous protège avec des solutions de cybersécurité avancées : EDR, XDR, SOC et plus encore.",
-  icons: {
-    icon: "/icon.svg",
-  },
 };
 
 export default function RootLayout({
