@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import ProductImage from "@/components/ui/ProductImage";
 
 interface ProductCarouselProps {
     mainImage: string;
@@ -33,15 +34,10 @@ export default function ProductCarousel({ mainImage, productName }: ProductCarou
                 >
                     {images.map((src, i) => (
                         <div key={i} className="flex-shrink-0 w-full h-full relative">
-                            <img
+                            <ProductImage
                                 src={src}
                                 alt={`${productName} - Vue ${i + 1}`}
                                 className="w-full h-full object-cover"
-                                onError={(e) => {
-                                    const img = e.currentTarget;
-                                    if (img.src.endsWith(PLACEHOLDER)) return;
-                                    img.src = PLACEHOLDER;
-                                }}
                             />
                             {/* Inner shadow overlay for depth */}
                             <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.6)] pointer-events-none" />

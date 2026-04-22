@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import ProductImage from "@/components/ui/ProductImage";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { PRODUCTS } from "@/constant";
@@ -170,15 +171,9 @@ export default function TopProducts() {
                             className="group flex flex-col bg-[var(--cyna-card-surface)] border border-zinc-800/80 rounded-3xl overflow-hidden hover:border-cyna-600/50 transition-all duration-300 shadow-[5px_4px_20px_rgba(0,0,0,0.85),0_25px_70px_-20px_rgba(96,11,209,0.45),inset_0_1px_0_0_rgba(255,255,255,0.08)] hover:shadow-[5px_4px_24px_rgba(0,0,0,0.9),0_30px_80px_-15px_rgba(96,11,209,0.55),inset_0_1px_0_0_rgba(255,255,255,0.1)]"
                         >
                             <Link href={`/product/${product.slug}`} className="block relative aspect-video overflow-hidden bg-zinc-900">
-                                <img
+                                <ProductImage
                                     src={product.image}
-                                    alt=""
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                    onError={(e) => {
-                                        const img = e.currentTarget;
-                                        if (img.src.endsWith("/product-placeholder.svg")) return;
-                                        img.src = "/product-placeholder.svg";
-                                    }}
                                 />
                                 <div className="absolute top-4 left-4">
                                     <span className="bg-[#600bd1] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-[0_4px_12px_rgba(96,11,209,0.55)] border border-white/20">

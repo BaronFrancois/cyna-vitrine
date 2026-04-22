@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import ProductImage from "@/components/ui/ProductImage";
 import Link from "next/link";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 import { PRODUCTS } from "@/constant";
@@ -54,15 +55,10 @@ export default function SimilarServices({ currentProductId, currentCategory }: S
                             )}
                         >
                             <div className="relative h-40 overflow-hidden bg-zinc-900">
-                                <img
+                                <ProductImage
                                     src={product.image}
                                     alt={product.name}
                                     className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
-                                    onError={(e) => {
-                                        const img = e.currentTarget;
-                                        if (img.src.endsWith("/product-placeholder.svg")) return;
-                                        img.src = "/product-placeholder.svg";
-                                    }}
                                 />
                                 <div className="absolute top-3 left-3 flex gap-2">
                                     <span className="bg-black/80 backdrop-blur-sm text-gray-300 text-[10px] font-bold uppercase px-2 py-1 rounded-full border border-zinc-700">

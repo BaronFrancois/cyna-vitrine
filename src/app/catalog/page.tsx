@@ -12,10 +12,10 @@ import {
     fetchProductSearch,
     pickMonthlyPrice,
     productCardImage,
-    PRODUCT_PLACEHOLDER_IMAGE,
     type ApiProductCard,
     type ProductSearchResponse,
 } from "@/lib/vitrineCatalog";
+import ProductImage from "@/components/ui/ProductImage";
 import { useI18n } from "@/context/I18nContext";
 import { interpolate } from "@/i18n/messages";
 import { CatalogSuspenseFallback } from "@/components/CatalogSuspenseFallback";
@@ -203,15 +203,9 @@ function CatalogContent() {
                                                 href={`/product/${product.slug}`}
                                                 className="block h-64 overflow-hidden relative bg-zinc-900"
                                             >
-                                                <img
+                                                <ProductImage
                                                     src={productCardImage(product)}
-                                                    alt=""
                                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                                    onError={(e) => {
-                                                        const img = e.currentTarget;
-                                                        if (img.src.endsWith(PRODUCT_PLACEHOLDER_IMAGE)) return;
-                                                        img.src = PRODUCT_PLACEHOLDER_IMAGE;
-                                                    }}
                                                 />
                                                 {product.isAvailable ? (
                                                     <span className="absolute top-4 right-4 bg-green-500/90 text-white text-[10px] font-bold px-2 py-1 rounded-full backdrop-blur-sm uppercase tracking-wide">
